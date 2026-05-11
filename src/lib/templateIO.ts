@@ -41,10 +41,12 @@ async function serializeLayer(l: Layer): Promise<Record<string, unknown>> {
   const out: Record<string, unknown> = { ...rest };
 
   if ('img' in l) {
-    // 의사 이미지는 PNG (투명 배경 보존), 나머지는 JPEG
+    // doctor-card는 imageUrl 필드 사용, 나머지는 url 필드
+    const imgUrl = (rest.imageUrl ?? rest.url ?? null) as string | null;
     const imgFormat = (rest._isDoctorImg || l.type === 'logo') ? 'png' : 'jpeg';
-    out.dataUrl = await imgToDataUrl(img ?? null, (rest.url as string | null) ?? null, imgFormat);
+    out.dataUrl = await imgToDataUrl(img ?? null, imgUrl, imgFormat);
     out.url = null;
+    out.imageUrl = null;
   }
   if ('frameMaskImg' in l && frameMaskImg) {
     out.frameMaskDataUrl = await imgToDataUrl(frameMaskImg, rest.frameMaskUrl ?? null, 'png');
@@ -121,10 +123,20 @@ async function deserializeLayer(raw: Record<string, unknown>): Promise<Layer> {
   const layer = { ...raw } as Record<string, unknown>;
 
   if ('dataUrl' in layer && layer.dataUrl) {
-    try {
-      layer.img = await loadImage(layer.dataUrl as string);
-      layer.url = layer.dataUrl as string;
-    } catch { layer.img = null; }
+    // 로고는 autoLoadLogos가 blob URL로 재로드하므로 img = null 유지
+    if ((layer as Record<string,unknown>).type === 'logo') {
+      layer.img = null;
+    } else {
+      try {
+        const u = layer.dataUrl as string;
+        layer.img = await loadImage(u);
+        if ((layer as Record<string,unknown>).type === 'doctor-card') {
+          (layer as Record<string,unknown>).imageUrl = u;
+        } else {
+          layer.url = u;
+        }
+      } catch { layer.img = null; }
+    }
     delete layer.dataUrl;
   } else if ('url' in layer && layer.url && typeof layer.url === 'string') {
     const u = layer.url as string;
