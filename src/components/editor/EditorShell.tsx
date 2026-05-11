@@ -14,7 +14,7 @@ import ContextMenu from './ContextMenu';
 import { useEditorStore, selectCurrentPage, selectBgKeyColor } from '@/store/editorStore';
 import { makeLayer } from '@/lib/layerFactory';
 import { downloadCurrentPage, downloadAllAsZip } from '@/canvas/export';
-import { saveTemplate, openTemplatePicker, mergeTemplateIntoPage } from '@/lib/templateIO';
+import { saveTemplate, openTemplatePicker, mergeTemplateIntoPage, saveCloudTemplate, loadCloudTemplate, listCloudTemplates } from '@/lib/templateIO';
 import type { LayerType, LogoLayer, BackgroundLayer } from '@/types/layer';
 import { getDefaultLogoImage, LOGO_URL, autoLoadLogos } from '@/lib/logoLoader';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
@@ -270,6 +270,61 @@ export default function EditorShell() {
                   className="w-full text-left px-4 py-2 text-sm hover:bg-[#1a5cba]"
                 >
                   열기
+                </button>
+                <div className="border-t border-[#1a5cba]" />
+                <button
+                  onClick={async () => {
+                    setTplOpen(false);
+                    try {
+                      toast('클라우드 저장 중...');
+                      const state = useEditorStore.getState();
+                      await saveCloudTemplate(state.pages, state.currentScheduleRow);
+                      toast('클라우드 저장 완료');
+                    } catch {
+                      toast('클라우드 저장 실패');
+                    }
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-[#1a5cba]"
+                >
+                  ☁ 클라우드 저장
+                </button>
+                <button
+                  onClick={async () => {
+                    setTplOpen(false);
+                    try {
+                      toast('템플릿 목록 불러오는 중...');
+                      const folders = await listCloudTemplates();
+                      if (!folders.length) { toast('저장된 템플릿 없음'); return; }
+                      const folder = window.prompt(
+                        `불러올 템플릿 선택:\n${folders.map((f, i) => `${i + 1}. ${f}`).join('\n')}`,
+                        folders[folders.length - 1]
+                      );
+                      if (!folder) return;
+                      toast('클라우드에서 불러오는 중...');
+                      const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folder);
+                      const state = useEditorStore.getState();
+                      pushHistory();
+                      const newPages = [...state.pages];
+                      tplPages.forEach((tpl, i) => {
+                        if (i < newPages.length) {
+                          newPages[i] = mergeTemplateIntoPage(newPages[i], tpl);
+                        } else {
+                          newPages.push(mergeTemplateIntoPage(
+                            { id: newPages.length + 1, name: tpl.name || '', layers: [] },
+                            tpl
+                          ));
+                        }
+                      });
+                      setPages(newPages);
+                      if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow);
+                      toast('클라우드 템플릿 불러오기 완료');
+                    } catch {
+                      toast('클라우드 불러오기 실패');
+                    }
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-[#1a5cba]"
+                >
+                  ☁ 클라우드 열기
                 </button>
               </div>
             </>

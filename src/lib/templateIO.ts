@@ -217,6 +217,81 @@ export function openTemplatePicker(
   input.click();
 }
 
+/* ── 클라우드 저장 ── */
+
+export async function saveCloudTemplate(
+  pages: Page[],
+  scheduleRow: Record<string, unknown> | null = null,
+): Promise<void> {
+  const folder = buildTemplateFilename(scheduleRow);
+  const data = await Promise.all(
+    pages.map(async pg => {
+      const bgLayer = pg.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
+      return {
+        id: pg.id,
+        name: pg.name,
+        bgColor: bgLayer?.solidColor ?? '#ffffff',
+        isMedicalLaw: pg.isMedicalLaw ?? false,
+        medConfig: pg.medConfig ? await serializeMedConfig(pg.medConfig) : undefined,
+        layers: await Promise.all(
+          pg.layers
+            .filter(l => l.type !== 'background')
+            .map(l => serializeLayer(l))
+        ),
+      };
+    })
+  );
+
+  const payload = { version: 2, scheduleRow, pages: data };
+  const res = await fetch(`/api/plus-template?folder=${encodeURIComponent(folder)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('클라우드 저장 실패');
+}
+
+/* ── 클라우드 불러오기 ── */
+
+export async function loadCloudTemplate(
+  folderName: string,
+): Promise<{ pages: TemplatePage[]; scheduleRow: Record<string, unknown> | null }> {
+  const res = await fetch(`/api/plus-template?folder=${encodeURIComponent(folderName)}`);
+  if (!res.ok) throw new Error('클라우드 불러오기 실패');
+  const data = await res.json();
+
+  const rawPages: Record<string, unknown>[] = data.pages ?? [];
+  const savedScheduleRow = (data.scheduleRow as Record<string, unknown> | null) ?? null;
+
+  const restoredPages = await Promise.all(
+    rawPages.map(async (pg, i) => {
+      const layers = await Promise.all(
+        ((pg.layers ?? []) as Record<string, unknown>[]).map(l => deserializeLayer(l))
+      );
+      const medConfig = pg.medConfig
+        ? await deserializeMedConfig(pg.medConfig as Record<string, unknown>)
+        : undefined;
+      return {
+        id: (pg.id as number) ?? i + 1,
+        name: (pg.name as string) ?? '',
+        bgColor: (pg.bgColor as string) ?? '#ffffff',
+        isMedicalLaw: (pg.isMedicalLaw as boolean) ?? false,
+        medConfig,
+        layers,
+      } as TemplatePage;
+    })
+  );
+
+  return { pages: restoredPages, scheduleRow: savedScheduleRow };
+}
+
+export async function listCloudTemplates(): Promise<string[]> {
+  const res = await fetch('/api/plus-template');
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (data.folders as string[]) ?? [];
+}
+
 /* ── 현재 페이지에 템플릿 병합 ── */
 
 export function mergeTemplateIntoPage(currentPage: Page, tpl: TemplatePage): Page {
