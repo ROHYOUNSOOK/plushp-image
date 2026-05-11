@@ -10,6 +10,7 @@ import CanvasArea from './CanvasArea';
 import PropsPanel from './PropsPanel';
 import LayerPanel from './LayerPanel';
 import { toast } from './Toast';
+import Toast from './Toast';
 import ContextMenu from './ContextMenu';
 import { useEditorStore, selectCurrentPage, selectBgKeyColor } from '@/store/editorStore';
 import { makeLayer } from '@/lib/layerFactory';
@@ -442,6 +443,7 @@ export default function EditorShell() {
 
       {/* 컨텍스트 메뉴 */}
       <ContextMenu />
+      <Toast />
     </div>
   );
 }
