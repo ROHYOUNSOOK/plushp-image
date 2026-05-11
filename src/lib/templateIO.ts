@@ -17,7 +17,7 @@ async function imgToDataUrl(
 ): Promise<string | null> {
   if (!img) return null;
   // blob URL, URL 없음, 또는 HTTP/data URL이 아닌 문자열(의사 ID 등) → 캔버스 변환
-  const needsCanvas = !url || url.startsWith('blob:') || (!url.startsWith('http') && !url.startsWith('data:') && !url.startsWith('/api/proxy-image'));
+  const needsCanvas = !url || url.startsWith('blob:') || (!url.startsWith('http') && !url.startsWith('data:') && !url.startsWith('/api/proxy-image') && !url.startsWith('/plus/'));
   if (needsCanvas) {
     try {
       const ofc = document.createElement('canvas');
@@ -42,7 +42,7 @@ async function serializeLayer(l: Layer): Promise<Record<string, unknown>> {
 
   if ('img' in l) {
     // 의사 이미지는 PNG (투명 배경 보존), 나머지는 JPEG
-    const imgFormat = rest._isDoctorImg ? 'png' : 'jpeg';
+    const imgFormat = (rest._isDoctorImg || l.type === 'logo') ? 'png' : 'jpeg';
     out.dataUrl = await imgToDataUrl(img ?? null, (rest.url as string | null) ?? null, imgFormat);
     out.url = null;
   }
@@ -128,7 +128,7 @@ async function deserializeLayer(raw: Record<string, unknown>): Promise<Layer> {
     delete layer.dataUrl;
   } else if ('url' in layer && layer.url && typeof layer.url === 'string') {
     const u = layer.url as string;
-    if (u.startsWith('http') || u.startsWith('/api/proxy-image')) {
+    if (u.startsWith('http') || u.startsWith('/api/proxy-image') || u.startsWith('/plus/')) {
       try { layer.img = await loadImage(u); } catch { layer.img = null; }
     } else {
       layer.img = null;
@@ -145,7 +145,7 @@ async function deserializeLayer(raw: Record<string, unknown>): Promise<Layer> {
     delete layer.frameMaskDataUrl;
   } else if ('frameMaskUrl' in layer && layer.frameMaskUrl && typeof layer.frameMaskUrl === 'string') {
     const mu = layer.frameMaskUrl as string;
-    if (mu.startsWith('http') || mu.startsWith('/api/proxy-image')) {
+    if (mu.startsWith('http') || mu.startsWith('/api/proxy-image') || mu.startsWith('/plus/')) {
       try { layer.frameMaskImg = await loadImage(mu); } catch { layer.frameMaskImg = null; }
     } else {
       layer.frameMaskImg = null;
