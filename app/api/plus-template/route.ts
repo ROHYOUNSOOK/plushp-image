@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const res = await fetch(`${VULTR_BASE}/template/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ folderName: folder, template: JSON.parse(body) }),
+      body: JSON.stringify({ folderName: folder, templateData: JSON.parse(body) }),
     });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
