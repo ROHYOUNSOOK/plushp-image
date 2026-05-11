@@ -17,7 +17,7 @@ async function imgToDataUrl(
 ): Promise<string | null> {
   if (!img) return null;
   // blob URL, URL 없음, 또는 HTTP/data URL이 아닌 문자열(의사 ID 등) → 캔버스 변환
-  const needsCanvas = !url || url.startsWith('blob:') || (!url.startsWith('http') && !url.startsWith('data:'));
+  const needsCanvas = !url || url.startsWith('blob:') || (!url.startsWith('http') && !url.startsWith('data:') && !url.startsWith('/api/proxy-image'));
   if (needsCanvas) {
     try {
       const ofc = document.createElement('canvas');
