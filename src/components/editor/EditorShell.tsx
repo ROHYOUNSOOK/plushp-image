@@ -264,6 +264,7 @@ export default function EditorShell() {
                         setPages(newPages);
                         if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow);
                         toast('템플릿 불러오기 완료');
+                        autoLoadLogos();
                       },
                       (msg) => toast(msg)
                     );
@@ -319,6 +320,7 @@ export default function EditorShell() {
                       setPages(newPages);
                       if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow);
                       toast('클라우드 템플릿 불러오기 완료');
+                      autoLoadLogos();
                     } catch {
                       toast('클라우드 불러오기 실패');
                     }
