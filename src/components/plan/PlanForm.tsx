@@ -166,9 +166,9 @@ export default function PlanForm({ row, allDoctors, blogAccounts, onSaved, onDel
           <Section title="원장님">
             <div className="space-y-2">
               {form.doctors.map((d, i) => (
-                <div key={i} className="flex items-center gap-2.5 relative">
-                  <span className="text-[11px] font-medium text-gray-300 w-4 text-right">{i + 1}</span>
-                  <div className="flex-1 relative">
+                <div key={i} className="flex items-center gap-2 relative">
+                  <span className="text-[11px] font-medium text-gray-300 w-4 shrink-0 text-right">{i + 1}</span>
+                  <div className="flex-1 min-w-0 relative">
                     <input
                       className="w-full text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] focus:ring-2 focus:ring-[#1450a0/10] transition placeholder:text-gray-300"
                       value={d}
@@ -190,9 +190,10 @@ export default function PlanForm({ row, allDoctors, blogAccounts, onSaved, onDel
                       </div>
                     )}
                   </div>
-                  {form.doctors.length > 1 && (
-                    <button onClick={() => removeDoctor(i)} className="text-gray-300 hover:text-red-400 transition-colors text-base leading-none w-5">×</button>
-                  )}
+                  <button
+                    onClick={() => removeDoctor(i)}
+                    className={`shrink-0 w-5 text-base leading-none transition-colors ${form.doctors.length > 1 ? 'text-gray-300 hover:text-red-400' : 'invisible'}`}
+                  >×</button>
                 </div>
               ))}
               {form.doctors.length < 4 && (
