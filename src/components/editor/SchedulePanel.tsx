@@ -22,6 +22,7 @@ export default function SchedulePanel() {
   const pushHistory = useEditorStore(s => s.pushHistory);
   const applySchedule = useEditorStore(s => s.applySchedule);
   const setCurrentScheduleRow = useEditorStore(s => s.setCurrentScheduleRow);
+  const currentScheduleRow = useEditorStore(s => s.currentScheduleRow);
 
   // 데이터 로드 (스케줄 + 전체 의사 목록)
   useEffect(() => {
@@ -32,13 +33,22 @@ export default function SchedulePanel() {
     ]).then(([scheduleRes, doctorRes]) => {
       setLoading(false);
       if (scheduleRes.error) { toast('스케줄 로드 실패'); return; }
-      setRows(scheduleRes.data ?? []);
+      const loadedRows = scheduleRes.data ?? [];
+      setRows(loadedRows);
+
+      // 현재 적용된 스케줄이 있으면 자동 선택
+      if (currentScheduleRow?.id) {
+        const matched = loadedRows.find(r => r.id === currentScheduleRow.id);
+        if (matched) {
+          setSelectedDate(matched.date ?? '');
+          setSelectedRow(matched);
+        }
+      }
+
       if (doctorRes.error) {
         toast(`의사 정보 로드 실패 — Supabase plus_doctor RLS 확인 필요`);
-        console.error('[SchedulePanel] plus_doctor fetch error:', doctorRes.error);
       } else {
         setAllDoctors(doctorRes.data ?? []);
-        console.log('[SchedulePanel] plus_doctor loaded:', doctorRes.data?.length, 'rows');
       }
     });
   }, []);
