@@ -126,8 +126,13 @@ async function deserializeLayer(raw: Record<string, unknown>): Promise<Layer> {
       layer.url = layer.dataUrl as string;
     } catch { layer.img = null; }
     delete layer.dataUrl;
-  } else if ('url' in layer && layer.url && typeof layer.url === 'string' && (layer.url as string).startsWith('http')) {
-    try { layer.img = await loadImage(layer.url as string); } catch { layer.img = null; }
+  } else if ('url' in layer && layer.url && typeof layer.url === 'string') {
+    const u = layer.url as string;
+    if (u.startsWith('http') || u.startsWith('/api/proxy-image')) {
+      try { layer.img = await loadImage(u); } catch { layer.img = null; }
+    } else {
+      layer.img = null;
+    }
   } else if ('img' in layer) {
     layer.img = null;
   }
@@ -138,6 +143,13 @@ async function deserializeLayer(raw: Record<string, unknown>): Promise<Layer> {
       layer.frameMaskUrl = layer.frameMaskDataUrl as string;
     } catch { layer.frameMaskImg = null; }
     delete layer.frameMaskDataUrl;
+  } else if ('frameMaskUrl' in layer && layer.frameMaskUrl && typeof layer.frameMaskUrl === 'string') {
+    const mu = layer.frameMaskUrl as string;
+    if (mu.startsWith('http') || mu.startsWith('/api/proxy-image')) {
+      try { layer.frameMaskImg = await loadImage(mu); } catch { layer.frameMaskImg = null; }
+    } else {
+      layer.frameMaskImg = null;
+    }
   } else if ('frameMaskImg' in layer) {
     layer.frameMaskImg = null;
   }

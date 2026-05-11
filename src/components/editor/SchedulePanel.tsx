@@ -36,15 +36,6 @@ export default function SchedulePanel() {
       const loadedRows = scheduleRes.data ?? [];
       setRows(loadedRows);
 
-      // 현재 적용된 스케줄이 있으면 자동 선택
-      if (currentScheduleRow?.id) {
-        const matched = loadedRows.find(r => r.id === currentScheduleRow.id);
-        if (matched) {
-          setSelectedDate(matched.date ?? '');
-          setSelectedRow(matched);
-        }
-      }
-
       if (doctorRes.error) {
         toast(`의사 정보 로드 실패 — Supabase plus_doctor RLS 확인 필요`);
       } else {
@@ -52,6 +43,16 @@ export default function SchedulePanel() {
       }
     });
   }, []);
+
+  // currentScheduleRow 바뀔 때마다 드롭다운 자동 선택
+  useEffect(() => {
+    if (!currentScheduleRow?.id || !rows.length) return;
+    const matched = rows.find((r: { id: string }) => r.id === currentScheduleRow.id);
+    if (matched) {
+      setSelectedDate((matched as { date?: string }).date ?? '');
+      setSelectedRow(matched as ScheduleRow);
+    }
+  }, [currentScheduleRow?.id, rows]);
 
   // 고유 날짜 목록
   const dates = [...new Set(rows.map(r => r.date).filter(Boolean))];
