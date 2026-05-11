@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = 'edge';
-
 const VULTR_BASE = 'http://158.247.227.8/api/plus';
 
 export async function GET(req: NextRequest) {
