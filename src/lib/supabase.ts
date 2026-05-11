@@ -25,8 +25,17 @@ export interface DoctorRow {
   specialty: string;
 }
 
-const DOCTOR_BUCKET = `http://158.247.227.8/image/original-images/Plus/plus_doctors`;
+const VULTR_BASE = `http://158.247.227.8/image/original-images/Plus`;
+const DOCTOR_BUCKET = `${VULTR_BASE}/plus_doctors`;
 const EXTENSIONS = ['jpg', 'png', 'webp', 'jpeg'];
+
+/** HTTP URL을 프록시 URL로 변환 (HTTPS 환경에서 Mixed Content 방지) */
+function toProxyUrl(url: string): string {
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http://')) {
+    return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
 
 /** id + 확장자 순차 시도로 HTMLImageElement 로드, 없으면 null */
 function loadImageByIdWithExtensions(id: string): Promise<HTMLImageElement | null> {
@@ -38,7 +47,7 @@ function loadImageByIdWithExtensions(id: string): Promise<HTMLImageElement | nul
       img.crossOrigin = 'anonymous';
       img.onload = () => resolve(img);
       img.onerror = () => { idx++; tryNext(); };
-      img.src = `${DOCTOR_BUCKET}/${id}.${EXTENSIONS[idx]}`;
+      img.src = toProxyUrl(`${DOCTOR_BUCKET}/${id}.${EXTENSIONS[idx]}`);
     };
     tryNext();
   });
@@ -49,11 +58,11 @@ export async function loadDoctorImages(ids: (string | null)[]): Promise<(HTMLIma
   return Promise.all(ids.map(id => id ? loadImageByIdWithExtensions(id) : Promise.resolve(null)));
 }
 
-const FRAME_BUCKET = `http://158.247.227.8/image/original-images/Plus/plus_frame`;
+const FRAME_BUCKET = `${VULTR_BASE}/plus_frame`;
 
 async function listFilesFromDir(dirUrl: string): Promise<string[]> {
   try {
-    const res = await fetch(dirUrl + '/');
+    const res = await fetch(toProxyUrl(dirUrl + '/'));
     const html = await res.text();
     const matches = [...html.matchAll(/href="([^"]+\.(?:png|jpg|jpeg|webp))"/gi)];
     return matches.map(m => m[1]);
@@ -64,7 +73,7 @@ async function listFilesFromDir(dirUrl: string): Promise<string[]> {
 
 async function loadImageFromUrl(url: string): Promise<HTMLImageElement | null> {
   try {
-    const res = await fetch(url);
+    const res = await fetch(toProxyUrl(url));
     if (!res.ok) return null;
     const blob = await res.blob();
     const blobUrl = URL.createObjectURL(blob);

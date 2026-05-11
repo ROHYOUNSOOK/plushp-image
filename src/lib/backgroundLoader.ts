@@ -1,8 +1,15 @@
 const BG_BUCKET = `http://158.247.227.8/image/original-images/Cardnews_image/background_image`;
 
+function toProxyUrl(url: string): string {
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http://')) {
+    return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
 async function listFilesFromDir(dirUrl: string): Promise<string[]> {
   try {
-    const res = await fetch(dirUrl + '/');
+    const res = await fetch(toProxyUrl(dirUrl + '/'));
     const html = await res.text();
     const matches = [...html.matchAll(/href="([^"]+\.(?:png|jpg|jpeg|webp))"/gi)];
     return matches.map(m => m[1]);
@@ -37,7 +44,7 @@ export async function pickRandomBackground(): Promise<{ img: HTMLImageElement; u
   if (files.length === 0) throw new Error('배경 이미지 없음');
   const file = files[Math.floor(Math.random() * files.length)];
   const url = `${BG_BUCKET}/${file}`;
-  const res = await fetch(url);
+  const res = await fetch(toProxyUrl(url));
   if (!res.ok) throw new Error(`이미지 로드 실패: ${url}`);
   const blob = await res.blob();
   const blobUrl = URL.createObjectURL(blob);
