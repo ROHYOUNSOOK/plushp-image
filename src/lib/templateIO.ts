@@ -259,25 +259,23 @@ export async function saveCloudTemplate(
   scheduleRow: Record<string, unknown> | null = null,
 ): Promise<void> {
   const folder = buildTemplateFilename(scheduleRow);
-  const data = pages.map(pg => {
-    const bgLayer = pg.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-    return {
-      id: pg.id,
-      name: pg.name,
-      bgColor: bgLayer?.solidColor ?? '#ffffff',
-      isMedicalLaw: pg.isMedicalLaw ?? false,
-      medConfig: pg.medConfig ? (() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const cfg: Record<string, unknown> = { ...(pg.medConfig as any) };
-        if (cfg.logo) cfg.logo = { ...(cfg.logo as Record<string, unknown>), img: null };
-        delete cfg.bgImg;
-        return cfg;
-      })() : undefined,
-      layers: pg.layers
-        .filter(l => l.type !== 'background')
-        .map(l => serializeLayerCloud(l)),
-    };
-  });
+  const data = await Promise.all(
+    pages.map(async pg => {
+      const bgLayer = pg.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
+      return {
+        id: pg.id,
+        name: pg.name,
+        bgColor: bgLayer?.solidColor ?? '#ffffff',
+        isMedicalLaw: pg.isMedicalLaw ?? false,
+        medConfig: pg.medConfig ? await serializeMedConfig(pg.medConfig) : undefined,
+        layers: await Promise.all(
+          pg.layers
+            .filter(l => l.type !== 'background')
+            .map(l => serializeLayer(l))
+        ),
+      };
+    })
+  );
 
   const payload = { version: 2, scheduleRow, pages: data };
   const res = await fetch(`/api/plus-template?folder=${encodeURIComponent(folder)}`, {
