@@ -217,6 +217,29 @@ export function openTemplatePicker(
   input.click();
 }
 
+/* ── 클라우드용 경량 레이어 직렬화 (blob URL 이미지 제외) ── */
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function serializeLayerCloud(l: Layer): Record<string, unknown> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { img, frameMaskImg, _imgFilterCache, _holeCanvas, ...rest } = l as any;
+  const out: Record<string, unknown> = { ...rest };
+
+  if ('img' in l) {
+    const url = rest.url as string | null;
+    const keep = url && !url.startsWith('blob:');
+    out.url = keep ? url : null;
+    out.dataUrl = null;
+  }
+  if ('frameMaskImg' in l) {
+    const maskUrl = rest.frameMaskUrl as string | null;
+    const keep = maskUrl && !maskUrl.startsWith('blob:');
+    out.frameMaskUrl = keep ? maskUrl : null;
+    out.frameMaskDataUrl = null;
+  }
+  return out;
+}
+
 /* ── 클라우드 저장 ── */
 
 export async function saveCloudTemplate(
@@ -224,23 +247,25 @@ export async function saveCloudTemplate(
   scheduleRow: Record<string, unknown> | null = null,
 ): Promise<void> {
   const folder = buildTemplateFilename(scheduleRow);
-  const data = await Promise.all(
-    pages.map(async pg => {
-      const bgLayer = pg.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-      return {
-        id: pg.id,
-        name: pg.name,
-        bgColor: bgLayer?.solidColor ?? '#ffffff',
-        isMedicalLaw: pg.isMedicalLaw ?? false,
-        medConfig: pg.medConfig ? await serializeMedConfig(pg.medConfig) : undefined,
-        layers: await Promise.all(
-          pg.layers
-            .filter(l => l.type !== 'background')
-            .map(l => serializeLayer(l))
-        ),
-      };
-    })
-  );
+  const data = pages.map(pg => {
+    const bgLayer = pg.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
+    return {
+      id: pg.id,
+      name: pg.name,
+      bgColor: bgLayer?.solidColor ?? '#ffffff',
+      isMedicalLaw: pg.isMedicalLaw ?? false,
+      medConfig: pg.medConfig ? (() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const cfg: Record<string, unknown> = { ...(pg.medConfig as any) };
+        if (cfg.logo) cfg.logo = { ...(cfg.logo as Record<string, unknown>), img: null };
+        delete cfg.bgImg;
+        return cfg;
+      })() : undefined,
+      layers: pg.layers
+        .filter(l => l.type !== 'background')
+        .map(l => serializeLayerCloud(l)),
+    };
+  });
 
   const payload = { version: 2, scheduleRow, pages: data };
   const res = await fetch(`/api/plus-template?folder=${encodeURIComponent(folder)}`, {
