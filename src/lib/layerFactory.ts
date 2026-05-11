@@ -1,0 +1,95 @@
+/* ===========================
+   Layer Factory
+   — 원본: plus_page_spread_통합.html 1532~1587행
+=========================== */
+
+import type { Layer, LayerType } from '@/types/layer';
+import { W, H, LAYER_LABELS } from '@/types/constants';
+import { uid, calcTextboxPos } from './utils';
+
+/** 레이어 타입별 기본값으로 새 레이어 생성 */
+export function makeLayer(type: LayerType): Layer {
+  const base = { id: uid(), type, name: LAYER_LABELS[type], visible: true, locked: false };
+
+  switch (type) {
+    case 'background':
+      return {
+        ...base, type: 'background',
+        img: null, url: null, solidColor: '#4aabb8',
+        transform: { rotation: 0, flipH: false, flipV: false, scale: 1 },
+      };
+
+    case 'frame':
+      return {
+        ...base, type: 'frame',
+        x: 0, y: 0, w: W, h: H, radius: 0, shape: 'rect',
+        img: null, url: null,
+        imgOffsetX: 0, imgOffsetY: 0, imgScale: 1, imgRotation: 0,
+        imgLightness: 0, imgTemperature: 0,
+        fill: null,
+        stroke: { enabled: false, color: '#111111', width: 3, alpha: 1 },
+        opacity: 1,
+        shadow: { enabled: false, color: null, alpha: 0.2, blur: 10, offsetX: 0, offsetY: 20 },
+      };
+
+    case 'image':
+      return {
+        ...base, type: 'image',
+        x: 100, y: 100, w: 880, h: 880,
+        img: null, url: null, opacity: 1, rotation: 0,
+        shadow: { enabled: false, color: null, alpha: 0.2, blur: 10, offsetX: 0, offsetY: 20 },
+      };
+
+    case 'textbox': {
+      const preset = 'bottom-left' as const;
+      const w = 900, h = 220;
+      const { x, y } = calcTextboxPos(preset, w, h);
+      return {
+        ...base, type: 'textbox',
+        name: '텍스트박스', positionPreset: preset, w, h, x, y, freePos: false,
+        img: null, url: null, processedImg: null,
+        fillColor: null, fillAlpha: 1, radius: 4, autoSize: true,
+        shadow: { enabled: false, color: null, alpha: 0.2, blur: 10, offsetX: 0, offsetY: 20 },
+        border: { enabled: false, color: '#ffffff', width: 2, alpha: 1 },
+        content: '텍스트를 입력하세요', font: 'GmarketSans', fontSize: 110, fontWeight: '900',
+        textColor: '#ffffff', textAlign: 'left', vAlign: 'center', lineHeight: 1,
+        paddingTop: 20, paddingRight: 20, paddingBottom: 20, paddingLeft: 20,
+      };
+    }
+
+    case 'text':
+      return {
+        ...base, type: 'text',
+        x: 80, y: 420, w: 920, h: 220,
+        content: '텍스트를 입력하세요', font: 'Pretendard', size: 80, weight: 700,
+        color: '#000000', align: 'center', lineHeight: 1.3,
+      };
+
+    case 'logo':
+      return {
+        ...base, type: 'logo',
+        x: 30, y: 30, w: 130, h: 86,
+        img: null, url: null, opacity: 1, rotation: 0,
+        stroke: { enabled: true, color: null, width: 3, radius: 0 },
+        shadow: { enabled: false, color: null, alpha: 0.4, blur: 5, offsetX: 0, offsetY: 5 },
+      };
+
+    case 'doctor-card':
+      return {
+        ...base, type: 'doctor-card',
+        name: '의사 카드',
+        x: 60, y: 830, w: 960, h: 200,
+        img: null, imageUrl: null,
+        subject: '척추중점진료',
+        subjectSize: 30, subjectWeight: 400, subjectColor: '#ffffff', subjectFont: 'GmarketSans',
+        doctorName: '강석봉',
+        nameSize: 80, nameWeight: 700, nameColor: '#ffffff', nameFont: 'GmarketSans',
+        suffixText: '원장',
+        suffixSize: 40, suffixWeight: 700, suffixColor: '#ffffff',
+        nameSuffixGap: 8,
+        specialty: '정형외과/스포츠의학과 전문의',
+        specialtySize: 30, specialtyWeight: 400, specialtyColor: '#ffffff', specialtyFont: 'GmarketSans',
+        lineGap: 16, align: 'center',
+      };
+  }
+}
