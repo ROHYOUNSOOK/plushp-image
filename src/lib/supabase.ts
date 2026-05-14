@@ -59,6 +59,7 @@ export async function loadDoctorImages(ids: (string | null)[]): Promise<(HTMLIma
 }
 
 const FRAME_BUCKET = `${VULTR_BASE}/plus_frame`;
+const SCHEDULE_BASE = `http://158.247.227.8/image/plushospital/schedule`;
 
 async function listFilesFromDir(dirUrl: string): Promise<string[]> {
   try {
@@ -86,6 +87,29 @@ async function loadImageFromUrl(url: string): Promise<HTMLImageElement | null> {
   } catch {
     return null;
   }
+}
+
+/** 스케줄 폴더에서 페이지 순서대로 내부 이미지 로드 (1.jpg, 2.jpg, ...) */
+export async function loadScheduleInnerImages(
+  folderName: string,
+  count: number,
+): Promise<{ img: HTMLImageElement | null; url: string | null }[]> {
+  return Promise.all(
+    Array.from({ length: count }, async (_, i) => {
+      for (const ext of ['jpg', 'jpeg', 'png', 'webp']) {
+        const rawUrl = `${SCHEDULE_BASE}/${folderName}/${i + 1}.${ext}`;
+        const proxyUrl = toProxyUrl(rawUrl);
+        try {
+          const res = await fetch(proxyUrl, { method: 'HEAD' });
+          if (res.ok) {
+            const img = await loadImageFromUrl(rawUrl);
+            return { img, url: proxyUrl };
+          }
+        } catch { /* 없으면 다음 확장자 시도 */ }
+      }
+      return { img: null, url: null };
+    })
+  );
 }
 
 /** count개의 랜덤 프레임 이미지 로드 (디렉토리 목록에서 랜덤 선택) */

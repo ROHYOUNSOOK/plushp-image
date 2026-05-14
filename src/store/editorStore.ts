@@ -86,7 +86,7 @@ export interface EditorState extends HistoryState {
   setDropTargetId: (id: string | null) => void;
   toggleMedicalLaw: (index: number) => void;
   updateMedConfig: (index: number, updates: Partial<import('@/types/page').MedConfig>) => void;
-  applySchedule: (texts: string[], doctors: string[], doctorSpecialty: string, doctorSpecialties?: string[], doctorDepartments?: string[], doctorImageUrls?: (string | null)[], doctorImages?: (HTMLImageElement | null)[], frameImages?: (HTMLImageElement | null)[]) => void;
+  applySchedule: (texts: string[], doctors: string[], doctorSpecialty: string, doctorSpecialties?: string[], doctorDepartments?: string[], doctorImageUrls?: (string | null)[], doctorImages?: (HTMLImageElement | null)[], frameImages?: (HTMLImageElement | null)[], frameInnerImages?: { img: HTMLImageElement | null; url: string | null }[]) => void;
   setCurrentScheduleRow: (row: Record<string, unknown> | null) => void;
 }
 
@@ -458,11 +458,11 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     return { pages };
   }),
 
-  applySchedule: (texts, doctors, doctorSpecialty, doctorSpecialties = [], doctorDepartments = [], doctorImageUrls = [], doctorImages = [], frameImages = []) => set(state => {
+  applySchedule: (texts, doctors, doctorSpecialty, doctorSpecialties = [], doctorDepartments = [], doctorImageUrls = [], doctorImages = [], frameImages = [], frameInnerImages = []) => set(state => {
     const pages = buildSchedulePages({
       texts, doctors, doctorSpecialty,
       doctorSpecialties, doctorDepartments,
-      doctorImageUrls, doctorImages, frameImages,
+      doctorImageUrls, doctorImages, frameImages, frameInnerImages,
       currentPages: state.pages,
     });
     return { pages, currentPage: 0, selectedLayerId: null, selectedLayerIds: [] };

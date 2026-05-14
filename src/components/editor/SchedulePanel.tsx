@@ -2,7 +2,7 @@
 
 
 import { useEffect, useState } from 'react';
-import { supabase, type ScheduleRow, loadDoctorImages, loadRandomFrameImages } from '@/lib/supabase';
+import { supabase, type ScheduleRow, loadDoctorImages, loadRandomFrameImages, loadScheduleInnerImages } from '@/lib/supabase';
 import { useEditorStore } from '@/store/editorStore';
 import { toast } from './Toast';
 import { autoLoadLogos } from '@/lib/logoLoader';
@@ -102,13 +102,18 @@ export default function SchedulePanel() {
       const found = allDoctors.find(d => d.doctor_name === name.trim());
       return found?.id ?? null;
     });
-    const [doctorImages, frameImages] = await Promise.all([
+    const date = selectedRow.date ?? '';
+    const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
+    const folderName = [yy + mm + dd, selectedRow.account_id, selectedRow.keyword].filter(Boolean).join('_');
+
+    const [doctorImages, frameImages, frameInnerImages] = await Promise.all([
       loadDoctorImages(doctorIds),
       loadRandomFrameImages(selectedRow.texts.length),
+      loadScheduleInnerImages(folderName, selectedRow.texts.length),
     ]);
 
     setCurrentScheduleRow(selectedRow as unknown as Record<string, unknown>);
-    applySchedule(selectedRow.texts, selectedRow.doctors, selectedRow.doctor_specialty, doctorSpecialties, doctorDepartments, doctorIds, doctorImages, frameImages);
+    applySchedule(selectedRow.texts, selectedRow.doctors, selectedRow.doctor_specialty, doctorSpecialties, doctorDepartments, doctorIds, doctorImages, frameImages, frameInnerImages);
     toast(`총 ${selectedRow.texts.length + (selectedRow.doctors.length > 0 ? 1 : 0) + 1}페이지 적용됨`);
     await autoLoadLogos();
 

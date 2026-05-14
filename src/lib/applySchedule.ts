@@ -35,6 +35,7 @@ export interface ApplyScheduleParams {
   doctorImageUrls: (string | null)[];
   doctorImages: (HTMLImageElement | null)[];
   frameImages: (HTMLImageElement | null)[];
+  frameInnerImages?: { img: HTMLImageElement | null; url: string | null }[];
   currentPages: Page[];
 }
 
@@ -47,6 +48,7 @@ export function buildSchedulePages({
   doctorImageUrls,
   doctorImages,
   frameImages,
+  frameInnerImages = [],
   currentPages,
 }: ApplyScheduleParams): Page[] {
   const textCount = texts.length;
@@ -103,10 +105,15 @@ export function buildSchedulePages({
     const logoLayer: LogoLayer = { ...logoBase, x: logoX, y: logoY };
 
     const frameImg = frameImages[i] ?? null;
+    const innerImage = frameInnerImages[i] ?? null;
     const existingFrame = pg.layers.find(l => l.type === 'frame') as FrameLayer | undefined;
-    const frameLayer: FrameLayer = existingFrame
-      ? { ...existingFrame, frameMaskImg: frameImg ?? existingFrame.frameMaskImg, frameMaskProcessed: null, _processedMaskKey: undefined }
-      : { ...(makeLayer('frame') as FrameLayer), frameMaskImg: frameImg };
+    const frameLayer: FrameLayer = {
+      ...(existingFrame ?? (makeLayer('frame') as FrameLayer)),
+      frameMaskImg: frameImg ?? existingFrame?.frameMaskImg ?? null,
+      frameMaskProcessed: null,
+      _processedMaskKey: undefined,
+      ...(innerImage ? { img: innerImage.img, url: innerImage.url } : {}),
+    };
 
     const baseLayers = pg.layers.filter(l => l.type !== 'textbox' && l.type !== 'logo' && l.type !== 'frame');
 
