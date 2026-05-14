@@ -85,7 +85,12 @@ async function serializeMedConfig(cfg: MedConfig): Promise<Record<string, unknow
 /* ── 파일명 생성 ── */
 
 function buildTemplateFilename(scheduleRow: Record<string, unknown> | null): string {
-  if (!scheduleRow) return 'template';
+  if (!scheduleRow) {
+    const entered = typeof window !== 'undefined'
+      ? window.prompt('저장할 파일명을 입력하세요 (날짜_아이디_키워드)', 'template')
+      : null;
+    return entered?.trim() || 'template';
+  }
   const date = (scheduleRow.date as string) ?? '';
   const yy = date.length >= 4 ? date.slice(2, 4) : '';
   const mm = date.length >= 7 ? date.slice(5, 7) : '';
