@@ -34,7 +34,7 @@ export interface ApplyScheduleParams {
   doctorDepartments: string[];
   doctorImageUrls: (string | null)[];
   doctorImages: (HTMLImageElement | null)[];
-  frameImages: (HTMLImageElement | null)[];
+  frameImages: { img: HTMLImageElement | null; url: string | null }[];
   frameInnerImages?: { img: HTMLImageElement | null; url: string | null }[];
   currentPages: Page[];
 }
@@ -104,12 +104,13 @@ export function buildSchedulePages({
     const { x: logoX, y: logoY } = calcLogoCornerPos(logoCorner, logoBase.w, logoBase.h);
     const logoLayer: LogoLayer = { ...logoBase, x: logoX, y: logoY };
 
-    const frameImg = frameImages[i] ?? null;
+    const frameMask = frameImages[i] ?? { img: null, url: null };
     const innerImage = frameInnerImages[i] ?? null;
     const existingFrame = pg.layers.find(l => l.type === 'frame') as FrameLayer | undefined;
     const frameLayer: FrameLayer = {
       ...(existingFrame ?? (makeLayer('frame') as FrameLayer)),
-      frameMaskImg: frameImg ?? existingFrame?.frameMaskImg ?? null,
+      frameMaskImg: frameMask.img ?? existingFrame?.frameMaskImg ?? null,
+      frameMaskUrl: frameMask.url ?? existingFrame?.frameMaskUrl ?? null,
       frameMaskProcessed: null,
       _processedMaskKey: undefined,
       ...(innerImage ? { img: innerImage.img, url: innerImage.url } : {}),

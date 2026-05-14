@@ -112,14 +112,17 @@ export async function loadScheduleInnerImages(
   );
 }
 
-/** count개의 랜덤 프레임 이미지 로드 (디렉토리 목록에서 랜덤 선택) */
-export async function loadRandomFrameImages(count: number): Promise<(HTMLImageElement | null)[]> {
+/** count개의 랜덤 프레임 마스크 이미지 로드 (URL 포함 반환) */
+export async function loadRandomFrameImages(count: number): Promise<{ img: HTMLImageElement | null; url: string | null }[]> {
   const files = await listFilesFromDir(FRAME_BUCKET);
-  if (files.length === 0) return Array(count).fill(null);
+  if (files.length === 0) return Array(count).fill({ img: null, url: null });
   return Promise.all(
-    Array.from({ length: count }, () => {
+    Array.from({ length: count }, async () => {
       const file = files[Math.floor(Math.random() * files.length)];
-      return loadImageFromUrl(`${FRAME_BUCKET}/${file}`);
+      const rawUrl = `${FRAME_BUCKET}/${file}`;
+      const proxyUrl = toProxyUrl(rawUrl);
+      const img = await loadImageFromUrl(rawUrl);
+      return { img, url: proxyUrl };
     })
   );
 }
