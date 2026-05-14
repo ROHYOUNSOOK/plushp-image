@@ -98,14 +98,17 @@ export function usePlanForm(
       const doctorDepartments = doctors.map(n => allDoctors.find(d => d.doctor_name === n.trim())?.department ?? '');
       const doctorIds = doctors.map(n => allDoctors.find(d => d.doctor_name === n.trim())?.id ?? null);
 
-      const [doctorImages, frameImages] = await Promise.all([
+      const [doctorImagesResult, frameImages] = await Promise.all([
         loadDoctorImages(doctorIds),
         loadRandomFrameImages((saved.texts ?? []).length),
       ]);
 
+      const doctorImages = doctorImagesResult.map(r => r?.img ?? null);
+      const resolvedDoctorImageUrls = doctorImagesResult.map(r => r?.url ?? null);
+
       applySchedule(
         saved.texts ?? [], doctors, saved.doctor_specialty,
-        doctorSpecialties, doctorDepartments, doctorIds, doctorImages, frameImages,
+        doctorSpecialties, doctorDepartments, resolvedDoctorImageUrls, doctorImages, frameImages,
       );
       onSaved(saved);
       await autoLoadLogos();

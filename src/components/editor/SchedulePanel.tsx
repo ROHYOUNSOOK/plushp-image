@@ -106,14 +106,17 @@ export default function SchedulePanel() {
     const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
     const folderName = [yy + mm + dd, selectedRow.account_id, selectedRow.keyword].filter(Boolean).join('_');
 
-    const [doctorImages, frameImages, frameInnerImages] = await Promise.all([
+    const [doctorImagesResult, frameImages, frameInnerImages] = await Promise.all([
       loadDoctorImages(doctorIds),
       loadRandomFrameImages(selectedRow.texts.length),
       loadScheduleInnerImages(folderName, selectedRow.texts.length),
     ]);
 
+    const doctorImages = doctorImagesResult.map(r => r?.img ?? null);
+    const resolvedDoctorImageUrls = doctorImagesResult.map(r => r?.url ?? null);
+
     setCurrentScheduleRow(selectedRow as unknown as Record<string, unknown>);
-    applySchedule(selectedRow.texts, selectedRow.doctors, selectedRow.doctor_specialty, doctorSpecialties, doctorDepartments, doctorIds, doctorImages, frameImages, frameInnerImages);
+    applySchedule(selectedRow.texts, selectedRow.doctors, selectedRow.doctor_specialty, doctorSpecialties, doctorDepartments, resolvedDoctorImageUrls, doctorImages, frameImages, frameInnerImages);
     toast(`총 ${selectedRow.texts.length + (selectedRow.doctors.length > 0 ? 1 : 0) + 1}페이지 적용됨`);
     await autoLoadLogos();
 

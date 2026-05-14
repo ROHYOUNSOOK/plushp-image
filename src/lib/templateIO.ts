@@ -41,16 +41,29 @@ async function serializeLayer(l: Layer): Promise<Record<string, unknown>> {
   const out: Record<string, unknown> = { ...rest };
 
   if ('img' in l) {
-    // doctor-card는 imageUrl 필드 사용, 나머지는 url 필드
     const imgUrl = (rest.imageUrl ?? rest.url ?? null) as string | null;
-    const imgFormat = (rest._isDoctorImg || l.type === 'logo') ? 'png' : 'jpeg';
-    out.dataUrl = await imgToDataUrl(img ?? null, imgUrl, imgFormat);
-    out.url = null;
-    out.imageUrl = null;
+    const isRemoteUrl = imgUrl && !imgUrl.startsWith('blob:') && (imgUrl.startsWith('http') || imgUrl.startsWith('/api/proxy-image') || imgUrl.startsWith('/plus/'));
+    if (isRemoteUrl) {
+      out.url = imgUrl;
+      out.imageUrl = null;
+      out.dataUrl = null;
+    } else {
+      const imgFormat = (rest._isDoctorImg || l.type === 'logo') ? 'png' : 'jpeg';
+      out.dataUrl = await imgToDataUrl(img ?? null, imgUrl, imgFormat);
+      out.url = null;
+      out.imageUrl = null;
+    }
   }
   if ('frameMaskImg' in l && frameMaskImg) {
-    out.frameMaskDataUrl = await imgToDataUrl(frameMaskImg, rest.frameMaskUrl ?? null, 'png');
-    out.frameMaskUrl = null;
+    const maskUrl = (rest.frameMaskUrl ?? null) as string | null;
+    const isMaskRemote = maskUrl && !maskUrl.startsWith('blob:') && (maskUrl.startsWith('http') || maskUrl.startsWith('/api/proxy-image') || maskUrl.startsWith('/plus/'));
+    if (isMaskRemote) {
+      out.frameMaskUrl = maskUrl;
+      out.frameMaskDataUrl = null;
+    } else {
+      out.frameMaskDataUrl = await imgToDataUrl(frameMaskImg, maskUrl, 'png');
+      out.frameMaskUrl = null;
+    }
   }
   return out;
 }

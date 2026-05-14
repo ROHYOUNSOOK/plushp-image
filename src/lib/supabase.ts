@@ -37,24 +37,26 @@ function toProxyUrl(url: string): string {
   return url;
 }
 
-/** id + 확장자 순차 시도로 HTMLImageElement 로드, 없으면 null */
-function loadImageByIdWithExtensions(id: string): Promise<HTMLImageElement | null> {
+/** id + 확장자 순차 시도로 HTMLImageElement + 성공한 URL 로드, 없으면 null */
+function loadImageByIdWithExtensions(id: string): Promise<{ img: HTMLImageElement; url: string } | null> {
   return new Promise(resolve => {
     let idx = 0;
     const tryNext = () => {
       if (idx >= EXTENSIONS.length) { resolve(null); return; }
+      const rawUrl = `${DOCTOR_BUCKET}/${id}.${EXTENSIONS[idx]}`;
+      const proxyUrl = toProxyUrl(rawUrl);
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      img.onload = () => resolve(img);
+      img.onload = () => resolve({ img, url: proxyUrl });
       img.onerror = () => { idx++; tryNext(); };
-      img.src = toProxyUrl(`${DOCTOR_BUCKET}/${id}.${EXTENSIONS[idx]}`);
+      img.src = proxyUrl;
     };
     tryNext();
   });
 }
 
-/** doctor id 배열을 HTMLImageElement 배열로 병렬 로드 (없으면 null) */
-export async function loadDoctorImages(ids: (string | null)[]): Promise<(HTMLImageElement | null)[]> {
+/** doctor id 배열을 { img, url } 배열로 병렬 로드 (없으면 null) */
+export async function loadDoctorImages(ids: (string | null)[]): Promise<({ img: HTMLImageElement; url: string } | null)[]> {
   return Promise.all(ids.map(id => id ? loadImageByIdWithExtensions(id) : Promise.resolve(null)));
 }
 
