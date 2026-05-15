@@ -294,13 +294,21 @@ export default function EditorShell() {
                   onClick={async () => {
                     setTplOpen(false);
                     try {
-                      toast('템플릿 목록 불러오는 중...');
-                      const folders = await listCloudTemplates();
-                      if (!folders.length) { toast('저장된 템플릿 없음'); return; }
-                      const folder = window.prompt(
-                        `불러올 템플릿 선택:\n${folders.map((f, i) => `${i + 1}. ${f}`).join('\n')}`,
-                        folders[folders.length - 1]
-                      );
+                      const { currentScheduleRow: sr } = useEditorStore.getState();
+                      let folder: string | null = null;
+                      if (sr) {
+                        const date = (sr.date as string) ?? '';
+                        const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
+                        folder = [yy + mm + dd, sr.account_id, sr.keyword].filter(Boolean).join('_') as string;
+                      } else {
+                        toast('템플릿 목록 불러오는 중...');
+                        const folders = await listCloudTemplates();
+                        if (!folders.length) { toast('저장된 템플릿 없음'); return; }
+                        folder = window.prompt(
+                          `불러올 템플릿 선택:\n${folders.map((f, i) => `${i + 1}. ${f}`).join('\n')}`,
+                          folders[folders.length - 1]
+                        );
+                      }
                       if (!folder) return;
                       toast('클라우드에서 불러오는 중...');
                       const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folder);
