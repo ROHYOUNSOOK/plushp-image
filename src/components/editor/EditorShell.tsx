@@ -313,6 +313,9 @@ export default function EditorShell() {
                       toast('클라우드에서 불러오는 중...');
                       const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folder);
                       const state = useEditorStore.getState();
+                      // 현재 배경 컬러를 먼저 읽어둠 (템플릿 merge 전)
+                      const curBg = state.pages[0]?.layers.find(l => l.type === 'background') as { solidColor?: string } | undefined;
+                      const curBgColor = curBg?.solidColor ?? '#ffffff';
                       pushHistory();
                       const newPages = [...state.pages];
                       tplPages.forEach((tpl, i) => {
@@ -327,9 +330,7 @@ export default function EditorShell() {
                       });
                       setPages(newPages);
                       if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow);
-                      const bg = newPages[0]?.layers.find(l => l.type === 'background') as { solidColor?: string } | undefined;
-                      const bgColor = bg?.solidColor ?? '#ffffff';
-                      useEditorStore.getState().applySyncColors(calcAutoFillColor(bgColor), calcShadowColor(bgColor));
+                      useEditorStore.getState().applySyncColors(calcAutoFillColor(curBgColor), calcShadowColor(curBgColor));
                       toast('클라우드 템플릿 불러오기 완료');
                       autoLoadLogos();
                     } catch {
