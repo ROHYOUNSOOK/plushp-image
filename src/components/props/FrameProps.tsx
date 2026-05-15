@@ -122,10 +122,41 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
           label={layer.img ? '프레임 내부 이미지 교체' : '프레임 내부 이미지'}
           onFile={async (file) => {
             try {
-              const { img, url } = await loadImageFromFile(file);
+              const { img, url: blobUrl } = await loadImageFromFile(file);
               pushHistory();
-              applyFrameImage(layer, img, url);
-              useEditorStore.getState().setPages([...useEditorStore.getState().pages]);
+
+              const state = useEditorStore.getState();
+              const scheduleRow = state.currentScheduleRow;
+
+              if (scheduleRow) {
+                const date = (scheduleRow.date as string) ?? '';
+                const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
+                const folderName = [yy + mm + dd, scheduleRow.account_id, scheduleRow.keyword].filter(Boolean).join('_');
+                const pageIndex = (state.currentPage ?? 0) + 1;
+
+                try {
+                  toast('이미지 업로드 중...');
+                  const formData = new FormData();
+                  formData.append('file', file);
+                  formData.append('folderName', folderName as string);
+                  formData.append('pageIndex', String(pageIndex));
+
+                  const res = await fetch('/api/upload-schedule-image', { method: 'POST', body: formData });
+                  const data = await res.json();
+
+                  if (data.url) {
+                    applyFrameImage(layer, img, data.url);
+                    state.setPages([...state.pages]);
+                    toast('업로드 완료');
+                    return;
+                  }
+                } catch {
+                  toast('업로드 실패 — 로컬 이미지로 적용');
+                }
+              }
+
+              applyFrameImage(layer, img, blobUrl);
+              state.setPages([...state.pages]);
               toast('내부 이미지 적용');
             } catch { toast('이미지 로드 실패'); }
           }}
