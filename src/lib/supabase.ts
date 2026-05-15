@@ -100,11 +100,12 @@ export async function loadScheduleInnerImages(
     Array.from({ length: count }, async (_, i) => {
       for (const ext of ['jpg', 'jpeg', 'png', 'webp']) {
         const rawUrl = `${SCHEDULE_BASE}/${folderName}/${i + 1}.${ext}`;
-        const proxyUrl = toProxyUrl(rawUrl);
+        const bust = `?t=${Date.now()}`;
+        const proxyUrl = toProxyUrl(rawUrl) + bust;
         try {
-          const res = await fetch(proxyUrl, { method: 'HEAD' });
+          const res = await fetch(proxyUrl, { method: 'HEAD', cache: 'no-store' });
           if (res.ok) {
-            const img = await loadImageFromUrl(rawUrl);
+            const img = await loadImageFromUrl(rawUrl + bust);
             return { img, url: proxyUrl };
           }
         } catch { /* 없으면 다음 확장자 시도 */ }
