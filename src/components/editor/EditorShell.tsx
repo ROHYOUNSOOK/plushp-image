@@ -327,6 +327,9 @@ export default function EditorShell() {
                       });
                       setPages(newPages);
                       if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow);
+                      const bg = newPages[0]?.layers.find(l => l.type === 'background') as { solidColor?: string } | undefined;
+                      const bgColor = bg?.solidColor ?? '#ffffff';
+                      useEditorStore.getState().applySyncColors(calcAutoFillColor(bgColor), calcShadowColor(bgColor));
                       toast('클라우드 템플릿 불러오기 완료');
                       autoLoadLogos();
                     } catch {

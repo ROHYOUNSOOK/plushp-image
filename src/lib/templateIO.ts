@@ -206,7 +206,6 @@ export interface TemplatePage {
   id: number;
   name: string;
   bgColor?: string;
-  bgUrl?: string | null;
   isMedicalLaw?: boolean;
   medConfig?: MedConfig;
   layers: Layer[];
@@ -293,12 +292,10 @@ export async function saveCloudTemplate(
   const data = await Promise.all(
     pages.map(async pg => {
       const bgLayer = pg.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-      const bgUrl = bgLayer?.url && !bgLayer.url.startsWith('blob:') ? bgLayer.url : null;
       return {
         id: pg.id,
         name: pg.name,
         bgColor: bgLayer?.solidColor ?? '#ffffff',
-        bgUrl,
         isMedicalLaw: pg.isMedicalLaw ?? false,
         medConfig: pg.medConfig ? await serializeMedConfig(pg.medConfig) : undefined,
         layers: await Promise.all(
@@ -343,7 +340,6 @@ export async function loadCloudTemplate(
         id: (pg.id as number) ?? i + 1,
         name: (pg.name as string) ?? '',
         bgColor: (pg.bgColor as string) ?? '#ffffff',
-        bgUrl: (pg.bgUrl as string | null) ?? null,
         isMedicalLaw: (pg.isMedicalLaw as boolean) ?? false,
         medConfig,
         layers,
@@ -373,10 +369,6 @@ export function mergeTemplateIntoPage(currentPage: Page, tpl: TemplatePage): Pag
   // 의료법 페이지는 medConfig.bgColor가 배경을 제어하므로 bgLayer 색상 적용 생략
   if (tpl.bgColor && !tpl.isMedicalLaw) {
     bgLayer.solidColor = tpl.bgColor;
-  }
-  if (tpl.bgUrl) {
-    bgLayer.url = tpl.bgUrl;
-    loadImage(tpl.bgUrl).then(img => { bgLayer.img = img; }).catch(() => {});
   }
 
   return {
