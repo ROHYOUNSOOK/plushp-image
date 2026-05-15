@@ -295,20 +295,20 @@ export default function EditorShell() {
                     setTplOpen(false);
                     try {
                       const { currentScheduleRow: sr } = useEditorStore.getState();
-                      let folder: string | null = null;
-                      if (sr) {
-                        const date = (sr.date as string) ?? '';
-                        const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
-                        folder = [yy + mm + dd, sr.account_id, sr.keyword].filter(Boolean).join('_') as string;
-                      } else {
-                        toast('템플릿 목록 불러오는 중...');
-                        const folders = await listCloudTemplates();
-                        if (!folders.length) { toast('저장된 템플릿 없음'); return; }
-                        folder = window.prompt(
-                          `불러올 템플릿 선택:\n${folders.map((f, i) => `${i + 1}. ${f}`).join('\n')}`,
-                          folders[folders.length - 1]
-                        );
-                      }
+                      if (!sr) { toast('스케줄을 먼저 적용해주세요'); return; }
+                      const date = (sr.date as string) ?? '';
+                      const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
+                      const currentFolder = [yy + mm + dd, sr.account_id, sr.keyword].filter(Boolean).join('_');
+                      toast('템플릿 목록 불러오는 중...');
+                      const allFolders = await listCloudTemplates();
+                      const matched = allFolders.filter(f => f === currentFolder);
+                      if (!matched.length) { toast('저장된 템플릿 없음'); return; }
+                      const folder = matched.length === 1
+                        ? matched[0]
+                        : window.prompt(
+                            `불러올 템플릿 선택:\n${matched.map((f, i) => `${i + 1}. ${f}`).join('\n')}`,
+                            matched[0]
+                          );
                       if (!folder) return;
                       toast('클라우드에서 불러오는 중...');
                       const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folder);
