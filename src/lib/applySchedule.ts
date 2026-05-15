@@ -113,7 +113,8 @@ export function buildSchedulePages({
       frameMaskUrl: frameMask.url ?? existingFrame?.frameMaskUrl ?? null,
       frameMaskProcessed: null,
       _processedMaskKey: undefined,
-      ...(innerImage ? { img: innerImage.img, url: innerImage.url } : {}),
+      img: innerImage?.img ?? null,
+      url: innerImage?.url ?? null,
     };
 
     const baseLayers = pg.layers.filter(l => l.type !== 'textbox' && l.type !== 'logo' && l.type !== 'frame');
