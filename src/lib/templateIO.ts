@@ -367,7 +367,7 @@ export function mergeTemplateIntoPage(currentPage: Page, tpl: TemplatePage): Pag
     : makeLayer('background') as BackgroundLayer;
 
   // 의료법 페이지는 medConfig.bgColor가 배경을 제어하므로 bgLayer 색상 적용 생략
-  if (tpl.bgColor && !tpl.isMedicalLaw) {
+  if (tpl.bgColor && !tpl.isMedicalLaw && !existingBg?.solidColor) {
     bgLayer.solidColor = tpl.bgColor;
   }
 
