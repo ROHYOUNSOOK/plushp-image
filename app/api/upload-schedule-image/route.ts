@@ -4,10 +4,12 @@ const VULTR_UPLOAD = 'http://158.247.227.8/api/plus/schedule/upload';
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData();
+    const contentType = req.headers.get('content-type') ?? '';
+    const body = await req.arrayBuffer();
     const res = await fetch(VULTR_UPLOAD, {
       method: 'POST',
-      body: formData,
+      headers: { 'content-type': contentType },
+      body,
     });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });

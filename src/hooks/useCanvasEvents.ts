@@ -362,6 +362,18 @@ export function useCanvasEvents({
       state.pushHistory();
       const hit = hitTestLayer(x, y, page);
       if (hit && hit.type === 'frame') {
+        // 즉시 적용 (blob URL)
+        const fr = hit as import('@/types/layer').FrameLayer;
+        const sc = Math.max(fr.w / img.naturalWidth, fr.h / img.naturalHeight);
+        useEditorStore.getState().updateLayer(hit.id, {
+          img,
+          url,
+          imgScale: sc,
+          imgOffsetX: (fr.w - img.naturalWidth * sc) / 2,
+          imgOffsetY: (fr.h - img.naturalHeight * sc) / 2,
+        });
+        state.selectSingle(hit.id);
+
         const scheduleRow = state.currentScheduleRow;
         if (scheduleRow) {
           const date = (scheduleRow.date as string) ?? '';
@@ -374,43 +386,27 @@ export function useCanvasEvents({
           try {
             const formData = new FormData();
             formData.append('file', files[0]);
-            formData.append('folderName', folderName as string);
+            formData.append('folderName', folderName);
             formData.append('pageIndex', String(pageIndex));
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 30000);
             const res = await fetch('/api/upload-schedule-image', { method: 'POST', body: formData, signal: controller.signal });
             clearTimeout(timeout);
             const data = await res.json();
-            const applyFrame = (finalUrl: string) => {
-              const fr = hit as import('@/types/layer').FrameLayer;
-              const sc = Math.max(fr.w / img.naturalWidth, fr.h / img.naturalHeight);
-              useEditorStore.getState().updateLayer(hit.id, {
-                img,
-                url: finalUrl,
-                imgScale: sc,
-                imgOffsetX: (fr.w - img.naturalWidth * sc) / 2,
-                imgOffsetY: (fr.h - img.naturalHeight * sc) / 2,
-              });
-              state.selectSingle(hit.id);
-            };
-            if (data.url) {
-              applyFrame(data.url);
-              dropHideToast();
-              dropToast('업로드 완료');
-              return;
-            }
             dropHideToast();
-            applyFrame(url);
-            dropToast('프레임 이미지 적용');
-            return;
+            if (data.url) {
+              useEditorStore.getState().updateLayer(hit.id, { url: data.url });
+              dropToast('업로드 완료');
+            } else {
+              dropToast('업로드 실패 — 로컬 이미지로 적용됨');
+            }
           } catch {
             dropHideToast();
+            dropToast('업로드 실패 — 로컬 이미지로 적용됨');
           }
+        } else {
+          toast('프레임 이미지 적용');
         }
-        applyFrameImage(hit as import('@/types/layer').FrameLayer, img, url);
-        state.selectSingle(hit.id);
-        state.setPages([...state.pages]);
-        toast('프레임 이미지 적용');
       } else if (hit && hit.type === 'image') {
         applyImageLayerImage(hit as import('@/types/layer').ImageLayer, img, url);
         state.selectSingle(hit.id);

@@ -125,22 +125,20 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
               const { img, url: blobUrl } = await loadImageFromFile(file);
               pushHistory();
 
-              const applyToLayer = (finalImg: HTMLImageElement, finalUrl: string) => {
-                const sc = Math.max(layer.w / finalImg.naturalWidth, layer.h / finalImg.naturalHeight);
-                useEditorStore.getState().updateLayer(layer.id, {
-                  img: finalImg,
-                  url: finalUrl,
-                  imgScale: sc,
-                  imgOffsetX: (layer.w - finalImg.naturalWidth * sc) / 2,
-                  imgOffsetY: (layer.h - finalImg.naturalHeight * sc) / 2,
-                });
-              };
+                  // 즉시 적용 (blob URL) — 업로드 완료 전에도 에디터에 표시
+              const sc = Math.max(layer.w / img.naturalWidth, layer.h / img.naturalHeight);
+              useEditorStore.getState().updateLayer(layer.id, {
+                img,
+                url: blobUrl,
+                imgScale: sc,
+                imgOffsetX: (layer.w - img.naturalWidth * sc) / 2,
+                imgOffsetY: (layer.h - img.naturalHeight * sc) / 2,
+              });
 
               const scheduleRow = useEditorStore.getState().currentScheduleRow;
 
               if (!scheduleRow) {
                 toast('스케줄을 먼저 적용해주세요 (이미지는 로컬에만 적용됨)');
-                applyToLayer(img, blobUrl);
                 return;
               }
 
@@ -155,7 +153,7 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
               try {
                 const formData = new FormData();
                 formData.append('file', file);
-                formData.append('folderName', folderName as string);
+                formData.append('folderName', folderName);
                 formData.append('pageIndex', String(pageIndex));
 
                 const controller = new AbortController();
@@ -170,17 +168,15 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
 
                 hideToast();
                 if (data.url) {
-                  applyToLayer(img, data.url);
+                  useEditorStore.getState().updateLayer(layer.id, { url: data.url });
                   toast('업로드 완료');
-                  return;
+                } else {
+                  toast('업로드 실패 — 로컬 이미지로 적용됨');
                 }
-                toast('업로드 실패 — 로컬 이미지로 적용');
               } catch {
                 hideToast();
-                toast('업로드 실패 — 로컬 이미지로 적용');
+                toast('업로드 실패 — 로컬 이미지로 적용됨');
               }
-
-              applyToLayer(img, blobUrl);
             } catch { toast('이미지 로드 실패'); }
           }}
         />
