@@ -233,7 +233,7 @@ export default function CanvasArea({ showShortcuts = true }: { showShortcuts?: b
           {frameEditMode ? (
             <>
               <span>✏️ 프레임 내부 이미지 편집 중</span>
-              <span className="text-yellow-700 font-normal text-xs">· F 또는 Esc 로 종료</span>
+              <span className="text-yellow-700 font-normal text-xs">· Ctrl+휠 확대/축소 · F 또는 Esc 로 종료</span>
             </>
           ) : (
             <>

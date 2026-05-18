@@ -107,14 +107,22 @@ export function buildSchedulePages({
     const frameMask = frameImages[i] ?? { img: null, url: null };
     const innerImage = frameInnerImages[i] ?? null;
     const existingFrame = pg.layers.find(l => l.type === 'frame') as FrameLayer | undefined;
+    const baseFrame = existingFrame ?? (makeLayer('frame') as FrameLayer);
+    const innerImg = innerImage?.img ?? null;
+    const innerSc = innerImg
+      ? Math.max(baseFrame.w / innerImg.naturalWidth, baseFrame.h / innerImg.naturalHeight)
+      : baseFrame.imgScale;
     const frameLayer: FrameLayer = {
-      ...(existingFrame ?? (makeLayer('frame') as FrameLayer)),
+      ...baseFrame,
       frameMaskImg: frameMask.img ?? existingFrame?.frameMaskImg ?? null,
       frameMaskUrl: frameMask.url ?? existingFrame?.frameMaskUrl ?? null,
       frameMaskProcessed: null,
       _processedMaskKey: undefined,
-      img: innerImage?.img ?? null,
+      img: innerImg,
       url: innerImage?.url ?? null,
+      imgScale: innerSc,
+      imgOffsetX: innerImg ? (baseFrame.w - innerImg.naturalWidth * innerSc) / 2 : baseFrame.imgOffsetX,
+      imgOffsetY: innerImg ? (baseFrame.h - innerImg.naturalHeight * innerSc) / 2 : baseFrame.imgOffsetY,
     };
 
     const baseLayers = pg.layers.filter(l => l.type !== 'textbox' && l.type !== 'logo' && l.type !== 'frame');

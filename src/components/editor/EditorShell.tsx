@@ -57,8 +57,8 @@ async function applyScheduleImagesToPages(
         layers: pg.layers.map(l => {
           if (l.type !== 'frame') return l;
           const fr = l as FrameLayer;
-          applyFrameImage(fr, inner.img!, inner.url ?? '');
-          return { ...fr };
+          // 템플릿에 저장된 scale/offset 보존, img/url만 교체
+          return { ...fr, img: inner.img!, url: inner.url ?? '' };
         }),
       };
     });
