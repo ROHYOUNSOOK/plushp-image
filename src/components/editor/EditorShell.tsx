@@ -277,7 +277,7 @@ export default function EditorShell() {
                   }}
                   className="w-full text-left px-4 py-2 text-sm hover:bg-[#1a5cba]"
                 >
-                  저장
+                  내 PC에 저장
                 </button>
                 <button
                   onClick={() => {
@@ -313,7 +313,7 @@ export default function EditorShell() {
                   }}
                   className="w-full text-left px-4 py-2 text-sm hover:bg-[#1a5cba]"
                 >
-                  열기
+                  내 PC에서 열기
                 </button>
                 <div className="border-t border-[#1a5cba]" />
                 <button

@@ -41,11 +41,16 @@ async function serializeLayer(l: Layer): Promise<Record<string, unknown>> {
   const out: Record<string, unknown> = { ...rest };
 
   if ('img' in l) {
-    // 프레임 내부 이미지 포함 모든 이미지: JSON에 저장 안 함
-    // (내부 이미지는 로드 시 스케줄 폴더에서 직접 가져옴)
     out.url = null;
-    out.imageUrl = null;
     out.dataUrl = null;
+    // doctor-card는 imageUrl이 Vultr 원격 URL이므로 보존
+    if (l.type === 'doctor-card') {
+      const iu = (rest.imageUrl ?? null) as string | null;
+      const isRemote = iu && !iu.startsWith('blob:') && (iu.startsWith('http') || iu.startsWith('/api/proxy-image') || iu.startsWith('/plus/'));
+      out.imageUrl = isRemote ? iu : null;
+    } else {
+      out.imageUrl = null;
+    }
   }
   if ('frameMaskImg' in l) {
     // 프레임 마스크(프레임 이미지): remote URL이면 저장, blob이면 저장 안 함
@@ -147,6 +152,13 @@ async function deserializeLayer(raw: Record<string, unknown>): Promise<Layer> {
     delete layer.dataUrl;
   } else if ('url' in layer && layer.url && typeof layer.url === 'string') {
     const u = layer.url as string;
+    if (u.startsWith('http') || u.startsWith('/api/proxy-image') || u.startsWith('/plus/')) {
+      try { layer.img = await loadImage(u); } catch { layer.img = null; }
+    } else {
+      layer.img = null;
+    }
+  } else if (layer.type === 'doctor-card' && layer.imageUrl && typeof layer.imageUrl === 'string') {
+    const u = layer.imageUrl as string;
     if (u.startsWith('http') || u.startsWith('/api/proxy-image') || u.startsWith('/plus/')) {
       try { layer.img = await loadImage(u); } catch { layer.img = null; }
     } else {
@@ -258,8 +270,14 @@ function serializeLayerCloud(l: Layer): Record<string, unknown> {
 
   if ('img' in l) {
     out.url = null;
-    out.imageUrl = null;
     out.dataUrl = null;
+    if (l.type === 'doctor-card') {
+      const iu = (rest.imageUrl ?? null) as string | null;
+      const isRemote = iu && !iu.startsWith('blob:') && (iu.startsWith('http') || iu.startsWith('/api/proxy-image') || iu.startsWith('/plus/'));
+      out.imageUrl = isRemote ? iu : null;
+    } else {
+      out.imageUrl = null;
+    }
   }
   if ('frameMaskImg' in l) {
     const maskUrl = rest.frameMaskUrl as string | null;
