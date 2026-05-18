@@ -1,14 +1,20 @@
 'use client';
 
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 type ToastType = 'default' | 'yellow';
 
 let _showToast: (msg: string, dur?: number, type?: ToastType) => void = () => {};
+let _hideToast: () => void = () => {};
 
+/** dur=0이면 hideToast() 호출 전까지 유지 */
 export function toast(msg: string, dur = 1800, type: ToastType = 'default') {
   _showToast(msg, dur, type);
+}
+
+export function hideToast() {
+  _hideToast();
 }
 
 export default function Toast() {
@@ -16,16 +22,24 @@ export default function Toast() {
   const [visible, setVisible] = useState(false);
   const [type, setType] = useState<ToastType>('default');
 
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const hide = useCallback(() => setVisible(false), []);
+
   const show = useCallback((msg: string, dur = 1800, t: ToastType = 'default') => {
+    if (timerRef.current) clearTimeout(timerRef.current);
     setMessage(msg);
     setType(t);
     setVisible(true);
-    setTimeout(() => setVisible(false), dur);
+    if (dur > 0) {
+      timerRef.current = setTimeout(() => setVisible(false), dur);
+    }
   }, []);
 
   useEffect(() => {
     _showToast = show;
-  }, [show]);
+    _hideToast = hide;
+  }, [show, hide]);
 
   if (!visible) return null;
 

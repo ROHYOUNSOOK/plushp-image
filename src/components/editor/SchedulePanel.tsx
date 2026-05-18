@@ -14,7 +14,7 @@ export default function SchedulePanel() {
     dates, keywords,
   } = useScheduleData();
 
-  const { applySelectedSchedule, applyRandomBackground } = useScheduleApplication();
+  const { isApplying, applySelectedSchedule, applyRandomBackground } = useScheduleApplication();
 
   return (
     <div className="p-2 border-b border-gray-200 bg-gray-50">
@@ -68,10 +68,10 @@ export default function SchedulePanel() {
 
         <button
           onClick={() => selectedRow && applySelectedSchedule(selectedRow, allDoctors)}
-          disabled={!selectedRow}
+          disabled={!selectedRow || isApplying}
           className="w-full py-1 text-xs rounded bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          적용
+          {isApplying ? '적용 중...' : '적용'}
         </button>
       </div>
     </div>

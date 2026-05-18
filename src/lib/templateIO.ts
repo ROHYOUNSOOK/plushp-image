@@ -41,17 +41,17 @@ async function serializeLayer(l: Layer): Promise<Record<string, unknown>> {
   const out: Record<string, unknown> = { ...rest };
 
   if ('img' in l) {
-    const imgUrl = (rest.imageUrl ?? rest.url ?? null) as string | null;
-    const isRemoteUrl = imgUrl && !imgUrl.startsWith('blob:') && (imgUrl.startsWith('http') || imgUrl.startsWith('/api/proxy-image') || imgUrl.startsWith('/plus/'));
-    if (isRemoteUrl) {
-      out.url = imgUrl;
-      out.imageUrl = null;
+    if (l.type === 'frame') {
+      // 프레임 내부 이미지: URL만 저장 (Vultr 서버 경로)
+      const imgUrl = (rest.url ?? null) as string | null;
+      const isRemoteUrl = imgUrl && !imgUrl.startsWith('blob:') && (imgUrl.startsWith('http') || imgUrl.startsWith('/api/proxy-image') || imgUrl.startsWith('/plus/'));
+      out.url = isRemoteUrl ? imgUrl : null;
       out.dataUrl = null;
     } else {
-      const imgFormat = (rest._isDoctorImg || l.type === 'logo') ? 'png' : 'jpeg';
-      out.dataUrl = await imgToDataUrl(img ?? null, imgUrl, imgFormat);
+      // 원장님 사진, 로고 등 나머지 이미지: 저장 안 함 (스케줄 적용 시 재로드)
       out.url = null;
       out.imageUrl = null;
+      out.dataUrl = null;
     }
   }
   if ('frameMaskImg' in l && frameMaskImg) {
@@ -268,10 +268,15 @@ function serializeLayerCloud(l: Layer): Record<string, unknown> {
   const out: Record<string, unknown> = { ...rest };
 
   if ('img' in l) {
-    const url = rest.url as string | null;
-    const keep = url && !url.startsWith('blob:');
-    out.url = keep ? url : null;
+    if (l.type === 'frame') {
+      const url = rest.url as string | null;
+      const keep = url && !url.startsWith('blob:');
+      out.url = keep ? url : null;
+    } else {
+      out.url = null;
+    }
     out.dataUrl = null;
+    out.imageUrl = null;
   }
   if ('frameMaskImg' in l) {
     const maskUrl = rest.frameMaskUrl as string | null;

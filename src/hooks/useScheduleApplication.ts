@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { type ScheduleRow, loadDoctorImages, loadRandomFrameImages, loadScheduleInnerImages } from '@/lib/supabase';
 import { useEditorStore } from '@/store/editorStore';
-import { toast } from '@/components/editor/Toast';
+import { toast, hideToast } from '@/components/editor/Toast';
 import { autoLoadLogos } from '@/lib/logoLoader';
 import { applyBgToAllPages } from '@/lib/imageUpload';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
@@ -23,59 +24,71 @@ export function resolveDoctorInfo(doctors: string[], allDoctors: DoctorInfo[]) {
 }
 
 export function useScheduleApplication() {
+  const [isApplying, setIsApplying] = useState(false);
   const pushHistory = useEditorStore(s => s.pushHistory);
   const applySchedule = useEditorStore(s => s.applySchedule);
   const setCurrentScheduleRow = useEditorStore(s => s.setCurrentScheduleRow);
 
   const applySelectedSchedule = async (selectedRow: ScheduleRow, allDoctors: DoctorInfo[]) => {
+    setIsApplying(true);
     pushHistory();
 
-    const { specialties, departments, ids } = resolveDoctorInfo(selectedRow.doctors, allDoctors);
-    const folderName = buildScheduleFolderName(selectedRow);
-
-    const [doctorImagesResult, frameImages, frameInnerImages] = await Promise.all([
-      loadDoctorImages(ids),
-      loadRandomFrameImages(selectedRow.texts.length),
-      loadScheduleInnerImages(folderName, selectedRow.texts.length),
-    ]);
-
-    const doctorImages = doctorImagesResult.map(r => r?.img ?? null);
-    const doctorImageUrls = doctorImagesResult.map(r => r?.url ?? null);
-
-    setCurrentScheduleRow(selectedRow as unknown as Record<string, unknown>);
-    applySchedule(
-      selectedRow.texts, selectedRow.doctors, selectedRow.doctor_specialty,
-      specialties, departments, doctorImageUrls, doctorImages, frameImages, frameInnerImages,
-    );
-    toast(`총 ${selectedRow.texts.length + (selectedRow.doctors.length > 0 ? 1 : 0) + 1}페이지 적용됨`);
-    await autoLoadLogos();
-
     try {
-      toast('배경 불러오는 중...');
-      const { img, url } = await pickRandomBackground();
-      const state = useEditorStore.getState();
-      applyBgToAllPages(img, url, state.pages);
-      state.setPages([...state.pages]);
-      toast('배경 적용 완료');
+      toast('이미지 불러오는 중...', 0);
+      const { specialties, departments, ids } = resolveDoctorInfo(selectedRow.doctors, allDoctors);
+      const folderName = buildScheduleFolderName(selectedRow);
+
+      const [doctorImagesResult, frameImages, frameInnerImages] = await Promise.all([
+        loadDoctorImages(ids),
+        loadRandomFrameImages(selectedRow.texts.length),
+        loadScheduleInnerImages(folderName, selectedRow.texts.length),
+      ]);
+
+      const doctorImages = doctorImagesResult.map(r => r?.img ?? null);
+      const doctorImageUrls = doctorImagesResult.map(r => r?.url ?? null);
+
+      toast('스케줄 적용 중...', 0);
+      setCurrentScheduleRow(selectedRow as unknown as Record<string, unknown>);
+      applySchedule(
+        selectedRow.texts, selectedRow.doctors, selectedRow.doctor_specialty,
+        specialties, departments, doctorImageUrls, doctorImages, frameImages, frameInnerImages,
+      );
+      await autoLoadLogos();
+
+      toast('배경 불러오는 중...', 0);
+      try {
+        const { img, url } = await pickRandomBackground();
+        const state = useEditorStore.getState();
+        applyBgToAllPages(img, url, state.pages);
+        state.setPages([...state.pages]);
+      } catch { /* 실패 시 기존 배경 유지 */ }
+
+      hideToast();
+      toast(`총 ${selectedRow.texts.length + (selectedRow.doctors.length > 0 ? 1 : 0) + 1}페이지 적용됨`);
     } catch {
-      toast('배경 로드 실패 — 수동으로 선택하세요');
+      hideToast();
+      toast('스케줄 적용 실패');
+    } finally {
+      setIsApplying(false);
     }
   };
 
   const applyRandomBackground = async (onApplied?: () => void) => {
     try {
-      toast('배경 불러오는 중...');
+      toast('배경 불러오는 중...', 0);
       const { img, url } = await pickRandomBackground();
       const state = useEditorStore.getState();
       state.pushHistory();
       applyBgToAllPages(img, url, state.pages);
       state.setPages([...state.pages]);
       onApplied?.();
+      hideToast();
       toast('전 페이지 배경 적용됨');
     } catch {
+      hideToast();
       toast('배경 로드 실패');
     }
   };
 
-  return { applySelectedSchedule, applyRandomBackground };
+  return { isApplying, applySelectedSchedule, applyRandomBackground };
 }
