@@ -41,15 +41,15 @@ async function serializeLayer(l: Layer): Promise<Record<string, unknown>> {
   const out: Record<string, unknown> = { ...rest };
 
   if ('img' in l) {
-    out.url = null;
     out.dataUrl = null;
-    // doctor-card는 imageUrl이 Vultr 원격 URL이므로 보존
-    if (l.type === 'doctor-card') {
-      const iu = (rest.imageUrl ?? null) as string | null;
-      const isRemote = iu && !iu.startsWith('blob:') && (iu.startsWith('http') || iu.startsWith('/api/proxy-image') || iu.startsWith('/plus/'));
-      out.imageUrl = isRemote ? iu : null;
+    out.imageUrl = null;
+    // image 레이어(원장님 사진 등): remote URL이면 보존 — frame 레이어는 스케줄 폴더에서 재로드하므로 null
+    if (l.type === 'image') {
+      const u = (rest.url ?? null) as string | null;
+      const isRemote = u && !u.startsWith('blob:') && (u.startsWith('http') || u.startsWith('/api/proxy-image') || u.startsWith('/plus/'));
+      out.url = isRemote ? u : null;
     } else {
-      out.imageUrl = null;
+      out.url = null;
     }
   }
   if ('frameMaskImg' in l) {
@@ -152,13 +152,6 @@ async function deserializeLayer(raw: Record<string, unknown>): Promise<Layer> {
     delete layer.dataUrl;
   } else if ('url' in layer && layer.url && typeof layer.url === 'string') {
     const u = layer.url as string;
-    if (u.startsWith('http') || u.startsWith('/api/proxy-image') || u.startsWith('/plus/')) {
-      try { layer.img = await loadImage(u); } catch { layer.img = null; }
-    } else {
-      layer.img = null;
-    }
-  } else if (layer.type === 'doctor-card' && layer.imageUrl && typeof layer.imageUrl === 'string') {
-    const u = layer.imageUrl as string;
     if (u.startsWith('http') || u.startsWith('/api/proxy-image') || u.startsWith('/plus/')) {
       try { layer.img = await loadImage(u); } catch { layer.img = null; }
     } else {
@@ -269,14 +262,14 @@ function serializeLayerCloud(l: Layer): Record<string, unknown> {
   const out: Record<string, unknown> = { ...rest };
 
   if ('img' in l) {
-    out.url = null;
     out.dataUrl = null;
-    if (l.type === 'doctor-card') {
-      const iu = (rest.imageUrl ?? null) as string | null;
-      const isRemote = iu && !iu.startsWith('blob:') && (iu.startsWith('http') || iu.startsWith('/api/proxy-image') || iu.startsWith('/plus/'));
-      out.imageUrl = isRemote ? iu : null;
+    out.imageUrl = null;
+    if (l.type === 'image') {
+      const u = (rest.url ?? null) as string | null;
+      const isRemote = u && !u.startsWith('blob:') && (u.startsWith('http') || u.startsWith('/api/proxy-image') || u.startsWith('/plus/'));
+      out.url = isRemote ? u : null;
     } else {
-      out.imageUrl = null;
+      out.url = null;
     }
   }
   if ('frameMaskImg' in l) {
