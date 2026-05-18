@@ -9,9 +9,7 @@ import { useRouter } from 'next/navigation';
 import { supabase, type ScheduleRow, loadDoctorImages, loadRandomFrameImages } from '@/lib/supabase';
 import { autoLoadLogos } from '@/lib/logoLoader';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
-import { applyBackgroundImage } from '@/lib/imageUpload';
-import { makeLayer } from '@/lib/layerFactory';
-import type { BackgroundLayer } from '@/types/layer';
+import { applyBgToAllPages } from '@/lib/imageUpload';
 import { useEditorStore } from '@/store/editorStore';
 import { toast } from '@/components/editor/Toast';
 
@@ -117,19 +115,8 @@ export function usePlanForm(
       try {
         const { img, url } = await pickRandomBackground();
         const state = useEditorStore.getState();
-        const { pages } = state;
-        pages.forEach(pg => {
-          if (!pg.layers.find(l => l.type === 'background')) {
-            pg.layers.unshift(makeLayer('background') as BackgroundLayer);
-          }
-        });
-        const page1Bg = pages[0]?.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-        if (page1Bg) applyBackgroundImage(page1Bg, img, url, pages);
-        pages.slice(1).forEach(pg => {
-          const bg = pg.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-          if (bg) { bg.img = img; bg.url = url; bg.solidColor = page1Bg?.solidColor ?? ''; }
-        });
-        state.setPages([...pages]);
+        applyBgToAllPages(img, url, state.pages);
+        state.setPages([...state.pages]);
       } catch { /* 실패 시 기존 배경 유지 */ }
 
       router.push('/editor');

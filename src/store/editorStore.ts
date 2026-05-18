@@ -11,7 +11,7 @@ import { create } from 'zustand';
 import type { Layer } from '@/types/layer';
 import type { TextboxLayer } from '@/types/layer';
 import type { Page, MedConfig } from '@/types/page';
-import { replaceTextboxImageColors, calcAutoFillColor, calcShadowColor, hasTransparentPixels, lightenHex } from '@/lib/colorHelpers';
+import { syncColorsAcrossPages, getBgKeyColor } from '@/lib/colorSync';
 import { makeLayer } from '@/lib/layerFactory';
 import { calcTextboxPos } from '@/lib/utils';
 import { W, H } from '@/types/constants';
@@ -367,54 +367,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setShowGuides: (v) => set({ showGuides: v }),
   setPages: (pages) => set({ pages }),
 
-  applySyncColors: (autoColor, shadowColor) => set(state => {
-    // 현재 페이지의 배경 solidColor를 프레임 마스크 색상 치환 기준으로 사용
-    const bgLayer = state.pages[state.currentPage]?.layers.find(l => l.type === 'background') as import('@/types/layer').BackgroundLayer | undefined;
-    const bgKeyColor = bgLayer?.solidColor || autoColor;
-
-    return {
-      pages: state.pages.map(pg => ({
-        ...pg,
-        layers: pg.layers.map(l => {
-          if (l.type === 'textbox') {
-            const tb = l as import('@/types/layer').TextboxLayer;
-            return {
-              ...tb,
-              fillColor: autoColor,
-              ...(tb.img ? { processedImg: replaceTextboxImageColors(tb.img, autoColor) } : {}),
-            };
-          }
-          if (l.type === 'frame') {
-            const fr = l as import('@/types/layer').FrameLayer;
-            if (fr.frameMaskImg) {
-              return { ...fr, frameMaskProcessed: replaceTextboxImageColors(fr.frameMaskImg, bgKeyColor) };
-            }
-          }
-          if (l.type === 'logo') {
-            const lo = l as import('@/types/layer').LogoLayer;
-            return {
-              ...lo,
-              ...(lo.stroke?.enabled ? { stroke: { ...lo.stroke, color: autoColor } } : {}),
-              ...(lo.shadow?.enabled ? { shadow: { ...lo.shadow, color: shadowColor } } : {}),
-            };
-          }
-          if (l.type === 'image') {
-            const im = l as import('@/types/layer').ImageLayer;
-            return im.shadow ? { ...im, shadow: { ...im.shadow, color: shadowColor } } : l;
-          }
-          return l;
-        }),
-        ...(pg.isMedicalLaw && pg.medConfig ? {
-          medConfig: {
-            ...pg.medConfig,
-            titleColor: autoColor,
-            ...(pg.medConfig.boxStrokeEnabled ? { boxStrokeColor: autoColor } : {}),
-            ...(pg.medConfig.logo ? { logo: { ...pg.medConfig.logo, strokeColor: autoColor } } : {}),
-          },
-        } : {}),
-      })),
-    };
-  }),
+  applySyncColors: (autoColor, shadowColor) => set(state => ({
+    pages: syncColorsAcrossPages(
+      state.pages,
+      autoColor,
+      shadowColor,
+      getBgKeyColor(state.pages, state.currentPage, autoColor),
+    ),
+  })),
 
   setIsDragOver: (v) => set({ isDragOver: v }),
   setDropTargetId: (id) => set({ dropTargetId: id }),
