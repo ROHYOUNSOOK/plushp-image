@@ -150,6 +150,24 @@ export function applyBgToAllPages(img: HTMLImageElement, url: string, pages: Pag
 }
 
 /** 파일에서 이미지 로드 (URL.createObjectURL 사용) */
+export async function compressForUpload(img: HTMLImageElement, maxBytes = 4 * 1024 * 1024): Promise<Blob> {
+  const toBlob = (canvas: HTMLCanvasElement, q: number) =>
+    new Promise<Blob>(res => canvas.toBlob(b => res(b!), 'image/jpeg', q));
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  canvas.getContext('2d')!.drawImage(img, 0, 0);
+  for (const q of [0.85, 0.7, 0.5]) {
+    const blob = await toBlob(canvas, q);
+    if (blob.size <= maxBytes) return blob;
+  }
+  const scale = Math.sqrt(maxBytes / (img.naturalWidth * img.naturalHeight * 3));
+  canvas.width = Math.floor(img.naturalWidth * scale);
+  canvas.height = Math.floor(img.naturalHeight * scale);
+  canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return toBlob(canvas, 0.85);
+}
+
 export async function loadImageFromFile(file: File): Promise<{ img: HTMLImageElement; url: string }> {
   const url = URL.createObjectURL(file);
   try {

@@ -8,7 +8,7 @@ import ColorPickerField from '@/components/ui/ColorPickerField';
 import NumberInput from '@/components/ui/NumberInput';
 import SliderInput from '@/components/ui/SliderInput';
 import ImageUploadButton from '@/components/ui/ImageUploadButton';
-import { loadImageFromFile, applyFrameImage } from '@/lib/imageUpload';
+import { loadImageFromFile, applyFrameImage, compressForUpload } from '@/lib/imageUpload';
 import { extractDominantColor, calcAutoFillColor, calcShadowColor, replaceTextboxImageColors, hasTransparentPixels } from '@/lib/colorHelpers';
 import { selectBgKeyColor } from '@/store/editorStore';
 import { toast, hideToast } from '@/components/editor/Toast';
@@ -151,8 +151,9 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
 
               toast('이미지 업로드 중...', 0);
               try {
+                const compressed = await compressForUpload(img);
                 const formData = new FormData();
-                formData.append('file', file);
+                formData.append('file', compressed, 'image.jpg');
                 formData.append('folderName', folderName);
                 formData.append('pageIndex', String(pageIndex));
 

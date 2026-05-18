@@ -16,6 +16,7 @@ import {
   applyFrameImage,
   applyImageLayerImage,
   createDroppedImageLayer,
+  compressForUpload,
 } from '@/lib/imageUpload';
 import { toast } from '@/components/editor/Toast';
 import { med_getLogoDrawRect } from '@/canvas/drawMedicalLaw';
@@ -384,8 +385,9 @@ export function useCanvasEvents({
           const { toast: dropToast, hideToast: dropHideToast } = await import('@/components/editor/Toast');
           dropToast('이미지 업로드 중...', 0);
           try {
+            const compressed = await compressForUpload(img);
             const formData = new FormData();
-            formData.append('file', files[0]);
+            formData.append('file', compressed, 'image.jpg');
             formData.append('folderName', folderName);
             formData.append('pageIndex', String(pageIndex));
             const controller = new AbortController();
