@@ -42,6 +42,9 @@ export default function TextboxProps({ layer }: { layer: TextboxLayer }) {
   return (
     <div className="space-y-3">
       <div className="font-bold text-xs text-gray-500 uppercase">텍스트박스</div>
+      <div className="text-xs text-blue-500 bg-blue-50 rounded px-2 py-1.5 leading-relaxed">
+        위치 조정은 상단 <span className="font-semibold">정렬 버튼</span>을 이용하세요
+      </div>
 
       {/* PNG 이미지 템플릿 */}
       <div className="flex gap-1 items-center">
