@@ -79,6 +79,11 @@ const ALIGN_BTNS: { key: AlignDir; title: string }[] = [
 
 export default function AlignToolbar() {
   const showGuides = useEditorStore(s => s.showGuides);
+  const selectedLayerId = useEditorStore(s => s.selectedLayerId);
+  const currentPage = useEditorStore(s => s.currentPage);
+  const pages = useEditorStore(s => s.pages);
+  const selectedLayer = selectedLayerId ? pages[currentPage]?.layers.find(l => l.id === selectedLayerId) : null;
+  const isTextboxSelected = selectedLayer?.type === 'textbox';
 
   /* ── 드래그 위치 ── */
   const [pos, setPos] = useState({ x: 12, y: 12 });
@@ -169,6 +174,13 @@ export default function AlignToolbar() {
           {ICONS.distV}
         </button>
       </div>
+
+      {/* 텍스트박스 선택 시 안내 */}
+      {isTextboxSelected && (
+        <div className="text-xs text-blue-500 bg-blue-50 rounded px-2 py-1 leading-relaxed">
+          위 정렬 버튼으로 위치를 조정하세요
+        </div>
+      )}
 
       {/* 2행: 실행취소/다시실행 + 가이드 */}
       <div className="flex items-center gap-1">

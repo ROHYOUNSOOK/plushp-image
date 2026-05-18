@@ -4,14 +4,9 @@
 import React from 'react';
 import type { TextboxLayer } from '@/types/layer';
 import { useEditorStore } from '@/store/editorStore';
-import { selectBgKeyColor } from '@/store/editorStore';
 import ColorPickerField from '@/components/ui/ColorPickerField';
 import NumberInput from '@/components/ui/NumberInput';
 import SliderInput from '@/components/ui/SliderInput';
-import ImageUploadButton from '@/components/ui/ImageUploadButton';
-import { loadImageFromFile } from '@/lib/imageUpload';
-import { replaceTextboxImageColors } from '@/lib/colorHelpers';
-import { toast } from '@/components/editor/Toast';
 
 const FONTS = ['GmarketSans', 'Pretendard', 'SCoreDream', 'Jalnan'];
 
@@ -35,42 +30,12 @@ const VALIGNS: { value: 'top' | 'center' | 'bottom' }[] = [
 
 export default function TextboxProps({ layer }: { layer: TextboxLayer }) {
   const updateLayer = useEditorStore(s => s.updateLayer);
-  const bgKeyColor = useEditorStore(selectBgKeyColor);
 
   const update = (u: Partial<TextboxLayer>) => updateLayer(layer.id, u);
 
   return (
     <div className="space-y-3">
       <div className="font-bold text-xs text-gray-500 uppercase">텍스트박스</div>
-      <div className="text-xs text-blue-500 bg-blue-50 rounded px-2 py-1.5 leading-relaxed">
-        위치 조정은 상단 <span className="font-semibold">정렬 버튼</span>을 이용하세요
-      </div>
-
-      {/* PNG 이미지 템플릿 */}
-      <div className="flex gap-1 items-center">
-        <ImageUploadButton
-          label={layer.img ? '이미지 교체' : '이미지 업로드'}
-          onFile={async (file) => {
-            try {
-              const { img, url } = await loadImageFromFile(file);
-              const processedImg = replaceTextboxImageColors(img, bgKeyColor);
-              update({ img, url, processedImg });
-              toast('텍스트박스 이미지 적용');
-            } catch { toast('이미지 로드 실패'); }
-          }}
-        />
-        {layer.img && (
-          <button
-            onClick={() => update({ img: null, url: null, processedImg: null })}
-            className="px-2 py-1 text-xs rounded border border-gray-300 hover:bg-red-50 hover:border-red-400"
-          >
-            제거
-          </button>
-        )}
-      </div>
-      {layer.img && (
-        <div className="text-xs text-green-600">이미지 적용됨 (배경색 연동)</div>
-      )}
 
       {/* 내용 */}
       <textarea
