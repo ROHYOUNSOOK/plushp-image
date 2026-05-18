@@ -11,7 +11,7 @@ import ImageUploadButton from '@/components/ui/ImageUploadButton';
 import { loadImageFromFile, applyFrameImage } from '@/lib/imageUpload';
 import { extractDominantColor, calcAutoFillColor, calcShadowColor, replaceTextboxImageColors, hasTransparentPixels } from '@/lib/colorHelpers';
 import { selectBgKeyColor } from '@/store/editorStore';
-import { toast } from '@/components/editor/Toast';
+import { toast, hideToast } from '@/components/editor/Toast';
 
 export default function FrameProps({ layer }: { layer: FrameLayer }) {
   const updateLayer = useEditorStore(s => s.updateLayer);
@@ -125,44 +125,62 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
               const { img, url: blobUrl } = await loadImageFromFile(file);
               pushHistory();
 
-              const state = useEditorStore.getState();
-              const scheduleRow = state.currentScheduleRow;
+              const applyToLayer = (finalImg: HTMLImageElement, finalUrl: string) => {
+                const sc = Math.max(layer.w / finalImg.naturalWidth, layer.h / finalImg.naturalHeight);
+                useEditorStore.getState().updateLayer(layer.id, {
+                  img: finalImg,
+                  url: finalUrl,
+                  imgScale: sc,
+                  imgOffsetX: (layer.w - finalImg.naturalWidth * sc) / 2,
+                  imgOffsetY: (layer.h - finalImg.naturalHeight * sc) / 2,
+                });
+              };
+
+              const scheduleRow = useEditorStore.getState().currentScheduleRow;
 
               if (!scheduleRow) {
                 toast('스케줄을 먼저 적용해주세요 (이미지는 로컬에만 적용됨)');
+                applyToLayer(img, blobUrl);
+                return;
               }
 
-              if (scheduleRow) {
-                const date = (scheduleRow.date as string) ?? '';
-                const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
-                const folderName = [yy + mm + dd, scheduleRow.account_id, scheduleRow.keyword].filter(Boolean).join('_');
-                const pageIdx = state.pages.findIndex(pg => pg.layers.some(l => l.id === layer.id));
-                const pageIndex = (pageIdx >= 0 ? pageIdx : state.currentPage ?? 0) + 1;
+              const date = (scheduleRow.date as string) ?? '';
+              const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
+              const folderName = [yy + mm + dd, scheduleRow.account_id, scheduleRow.keyword].filter(Boolean).join('_');
+              const state = useEditorStore.getState();
+              const pageIdx = state.pages.findIndex(pg => pg.layers.some(l => l.id === layer.id));
+              const pageIndex = (pageIdx >= 0 ? pageIdx : state.currentPage ?? 0) + 1;
 
-                try {
-                  toast('이미지 업로드 중...');
-                  const formData = new FormData();
-                  formData.append('file', file);
-                  formData.append('folderName', folderName as string);
-                  formData.append('pageIndex', String(pageIndex));
+              toast('이미지 업로드 중...', 0);
+              try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('folderName', folderName as string);
+                formData.append('pageIndex', String(pageIndex));
 
-                  const res = await fetch('/api/upload-schedule-image', { method: 'POST', body: formData });
-                  const data = await res.json();
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 30000);
+                const res = await fetch('/api/upload-schedule-image', {
+                  method: 'POST',
+                  body: formData,
+                  signal: controller.signal,
+                });
+                clearTimeout(timeout);
+                const data = await res.json();
 
-                  if (data.url) {
-                    applyFrameImage(layer, img, data.url);
-                    state.setPages([...state.pages]);
-                    toast('업로드 완료');
-                    return;
-                  }
-                } catch {
-                  toast('업로드 실패 — 로컬 이미지로 적용');
+                hideToast();
+                if (data.url) {
+                  applyToLayer(img, data.url);
+                  toast('업로드 완료');
+                  return;
                 }
+                toast('업로드 실패 — 로컬 이미지로 적용');
+              } catch {
+                hideToast();
+                toast('업로드 실패 — 로컬 이미지로 적용');
               }
 
-              applyFrameImage(layer, img, blobUrl);
-              state.setPages([...state.pages]);
-              toast('내부 이미지 적용');
+              applyToLayer(img, blobUrl);
             } catch { toast('이미지 로드 실패'); }
           }}
         />

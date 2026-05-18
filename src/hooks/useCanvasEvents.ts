@@ -362,6 +362,51 @@ export function useCanvasEvents({
       state.pushHistory();
       const hit = hitTestLayer(x, y, page);
       if (hit && hit.type === 'frame') {
+        const scheduleRow = state.currentScheduleRow;
+        if (scheduleRow) {
+          const date = (scheduleRow.date as string) ?? '';
+          const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
+          const folderName = [yy + mm + dd, scheduleRow.account_id, scheduleRow.keyword].filter(Boolean).join('_');
+          const pageIdx = state.pages.findIndex(pg => pg.layers.some(l => l.id === hit.id));
+          const pageIndex = (pageIdx >= 0 ? pageIdx : state.currentPage) + 1;
+          const { toast: dropToast, hideToast: dropHideToast } = await import('@/components/editor/Toast');
+          dropToast('이미지 업로드 중...', 0);
+          try {
+            const formData = new FormData();
+            formData.append('file', files[0]);
+            formData.append('folderName', folderName as string);
+            formData.append('pageIndex', String(pageIndex));
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 30000);
+            const res = await fetch('/api/upload-schedule-image', { method: 'POST', body: formData, signal: controller.signal });
+            clearTimeout(timeout);
+            const data = await res.json();
+            const applyFrame = (finalUrl: string) => {
+              const fr = hit as import('@/types/layer').FrameLayer;
+              const sc = Math.max(fr.w / img.naturalWidth, fr.h / img.naturalHeight);
+              useEditorStore.getState().updateLayer(hit.id, {
+                img,
+                url: finalUrl,
+                imgScale: sc,
+                imgOffsetX: (fr.w - img.naturalWidth * sc) / 2,
+                imgOffsetY: (fr.h - img.naturalHeight * sc) / 2,
+              });
+              state.selectSingle(hit.id);
+            };
+            if (data.url) {
+              applyFrame(data.url);
+              dropHideToast();
+              dropToast('업로드 완료');
+              return;
+            }
+            dropHideToast();
+            applyFrame(url);
+            dropToast('프레임 이미지 적용');
+            return;
+          } catch {
+            dropHideToast();
+          }
+        }
         applyFrameImage(hit as import('@/types/layer').FrameLayer, img, url);
         state.selectSingle(hit.id);
         state.setPages([...state.pages]);

@@ -9,13 +9,17 @@ import Link from 'next/link';
 import CanvasArea from './CanvasArea';
 import PropsPanel from './PropsPanel';
 import LayerPanel from './LayerPanel';
-import { toast } from './Toast';
+import { toast, hideToast } from './Toast';
 import Toast from './Toast';
 import ContextMenu from './ContextMenu';
 import { useEditorStore, selectCurrentPage, selectBgKeyColor } from '@/store/editorStore';
 import { makeLayer } from '@/lib/layerFactory';
 import { downloadCurrentPage, downloadAllAsZip } from '@/canvas/export';
-import { saveTemplate, openTemplatePicker, mergeTemplateIntoPage, saveCloudTemplate, loadCloudTemplate, listCloudTemplates } from '@/lib/templateIO';
+import { saveTemplate, openTemplatePicker, mergeTemplateIntoPage, saveCloudTemplate, loadCloudTemplate, listCloudTemplates, type TemplatePage } from '@/lib/templateIO';
+import { loadScheduleInnerImages } from '@/lib/supabase';
+import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
+import type { FrameLayer } from '@/types/layer';
+import { applyFrameImage } from '@/lib/imageUpload';
 import type { LayerType, LogoLayer, BackgroundLayer } from '@/types/layer';
 import { getDefaultLogoImage, LOGO_URL, autoLoadLogos } from '@/lib/logoLoader';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
@@ -31,6 +35,38 @@ const LAYER_TYPES: { type: LayerType; icon: string; label: string }[] = [
   { type: 'logo', icon: '🏷', label: '로고' },
   { type: 'doctor-card', icon: '🩺', label: '의사카드' },
 ];
+
+/** 템플릿 로드 후 스케줄 폴더에서 페이지별 이미지를 프레임에 적용 */
+async function applyScheduleImagesToPages(
+  pages: TemplatePage[],
+  scheduleRow: Record<string, unknown> | null,
+): Promise<TemplatePage[]> {
+  if (!scheduleRow) return pages;
+  try {
+    const folderName = buildScheduleFolderName(scheduleRow as unknown as Parameters<typeof buildScheduleFolderName>[0]);
+    const textPages = pages.filter(pg => !pg.isMedicalLaw && pg.name !== '원장님');
+    if (!textPages.length) return pages;
+    const innerImages = await loadScheduleInnerImages(folderName, textPages.length);
+    const updatedPages = pages.map(pg => {
+      const textIdx = textPages.indexOf(pg);
+      if (textIdx < 0) return pg;
+      const inner = innerImages[textIdx];
+      if (!inner?.img) return pg;
+      return {
+        ...pg,
+        layers: pg.layers.map(l => {
+          if (l.type !== 'frame') return l;
+          const fr = l as FrameLayer;
+          applyFrameImage(fr, inner.img!, inner.url ?? '');
+          return { ...fr };
+        }),
+      };
+    });
+    return updatedPages as TemplatePage[];
+  } catch {
+    return pages;
+  }
+}
 
 export default function EditorShell() {
   const { pages, currentPage, addPage, deletePage, switchPage, pushHistory, addLayer, setPages, renamePage, toggleMedicalLaw, setCurrentScheduleRow } = useEditorStore();
@@ -247,11 +283,13 @@ export default function EditorShell() {
                   onClick={() => {
                     setTplOpen(false);
                     openTemplatePicker(
-                      (tplPages, savedScheduleRow) => {
+                      async (tplPages, savedScheduleRow) => {
                         const state = useEditorStore.getState();
                         pushHistory();
+                        toast('템플릿 불러오는 중...', 0);
+                        const pagesWithImages = await applyScheduleImagesToPages(tplPages, savedScheduleRow);
                         const newPages = [...state.pages];
-                        tplPages.forEach((tpl, i) => {
+                        pagesWithImages.forEach((tpl, i) => {
                           if (i < newPages.length) {
                             newPages[i] = mergeTemplateIntoPage(newPages[i], tpl);
                           } else {
@@ -263,6 +301,10 @@ export default function EditorShell() {
                         });
                         setPages(newPages);
                         if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow);
+                        const curBg = newPages[0]?.layers.find(l => l.type === 'background') as { solidColor?: string } | undefined;
+                        const curBgColor = curBg?.solidColor ?? '#ffffff';
+                        useEditorStore.getState().applySyncColors(calcAutoFillColor(curBgColor), calcShadowColor(curBgColor));
+                        hideToast();
                         toast('템플릿 불러오기 완료');
                         autoLoadLogos();
                       },
@@ -310,15 +352,15 @@ export default function EditorShell() {
                             matched[0]
                           );
                       if (!folder) return;
-                      toast('클라우드에서 불러오는 중...');
+                      toast('클라우드에서 불러오는 중...', 0);
                       const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folder);
                       const state = useEditorStore.getState();
-                      // 현재 배경 컬러를 먼저 읽어둠 (템플릿 merge 전)
                       const curBg = state.pages[0]?.layers.find(l => l.type === 'background') as { solidColor?: string } | undefined;
                       const curBgColor = curBg?.solidColor ?? '#ffffff';
+                      const pagesWithImages = await applyScheduleImagesToPages(tplPages, savedScheduleRow);
                       pushHistory();
                       const newPages = [...state.pages];
-                      tplPages.forEach((tpl, i) => {
+                      pagesWithImages.forEach((tpl, i) => {
                         if (i < newPages.length) {
                           newPages[i] = mergeTemplateIntoPage(newPages[i], tpl);
                         } else {
@@ -331,6 +373,7 @@ export default function EditorShell() {
                       setPages(newPages);
                       if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow);
                       useEditorStore.getState().applySyncColors(calcAutoFillColor(curBgColor), calcShadowColor(curBgColor));
+                      hideToast();
                       toast('클라우드 템플릿 불러오기 완료');
                       autoLoadLogos();
                     } catch {

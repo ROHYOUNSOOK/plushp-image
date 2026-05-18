@@ -41,29 +41,18 @@ async function serializeLayer(l: Layer): Promise<Record<string, unknown>> {
   const out: Record<string, unknown> = { ...rest };
 
   if ('img' in l) {
-    if (l.type === 'frame') {
-      // 프레임 내부 이미지: URL만 저장 (Vultr 서버 경로)
-      const imgUrl = (rest.url ?? null) as string | null;
-      const isRemoteUrl = imgUrl && !imgUrl.startsWith('blob:') && (imgUrl.startsWith('http') || imgUrl.startsWith('/api/proxy-image') || imgUrl.startsWith('/plus/'));
-      out.url = isRemoteUrl ? imgUrl : null;
-      out.dataUrl = null;
-    } else {
-      // 원장님 사진, 로고 등 나머지 이미지: 저장 안 함 (스케줄 적용 시 재로드)
-      out.url = null;
-      out.imageUrl = null;
-      out.dataUrl = null;
-    }
+    // 프레임 내부 이미지 포함 모든 이미지: JSON에 저장 안 함
+    // (내부 이미지는 로드 시 스케줄 폴더에서 직접 가져옴)
+    out.url = null;
+    out.imageUrl = null;
+    out.dataUrl = null;
   }
-  if ('frameMaskImg' in l && frameMaskImg) {
+  if ('frameMaskImg' in l) {
+    // 프레임 마스크(프레임 이미지): remote URL이면 저장, blob이면 저장 안 함
     const maskUrl = (rest.frameMaskUrl ?? null) as string | null;
     const isMaskRemote = maskUrl && !maskUrl.startsWith('blob:') && (maskUrl.startsWith('http') || maskUrl.startsWith('/api/proxy-image') || maskUrl.startsWith('/plus/'));
-    if (isMaskRemote) {
-      out.frameMaskUrl = maskUrl;
-      out.frameMaskDataUrl = null;
-    } else {
-      out.frameMaskDataUrl = await imgToDataUrl(frameMaskImg, maskUrl, 'png');
-      out.frameMaskUrl = null;
-    }
+    out.frameMaskUrl = isMaskRemote ? maskUrl : null;
+    out.frameMaskDataUrl = null;
   }
   return out;
 }
@@ -268,20 +257,14 @@ function serializeLayerCloud(l: Layer): Record<string, unknown> {
   const out: Record<string, unknown> = { ...rest };
 
   if ('img' in l) {
-    if (l.type === 'frame') {
-      const url = rest.url as string | null;
-      const keep = url && !url.startsWith('blob:');
-      out.url = keep ? url : null;
-    } else {
-      out.url = null;
-    }
-    out.dataUrl = null;
+    out.url = null;
     out.imageUrl = null;
+    out.dataUrl = null;
   }
   if ('frameMaskImg' in l) {
     const maskUrl = rest.frameMaskUrl as string | null;
-    const keep = maskUrl && !maskUrl.startsWith('blob:');
-    out.frameMaskUrl = keep ? maskUrl : null;
+    const isMaskRemote = maskUrl && !maskUrl.startsWith('blob:') && (maskUrl.startsWith('http') || maskUrl.startsWith('/api/proxy-image') || maskUrl.startsWith('/plus/'));
+    out.frameMaskUrl = isMaskRemote ? maskUrl : null;
     out.frameMaskDataUrl = null;
   }
   return out;
