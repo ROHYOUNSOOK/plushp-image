@@ -132,7 +132,8 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
                 const date = (scheduleRow.date as string) ?? '';
                 const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
                 const folderName = [yy + mm + dd, scheduleRow.account_id, scheduleRow.keyword].filter(Boolean).join('_');
-                const pageIndex = (state.currentPage ?? 0) + 1;
+                const pageIdx = state.pages.findIndex(pg => pg.layers.some(l => l.id === layer.id));
+                const pageIndex = (pageIdx >= 0 ? pageIdx : state.currentPage ?? 0) + 1;
 
                 try {
                   toast('이미지 업로드 중...');
