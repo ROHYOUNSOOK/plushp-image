@@ -128,6 +128,10 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
               const state = useEditorStore.getState();
               const scheduleRow = state.currentScheduleRow;
 
+              if (!scheduleRow) {
+                toast('스케줄을 먼저 적용해주세요 (이미지는 로컬에만 적용됨)');
+              }
+
               if (scheduleRow) {
                 const date = (scheduleRow.date as string) ?? '';
                 const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);

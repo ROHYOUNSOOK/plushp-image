@@ -6,7 +6,8 @@
 =========================== */
 
 import { useRouter } from 'next/navigation';
-import { supabase, type ScheduleRow, loadDoctorImages, loadRandomFrameImages } from '@/lib/supabase';
+import { supabase, type ScheduleRow, loadDoctorImages, loadRandomFrameImages, loadScheduleInnerImages } from '@/lib/supabase';
+import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
 import { autoLoadLogos } from '@/lib/logoLoader';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
 import { applyBgToAllPages } from '@/lib/imageUpload';
@@ -96,9 +97,13 @@ export function usePlanForm(
       const doctorDepartments = doctors.map(n => allDoctors.find(d => d.doctor_name === n.trim())?.department ?? '');
       const doctorIds = doctors.map(n => allDoctors.find(d => d.doctor_name === n.trim())?.id ?? null);
 
-      const [doctorImagesResult, frameImages] = await Promise.all([
+      const folderName = buildScheduleFolderName(saved);
+      const textCount = (saved.texts ?? []).length;
+
+      const [doctorImagesResult, frameImages, frameInnerImages] = await Promise.all([
         loadDoctorImages(doctorIds),
-        loadRandomFrameImages((saved.texts ?? []).length),
+        loadRandomFrameImages(textCount),
+        loadScheduleInnerImages(folderName, textCount),
       ]);
 
       const doctorImages = doctorImagesResult.map(r => r?.img ?? null);
@@ -106,7 +111,7 @@ export function usePlanForm(
 
       applySchedule(
         saved.texts ?? [], doctors, saved.doctor_specialty,
-        doctorSpecialties, doctorDepartments, resolvedDoctorImageUrls, doctorImages, frameImages,
+        doctorSpecialties, doctorDepartments, resolvedDoctorImageUrls, doctorImages, frameImages, frameInnerImages,
       );
       onSaved(saved);
       await autoLoadLogos();
