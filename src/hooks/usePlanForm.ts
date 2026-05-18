@@ -104,7 +104,12 @@ export function usePlanForm(
         loadDoctorImages(doctorIds),
         loadRandomFrameImages(textCount),
         loadScheduleInnerImages(folderName, textCount),
-      ]);
+        fetch('/api/ensure-schedule-folder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ folderName }),
+        }).catch(() => {}),
+      ]) as [Awaited<ReturnType<typeof loadDoctorImages>>, { img: HTMLImageElement | null; url: string | null }[], { img: HTMLImageElement | null; url: string | null }[], unknown];
 
       const doctorImages = doctorImagesResult.map(r => r?.img ?? null);
       const resolvedDoctorImageUrls = doctorImagesResult.map(r => r?.url ?? null);
