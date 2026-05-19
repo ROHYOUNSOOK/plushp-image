@@ -19,12 +19,11 @@ import {
   compressForUpload,
 } from '@/lib/imageUpload';
 import { toast } from '@/components/editor/Toast';
-import { med_getLogoDrawRect } from '@/canvas/drawMedicalLaw';
 
 type LayerSnap = { id: string; x: number; y: number; w: number; h: number };
 
 type DragState = {
-  type: 'move' | 'resize' | 'frameImg' | 'medLogo';
+  type: 'move' | 'resize' | 'frameImg';
   layerId: string;
   handle?: string;
   ox: number; oy: number;
@@ -119,23 +118,6 @@ export function useCanvasEvents({
     const page = state.pages[state.currentPage];
     if (!page) return;
 
-    if (page.isMedicalLaw) {
-      const logo = page.medConfig?.logo;
-      if (logo?.img) {
-        const r = med_getLogoDrawRect(logo, W, ML_H);
-        if (r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
-          state.pushHistory();
-          dragRef.current = {
-            type: 'medLogo', layerId: '',
-            ox: x, oy: y,
-            startX: 0, startY: 0, startW: 0, startH: 0,
-            startXPct: logo.xPct, startYPct: logo.yPct,
-          };
-          canvasRef.current?.setPointerCapture(e.pointerId);
-        }
-      }
-      return;
-    }
 
     const sel = state.selectedLayerId
       ? page.layers.find(l => l.id === state.selectedLayerId) ?? null
@@ -302,7 +284,7 @@ export function useCanvasEvents({
     if (!drag) {
       const state = useEditorStore.getState();
       const page = state.pages[state.currentPage];
-      if (page && !page.isMedicalLaw) {
+      if (page) {
         const hov = hitTestLayer(x, y, page);
         const newHovId = hov?.id ?? null;
         if (newHovId !== state.hoverId) state.setHoverId(newHovId);
@@ -312,27 +294,6 @@ export function useCanvasEvents({
 
     const dx = x - drag.ox;
     const dy = y - drag.oy;
-
-    if (drag.type === 'medLogo') {
-      const state = useEditorStore.getState();
-      const logo = state.pages[state.currentPage]?.medConfig?.logo;
-      if (!logo) return;
-      const drawW = ((logo.sizePct ?? 7) / 100) * W;
-      const drawH = logo.img ? drawW * (logo.img.naturalHeight / logo.img.naturalWidth) : drawW;
-      let cx = ((drag.startXPct ?? 50) / 100) * W + dx;
-      let cy = ((drag.startYPct ?? 50) / 100) * ML_H + dy;
-      const SNAP = 15, M = 30;
-      if (Math.abs(cx - drawW / 2 - M) < SNAP) cx = M + drawW / 2;
-      if (Math.abs(cx + drawW / 2 - (W - M)) < SNAP) cx = W - M - drawW / 2;
-      if (Math.abs(cx - W / 2) < SNAP) cx = W / 2;
-      if (Math.abs(cy - drawH / 2 - M) < SNAP) cy = M + drawH / 2;
-      if (Math.abs(cy + drawH / 2 - (ML_H - M)) < SNAP) cy = ML_H - M - drawH / 2;
-      if (Math.abs(cy - ML_H / 2) < SNAP) cy = ML_H / 2;
-      const newXPct = Math.max(0, Math.min(100, (cx / W) * 100));
-      const newYPct = Math.max(0, Math.min(100, (cy / ML_H) * 100));
-      state.updateMedConfig(state.currentPage, { logo: { ...logo, xPct: newXPct, yPct: newYPct } });
-      return;
-    }
 
     if (drag.type === 'group-move') {
       const state = useEditorStore.getState();

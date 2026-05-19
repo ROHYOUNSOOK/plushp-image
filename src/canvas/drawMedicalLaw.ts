@@ -230,10 +230,10 @@ export function drawMedicalLawPage(
   const cfg = page.medConfig;
   if (!cfg) return;
 
-  // 배경: BackgroundLayer 우선, 없으면 1페이지 배경 따라가기
+  // 배경: 이미지는 BackgroundLayer 우선, 색상은 1페이지 배경 실시간 동기화
   const bgLayer = page.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
   const bgImg = bgLayer?.img ?? firstPageBg?.img ?? null;
-  const bgSolid = bgLayer?.solidColor ?? cfg.bgColor ?? firstPageBg?.solidColor ?? '#e8f4f7';
+  const bgSolid = firstPageBg?.solidColor ?? bgLayer?.solidColor ?? cfg.bgColor ?? '#e8f4f7';
   if (bgImg) {
     const scale = Math.max(canvasW / bgImg.naturalWidth, canvasH / bgImg.naturalHeight);
     const dw = bgImg.naturalWidth * scale, dh = bgImg.naturalHeight * scale;
