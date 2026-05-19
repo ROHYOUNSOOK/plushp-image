@@ -201,25 +201,16 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
             };
             return (
               <>
-                <SliderInput label="노출" value={layer.imgLightness} min={-100} max={100}
+                <SliderInput label="노출" value={layer.imgLightness} min={-20} max={20}
                   onChange={v => onFilterChange({ imgLightness: v })}
                   onChangeEnd={onFilterEnd} />
-                <SliderInput label="색온도" value={layer.imgTemperature} min={-100} max={100}
+                <SliderInput label="색온도" value={layer.imgTemperature} min={-20} max={20}
                   onChange={v => onFilterChange({ imgTemperature: v })}
                   onChangeEnd={onFilterEnd} />
-                <SliderInput label="대비" value={layer.imgContrast ?? 0} min={-100} max={100}
+                <SliderInput label="대비" value={layer.imgContrast ?? 0} min={-20} max={20}
                   onChange={v => onFilterChange({ imgContrast: v })}
                   onChangeEnd={onFilterEnd} />
-                <SliderInput label="하이라이트" value={layer.imgHighlights ?? 0} min={-100} max={100}
-                  onChange={v => onFilterChange({ imgHighlights: v })}
-                  onChangeEnd={onFilterEnd} />
-                <SliderInput label="쉐도우" value={layer.imgShadows ?? 0} min={-100} max={100}
-                  onChange={v => onFilterChange({ imgShadows: v })}
-                  onChangeEnd={onFilterEnd} />
-                <SliderInput label="활기" value={layer.imgVibrance ?? 0} min={-100} max={100}
-                  onChange={v => onFilterChange({ imgVibrance: v })}
-                  onChangeEnd={onFilterEnd} />
-                <SliderInput label="채도" value={layer.imgSaturation ?? 0} min={-100} max={100}
+                <SliderInput label="채도" value={layer.imgSaturation ?? 0} min={-20} max={20}
                   onChange={v => onFilterChange({ imgSaturation: v })}
                   onChangeEnd={onFilterEnd} />
               </>
@@ -242,7 +233,7 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
             className="text-xs text-gray-400 hover:text-gray-700 mt-0.5"
             onClick={() => {
               pushHistory();
-              update({ imgLightness: 0, imgTemperature: 0, imgContrast: 0, imgHighlights: 0, imgShadows: 0, imgVibrance: 0, imgSaturation: 0, imgScale: 1, imgRotation: 0, _imgFilterCache: null });
+              update({ imgLightness: 0, imgTemperature: 0, imgContrast: 0, imgSaturation: 0, imgScale: 1, imgRotation: 0, _imgFilterCache: null });
             }}
           >
             전체 초기화
