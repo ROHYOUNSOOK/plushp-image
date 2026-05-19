@@ -8,6 +8,7 @@ import { hexToRgb, calcAutoFillColor, calcShadowColor } from '@/lib/colorHelpers
 import { calcTextboxPos } from '@/lib/utils';
 import { rrPath } from './pathHelpers';
 import { wrapText } from './drawText';
+import { W } from '@/types/constants';
 
 export function drawTextbox(
   ctx: CanvasRenderingContext2D,
@@ -31,7 +32,7 @@ export function drawTextbox(
     let maxLineW = 0;
     lines.forEach(l => { maxLineW = Math.max(maxLineW, ctx.measureText(l).width); });
     const lh = fs * (layer.lineHeight || 1);
-    layer.w = Math.ceil(maxLineW + padL + padR);
+    layer.w = Math.max(W, Math.ceil(maxLineW + padL + padR));
     layer.h = Math.ceil((lines.length - 1) * lh + fs + padT + padB);
     if (layer.positionPreset && !layer.freePos) {
       const pos = calcTextboxPos(layer.positionPreset, layer.w, layer.h);
