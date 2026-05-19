@@ -682,20 +682,48 @@ export function useCanvasEvents({
         return;
       }
       if (sel.type !== 'textbox') {
-        const pl = sel as PositionedLayer;
-        const cx = pl.x + pl.w / 2, cy = pl.y + pl.h / 2;
-        const prevW = pl.w;
-        pl.w = Math.max(20, pl.w * delta);
-        pl.h = Math.max(20, pl.h * delta);
-        pl.x = cx - pl.w / 2;
-        pl.y = cy - pl.h / 2;
-        if (sel.type === 'doctor-card') {
-          const dc = sel as import('@/types/layer').DoctorCardLayer;
-          const ratio = prevW > 0 ? pl.w / prevW : 1;
-          dc.subjectSize   = Math.max(6, Math.round(dc.subjectSize   * ratio));
-          dc.nameSize      = Math.max(6, Math.round(dc.nameSize      * ratio));
-          dc.suffixSize    = Math.max(6, Math.round(dc.suffixSize    * ratio));
-          dc.specialtySize = Math.max(6, Math.round(dc.specialtySize * ratio));
+        const allIds = state.selectedLayerIds;
+        if (allIds.length > 1) {
+          // 다중 선택(그룹) → 그룹 중앙 기준 비례 스케일
+          const groupLayers = allIds
+            .map(id => page.layers.find(ly => ly.id === id))
+            .filter((l): l is PositionedLayer => !!l && l.type !== 'background' && 'x' in l);
+          const minX = Math.min(...groupLayers.map(l => l.x));
+          const minY = Math.min(...groupLayers.map(l => l.y));
+          const maxX = Math.max(...groupLayers.map(l => l.x + l.w));
+          const maxY = Math.max(...groupLayers.map(l => l.y + l.h));
+          const gcx = (minX + maxX) / 2, gcy = (minY + maxY) / 2;
+          groupLayers.forEach(pl => {
+            pl.x = gcx + (pl.x - gcx) * delta;
+            pl.y = gcy + (pl.y - gcy) * delta;
+            const prevW = pl.w;
+            pl.w = Math.max(20, pl.w * delta);
+            pl.h = Math.max(20, pl.h * delta);
+            if ((pl as import('@/types/layer').Layer).type === 'doctor-card') {
+              const dc = pl as import('@/types/layer').DoctorCardLayer;
+              const ratio = prevW > 0 ? pl.w / prevW : 1;
+              dc.subjectSize   = Math.max(6, Math.round(dc.subjectSize   * ratio));
+              dc.nameSize      = Math.max(6, Math.round(dc.nameSize      * ratio));
+              dc.suffixSize    = Math.max(6, Math.round(dc.suffixSize    * ratio));
+              dc.specialtySize = Math.max(6, Math.round(dc.specialtySize * ratio));
+            }
+          });
+        } else {
+          const pl = sel as PositionedLayer;
+          const cx = pl.x + pl.w / 2, cy = pl.y + pl.h / 2;
+          const prevW = pl.w;
+          pl.w = Math.max(20, pl.w * delta);
+          pl.h = Math.max(20, pl.h * delta);
+          pl.x = cx - pl.w / 2;
+          pl.y = cy - pl.h / 2;
+          if (sel.type === 'doctor-card') {
+            const dc = sel as import('@/types/layer').DoctorCardLayer;
+            const ratio = prevW > 0 ? pl.w / prevW : 1;
+            dc.subjectSize   = Math.max(6, Math.round(dc.subjectSize   * ratio));
+            dc.nameSize      = Math.max(6, Math.round(dc.nameSize      * ratio));
+            dc.suffixSize    = Math.max(6, Math.round(dc.suffixSize    * ratio));
+            dc.specialtySize = Math.max(6, Math.round(dc.specialtySize * ratio));
+          }
         }
         state.setPages([...state.pages]);
       }

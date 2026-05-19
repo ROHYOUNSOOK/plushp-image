@@ -5,6 +5,7 @@ import React, { useRef, useState } from 'react';
 import { useEditorStore } from '@/store/editorStore';
 import { alignLayers, distributeLayers, type AlignDir, type DistributeDir } from '@/lib/snapAndAlign';
 import type { PositionedLayer } from '@/types/layer';
+import { W, H } from '@/types/constants';
 import { toast } from './Toast';
 
 /* ── SVG 아이콘 (원본 HTML 동일) ── */
@@ -123,11 +124,39 @@ export default function AlignToolbar() {
     const ids = state.selectedLayerIds;
     const targets = page.layers.filter(l => ids.includes(l.id) && l.type !== 'background') as PositionedLayer[];
     if (targets.length === 0) { toast('레이어를 선택하세요'); return; }
+
+    // 그룹화된 레이어 전체 → 하나의 바운딩 박스로 취급해 캔버스 기준 정렬
+    const groupIds = new Set(targets.map(l => l.groupId).filter(Boolean));
+    const isGroup = targets.length > 1 && groupIds.size === 1 && targets.every(l => l.groupId);
+    if (isGroup) {
+      const minX = Math.min(...targets.map(l => l.x));
+      const minY = Math.min(...targets.map(l => l.y));
+      const maxX = Math.max(...targets.map(l => l.x + l.w));
+      const maxY = Math.max(...targets.map(l => l.y + l.h));
+      const gw = maxX - minX, gh = maxY - minY;
+      const coordH = page.isMedicalLaw ? H : H;
+      let dx = 0, dy = 0;
+      if (dir === 'left')    dx = 0 - minX;
+      if (dir === 'centerH') dx = (W - gw) / 2 - minX;
+      if (dir === 'right')   dx = W - gw - minX;
+      if (dir === 'top')     dy = 0 - minY;
+      if (dir === 'centerV') dy = (coordH - gh) / 2 - minY;
+      if (dir === 'bottom')  dy = coordH - gh - minY;
+      if (dx === 0 && dy === 0) return;
+      state.pushHistory();
+      targets.forEach(l => {
+        const upd: Record<string, unknown> = { x: l.x + dx, y: l.y + dy };
+        if (l.type === 'textbox') { upd.positionPreset = null; upd.freePos = true; }
+        state.updateLayer(l.id, upd as Parameters<typeof state.updateLayer>[1]);
+      });
+      return;
+    }
+
+    // 일반 정렬
     const copies = targets.map(l => ({ ...l })) as PositionedLayer[];
     state.pushHistory();
     alignLayers(copies, dir);
     copies.forEach(c => {
-      // textbox는 positionPreset/freePos도 함께 업데이트해야 x/y가 그리기 시 덮어쓰이지 않음
       const upd: Record<string, unknown> = { x: c.x, y: c.y };
       if (c.type === 'textbox') { upd.positionPreset = null; upd.freePos = true; }
       state.updateLayer(c.id, upd as Parameters<typeof state.updateLayer>[1]);

@@ -156,19 +156,45 @@ export default function LayerPanel() {
       <div className="p-2">
       <div className="flex items-center justify-between mb-2">
         <span className="font-bold text-xs text-gray-500">레이어 ({layers.length})</span>
-        {selectedLayerIds.length >= 2 && (
-          <button
-            onClick={() => {
-              pushHistory();
-              groupLayers(selectedLayerIds);
-              toast(`${selectedLayerIds.length}개 그룹화됨`);
-            }}
-            className="text-xs text-purple-600 hover:text-purple-800 px-1.5 py-0.5 rounded border border-purple-300 hover:bg-purple-50"
-            title="선택 레이어 그룹화 (Ctrl+G)"
-          >
-            🔗 그룹화
-          </button>
-        )}
+        {(() => {
+          const selLayers = selectedLayerIds.map(id => layers.find(l => l.id === id)).filter(Boolean);
+          const groupIds = [...new Set(selLayers.map(l => l?.groupId).filter(Boolean))];
+          const allSameGroup = selLayers.length >= 2 && groupIds.length === 1 && selLayers.every(l => l?.groupId === groupIds[0]);
+          const anyGrouped = selLayers.length >= 1 && selLayers.some(l => l?.groupId);
+
+          if (allSameGroup) {
+            return (
+              <button
+                onClick={() => {
+                  const members = layers.filter(l => l.groupId === groupIds[0]).map(l => l.id);
+                  pushHistory();
+                  ungroupLayers(members);
+                  toast('그룹 해제됨');
+                }}
+                className="text-xs text-orange-600 hover:text-orange-800 px-1.5 py-0.5 rounded border border-orange-300 hover:bg-orange-50"
+                title="그룹 해제 (Ctrl+Shift+G)"
+              >
+                🔓 그룹 해제
+              </button>
+            );
+          }
+          if (selectedLayerIds.length >= 2 && !anyGrouped) {
+            return (
+              <button
+                onClick={() => {
+                  pushHistory();
+                  groupLayers(selectedLayerIds);
+                  toast(`${selectedLayerIds.length}개 그룹화됨`);
+                }}
+                className="text-xs text-purple-600 hover:text-purple-800 px-1.5 py-0.5 rounded border border-purple-300 hover:bg-purple-50"
+                title="그룹화 (Ctrl+G)"
+              >
+                🔗 그룹화
+              </button>
+            );
+          }
+          return null;
+        })()}
       </div>
 
       {reversed.length === 0 && (
