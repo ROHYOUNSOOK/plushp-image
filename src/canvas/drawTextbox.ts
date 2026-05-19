@@ -27,12 +27,14 @@ export function drawTextbox(
   ctx.save();
   ctx.font = fontStr;
   let lines: string[];
-  if (layer.autoSize !== false) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const isDoctorCardBg = !!(layer as any)._isDoctorCardBg;
+  if (layer.autoSize !== false && !isDoctorCardBg) {
     lines = (layer.content || ' ').split('\n').map(l => l || ' ');
     let maxLineW = 0;
     lines.forEach(l => { maxLineW = Math.max(maxLineW, ctx.measureText(l).width); });
     const lh = fs * (layer.lineHeight || 1);
-    layer.w = Math.max(W, Math.ceil(maxLineW + padL + padR));
+    layer.w = Math.ceil(maxLineW + padL + padR);
     layer.h = Math.ceil((lines.length - 1) * lh + fs + padT + padB);
     if (layer.positionPreset && !layer.freePos) {
       const pos = calcTextboxPos(layer.positionPreset, layer.w, layer.h);

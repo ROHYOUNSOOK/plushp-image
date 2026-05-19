@@ -134,7 +134,7 @@ export function applyDoctorCardTemplate(
     visible: true,
     locked: false,
     _isDoctorCardBg: true,
-    x: 0, y: minCardY - 40, w: W, h: H - (minCardY - 40),
+    x: 0, y: minCardY - 40, w: W, h: 250,
     positionPreset: null,
     freePos: true,
     img: null, url: null, processedImg: null,
