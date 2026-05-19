@@ -68,6 +68,8 @@ export interface EditorState extends HistoryState {
   reorderLayers: (fromIdxs: number[], toIdx: number) => void;
   toggleVisible: (id: string) => void;
   toggleLocked: (id: string) => void;
+  groupLayers: (ids: string[]) => void;
+  ungroupLayers: (ids: string[]) => void;
 
   // ── 액션: 히스토리 ──
   pushHistory: () => void;
@@ -306,6 +308,23 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       l.id === id ? { ...l, locked: !l.locked } as Layer : l
     );
     pages[state.currentPage] = page;
+    return { pages };
+  }),
+
+  groupLayers: (ids) => set(state => {
+    const groupId = `g${Date.now()}`;
+    const pages = state.pages.map((pg, i) => {
+      if (i !== state.currentPage) return pg;
+      return { ...pg, layers: pg.layers.map(l => ids.includes(l.id) ? { ...l, groupId } : l) };
+    });
+    return { pages };
+  }),
+
+  ungroupLayers: (ids) => set(state => {
+    const pages = state.pages.map((pg, i) => {
+      if (i !== state.currentPage) return pg;
+      return { ...pg, layers: pg.layers.map(l => ids.includes(l.id) ? { ...l, groupId: undefined } : l) };
+    });
     return { pages };
   }),
 

@@ -61,6 +61,7 @@ interface LayerBase {
   name: string;
   visible: boolean;
   locked: boolean;
+  groupId?: string;
 }
 
 /* ── 레이어 타입별 정의 ── */

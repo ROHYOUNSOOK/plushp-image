@@ -254,18 +254,32 @@ export function useCanvasEvents({
     if (hit) {
       if (e.shiftKey) {
         state.selectToggle(hit.id);
-      } else {
-        state.selectSingle(hit.id);
-      }
-      if (hit.type !== 'background') {
-        const pl = hit as PositionedLayer;
+        if (hit.type !== 'background') {
+          const pl = hit as PositionedLayer;
+          state.pushHistory();
+          dragRef.current = { type: 'move', layerId: hit.id, ox: x, oy: y, startX: pl.x, startY: pl.y, startW: pl.w, startH: pl.h };
+          canvasRef.current?.setPointerCapture(e.pointerId);
+        }
+      } else if (hit.groupId && hit.type !== 'background') {
+        // 그룹 레이어 클릭 → 같은 groupId 전체 선택 후 group-move
+        const members = page.layers.filter(l => l.groupId === hit.groupId && l.type !== 'background') as PositionedLayer[];
+        state.selectSingle(members[0].id);
+        members.slice(1).forEach(m => state.selectToggle(m.id));
         state.pushHistory();
         dragRef.current = {
-          type: 'move', layerId: hit.id,
+          type: 'group-move',
+          layerSnaps: members.map(l => ({ id: l.id, x: l.x, y: l.y, w: l.w, h: l.h })),
           ox: x, oy: y,
-          startX: pl.x, startY: pl.y, startW: pl.w, startH: pl.h,
         };
         canvasRef.current?.setPointerCapture(e.pointerId);
+      } else {
+        state.selectSingle(hit.id);
+        if (hit.type !== 'background') {
+          const pl = hit as PositionedLayer;
+          state.pushHistory();
+          dragRef.current = { type: 'move', layerId: hit.id, ox: x, oy: y, startX: pl.x, startY: pl.y, startW: pl.w, startH: pl.h };
+          canvasRef.current?.setPointerCapture(e.pointerId);
+        }
       }
     } else {
       cycleRef.current = null;
@@ -789,6 +803,37 @@ export function useCanvasEvents({
           toast(next ? '프레임 내부 이미지 편집 모드' : '편집 모드 해제');
         } else {
           toast('프레임 레이어를 선택하세요');
+        }
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.code === 'KeyG' && !e.shiftKey) {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        e.preventDefault();
+        if (state.selectedLayerIds.length >= 2) {
+          state.pushHistory();
+          state.groupLayers(state.selectedLayerIds);
+          toast(`${state.selectedLayerIds.length}개 레이어 그룹화됨`);
+        }
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyG') {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        e.preventDefault();
+        const page = state.pages[state.currentPage];
+        const groupIds = new Set(
+          state.selectedLayerIds
+            .map(id => page?.layers.find(l => l.id === id)?.groupId)
+            .filter(Boolean) as string[]
+        );
+        if (groupIds.size > 0) {
+          const toUngroup = page?.layers.filter(l => l.groupId && groupIds.has(l.groupId)).map(l => l.id) ?? [];
+          if (toUngroup.length > 0) {
+            state.pushHistory();
+            state.ungroupLayers(toUngroup);
+            toast('그룹 해제됨');
+          }
         }
         return;
       }

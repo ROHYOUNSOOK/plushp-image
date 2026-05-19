@@ -15,7 +15,7 @@ export default function LayerPanel() {
   const page = useEditorStore(selectCurrentPage);
   const layers = page?.layers ?? [];
 
-  const { selectSingle, selectToggle, toggleVisible, toggleLocked, removeLayer, reorderLayer, reorderLayers, pushHistory, addLayer } = useEditorStore();
+  const { selectSingle, selectToggle, toggleVisible, toggleLocked, removeLayer, reorderLayer, reorderLayers, pushHistory, addLayer, groupLayers, ungroupLayers } = useEditorStore();
 
   const lastClickedId = useRef<string | null>(null);
 
@@ -29,8 +29,8 @@ export default function LayerPanel() {
 
   /* ── 클릭 선택 ── */
   const handleClick = (id: string, e: React.MouseEvent) => {
+    const clickedLayer = layers.find(l => l.id === id);
     if (e.shiftKey && lastClickedId.current) {
-      // 범위 선택
       const from = layers.findIndex(l => l.id === lastClickedId.current);
       const to = layers.findIndex(l => l.id === id);
       if (from >= 0 && to >= 0) {
@@ -45,10 +45,14 @@ export default function LayerPanel() {
     }
     if (e.ctrlKey || e.metaKey) {
       selectToggle(id);
+    } else if (clickedLayer?.groupId) {
+      // 그룹 레이어 클릭 → 같은 그룹 전체 선택
+      const members = layers.filter(l => l.groupId === clickedLayer.groupId);
+      selectSingle(members[0].id);
+      members.slice(1).forEach(m => selectToggle(m.id));
     } else {
       selectSingle(id);
     }
-    // 레이어 패널 클릭 후 캔버스로 포커스 이동 → Delete 키가 확실히 동작하도록
     const canvas = document.querySelector('canvas');
     if (canvas) (canvas as HTMLElement).focus();
     lastClickedId.current = id;
@@ -150,7 +154,22 @@ export default function LayerPanel() {
     <div className="select-none">
       <SchedulePanel />
       <div className="p-2">
-      <div className="font-bold text-xs text-gray-500 mb-2">레이어 ({layers.length})</div>
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-bold text-xs text-gray-500">레이어 ({layers.length})</span>
+        {selectedLayerIds.length >= 2 && (
+          <button
+            onClick={() => {
+              pushHistory();
+              groupLayers(selectedLayerIds);
+              toast(`${selectedLayerIds.length}개 그룹화됨`);
+            }}
+            className="text-xs text-purple-600 hover:text-purple-800 px-1.5 py-0.5 rounded border border-purple-300 hover:bg-purple-50"
+            title="선택 레이어 그룹화 (Ctrl+G)"
+          >
+            🔗 그룹화
+          </button>
+        )}
+      </div>
 
       {reversed.length === 0 && (
         <div className="text-gray-400 text-xs">레이어가 없습니다</div>
@@ -160,8 +179,8 @@ export default function LayerPanel() {
         const isSelected = selectedLayerIds.includes(layer.id);
         const icon = LAYER_ICONS[layer.type as LayerType] || '📄';
         const isDragOver = dragOverIdx === idx;
-        // 드래그 중이고 이 레이어가 이동 대상이면 반투명 표시
         const isDragging = isDraggingActive && isSelected && dragSrcIdx.current !== null && selectedLayerIds.includes(layers[dragSrcIdx.current]?.id ?? '');
+        const isGrouped = !!layer.groupId;
 
         return (
           <div
@@ -178,10 +197,11 @@ export default function LayerPanel() {
               ${isSelected ? 'bg-blue-100 text-blue-800' : 'hover:bg-gray-100'}
               ${layer.locked ? 'opacity-60' : ''}
               ${isDragging ? 'opacity-40' : ''}
-              ${isDragOver ? 'border-t-2 border-blue-400' : ''}`}
+              ${isDragOver ? 'border-t-2 border-blue-400' : ''}
+              ${isGrouped ? 'border-l-2 border-purple-400 pl-2' : ''}`}
           >
             <span className="w-4 text-center text-gray-300 shrink-0 cursor-grab">⠿</span>
-            <span className="w-5 text-center shrink-0">{icon}</span>
+            <span className="w-5 text-center shrink-0">{isGrouped ? '🔗' : icon}</span>
             {editing?.id === layer.id ? (
               <input
                 autoFocus
@@ -202,6 +222,19 @@ export default function LayerPanel() {
             )}
 
             <div className="hidden group-hover:flex items-center gap-0.5 shrink-0">
+              {isGrouped && (
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    const members = layers.filter(l => l.groupId === layer.groupId).map(l => l.id);
+                    pushHistory();
+                    ungroupLayers(members);
+                    toast('그룹 해제됨');
+                  }}
+                  className="px-1 text-purple-400 hover:text-purple-700" title="그룹 해제">
+                  🔓
+                </button>
+              )}
               <button onClick={e => { e.stopPropagation(); toggleVisible(layer.id); }}
                 className="px-1 text-gray-400 hover:text-gray-700" title={layer.visible ? '숨기기' : '보이기'}>
                 {layer.visible ? '👁' : '🚫'}
