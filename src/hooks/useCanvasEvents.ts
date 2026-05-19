@@ -314,6 +314,23 @@ export function useCanvasEvents({
       if (h.includes('w')) { newGW = Math.max(20, drag.groupW - dx); newGX = drag.groupX + dx; }
       if (h.includes('s')) newGH = Math.max(20, drag.groupH + dy);
       if (h.includes('n')) { newGH = Math.max(20, drag.groupH - dy); newGY = drag.groupY + dy; }
+      if (e.shiftKey && drag.groupW > 0 && drag.groupH > 0) {
+        const aspect = drag.groupW / drag.groupH;
+        const isCorner = (h.includes('n') || h.includes('s')) && (h.includes('e') || h.includes('w'));
+        if (isCorner) {
+          const scale = Math.max(0.01, Math.abs(dx) >= Math.abs(dy) ? newGW / drag.groupW : newGH / drag.groupH);
+          newGW = Math.max(20, Math.round(drag.groupW * scale));
+          newGH = Math.max(20, Math.round(drag.groupH * scale));
+          if (h.includes('w')) newGX = drag.groupX + drag.groupW - newGW;
+          if (h.includes('n')) newGY = drag.groupY + drag.groupH - newGH;
+        } else if (h === 'e' || h === 'w') {
+          newGH = Math.max(20, Math.round(newGW / aspect));
+          if (h === 'w') newGX = drag.groupX + drag.groupW - newGW;
+        } else if (h === 'n' || h === 's') {
+          newGW = Math.max(20, Math.round(newGH * aspect));
+          if (h === 'n') newGY = drag.groupY + drag.groupH - newGH;
+        }
+      }
       const scaleX = newGW / drag.groupW;
       const scaleY = newGH / drag.groupH;
       const state = useEditorStore.getState();
