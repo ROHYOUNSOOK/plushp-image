@@ -143,9 +143,15 @@ export function useCanvasEvents({
 
     if (state.frameEditMode && sel && sel.type === 'frame') {
       const fl = sel as import('@/types/layer').FrameLayer;
-      // 코너 핸들 → 내부 이미지 리사이즈
+      // 코너 핸들 → 내부 이미지 경계 기준 리사이즈
       if (fl.img) {
-        const ch = hitTestHandle(fl as PositionedLayer, x, y);
+        const imgBounds = {
+          x: fl.x + fl.imgOffsetX,
+          y: fl.y + fl.imgOffsetY,
+          w: fl.img.naturalWidth  * fl.imgScale,
+          h: fl.img.naturalHeight * fl.imgScale,
+        } as PositionedLayer;
+        const ch = hitTestHandle(imgBounds, x, y);
         if (ch && (ch === 'nw' || ch === 'ne' || ch === 'se' || ch === 'sw')) {
           state.pushHistory();
           dragRef.current = {

@@ -61,18 +61,30 @@ export function drawHandles(
   frameEditMode: boolean,
 ): void {
   if (frameEditMode && layer.type === 'frame') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fl = layer as any;
+    const hasImg = fl.img != null;
+    const bx = hasImg ? layer.x + (fl.imgOffsetX ?? 0) : layer.x;
+    const by = hasImg ? layer.y + (fl.imgOffsetY ?? 0) : layer.y;
+    const bw = hasImg ? fl.img.naturalWidth  * (fl.imgScale ?? 1) : layer.w;
+    const bh = hasImg ? fl.img.naturalHeight * (fl.imgScale ?? 1) : layer.h;
+
     ctx.save();
-    ctx.strokeStyle = 'rgba(255,140,0,0.8)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([6, 3]);
+    ctx.strokeRect(bx, by, bw, bh);
+    ctx.strokeStyle = 'rgba(255,140,0,0.9)';
     ctx.lineWidth = 2;
-    ctx.setLineDash([5, 3]);
-    ctx.strokeRect(layer.x, layer.y, layer.w, layer.h);
+    ctx.strokeRect(bx, by, bw, bh);
     ctx.setLineDash([]);
+
     const R = HANDLE_R * (W / 600);
     [
-      { x: layer.x, y: layer.y },
-      { x: layer.x + layer.w, y: layer.y },
-      { x: layer.x + layer.w, y: layer.y + layer.h },
-      { x: layer.x, y: layer.y + layer.h },
+      { x: bx,      y: by },
+      { x: bx + bw, y: by },
+      { x: bx + bw, y: by + bh },
+      { x: bx,      y: by + bh },
     ].forEach(pt => {
       ctx.beginPath();
       ctx.arc(pt.x, pt.y, R, 0, Math.PI * 2);
