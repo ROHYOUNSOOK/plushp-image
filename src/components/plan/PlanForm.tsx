@@ -147,7 +147,7 @@ export default function PlanForm({ row, allDoctors, blogAccounts, onSaved, onDel
                 <div key={i} className="flex items-center gap-2.5">
                   <span className="text-[11px] font-medium text-gray-300 w-4 text-right">{i + 1}</span>
                   <input
-                    className="flex-1 text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] focus:ring-2 focus:ring-[#1450a0/10] transition placeholder:text-gray-300"
+                    className="flex-1 text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] focus:ring-2 focus:ring-[#1450a0/10] transition placeholder:text-gray-500"
                     value={t}
                     onChange={e => setTextAt(i, e.target.value)}
                     placeholder={`문구 ${i + 1}`}
@@ -170,7 +170,7 @@ export default function PlanForm({ row, allDoctors, blogAccounts, onSaved, onDel
                   <span className="text-[11px] font-medium text-gray-300 w-4 shrink-0 text-right">{i + 1}</span>
                   <div className="flex-1 min-w-0 relative">
                     <input
-                      className="w-full text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] focus:ring-2 focus:ring-[#1450a0/10] transition placeholder:text-gray-300"
+                      className="w-full text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] focus:ring-2 focus:ring-[#1450a0/10] transition placeholder:text-gray-500"
                       value={d}
                       onChange={e => setDoctorAt(i, e.target.value)}
                       placeholder="이름 입력"
@@ -259,7 +259,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function Input({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (
     <input
-      className="w-full text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] focus:ring-2 focus:ring-[#1450a0/10] transition placeholder:text-gray-300"
+      className="w-full text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] focus:ring-2 focus:ring-[#1450a0/10] transition placeholder:text-gray-500"
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
