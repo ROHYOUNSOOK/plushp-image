@@ -178,7 +178,8 @@ export default function AlignToolbar() {
       {/* 텍스트박스 선택 시 안내 */}
       {isTextboxSelected && (
         <div className="text-xs text-blue-500 bg-blue-50 rounded px-2 py-1 leading-relaxed">
-          위 정렬 버튼으로 위치를 조정하세요
+          위 정렬 버튼으로 위치를 조정하세요<br />
+          자동 크기 체크 해제 시 자유배치 가능
         </div>
       )}
 
