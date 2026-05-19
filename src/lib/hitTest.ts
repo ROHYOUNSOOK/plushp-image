@@ -118,6 +118,19 @@ export function getHandlePoints(layer: PositionedLayer): HandlePoint[] {
   ];
 }
 
+/** 다중 선택 레이어의 합산 바운딩 박스 계산 */
+export function getGroupBounds(layers: PositionedLayer[]): { x: number; y: number; w: number; h: number } | null {
+  if (layers.length === 0) return null;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const l of layers) {
+    minX = Math.min(minX, l.x);
+    minY = Math.min(minY, l.y);
+    maxX = Math.max(maxX, l.x + l.w);
+    maxY = Math.max(maxY, l.y + l.h);
+  }
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
 /** 리사이즈 핸들에 맞았는지 확인 */
 export function hitTestHandle(layer: PositionedLayer, px: number, py: number): string | null {
   const thr = HANDLE_R * (W / 600) * 1.6;

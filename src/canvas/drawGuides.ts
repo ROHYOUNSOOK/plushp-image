@@ -24,6 +24,36 @@ export function drawGuides(ctx: CanvasRenderingContext2D, isMedicalLaw = false):
   ctx.restore();
 }
 
+/** 다중 선택 그룹 바운딩 박스 핸들 그리기 (보라색) */
+export function drawGroupHandles(
+  ctx: CanvasRenderingContext2D,
+  bounds: { x: number; y: number; w: number; h: number },
+): void {
+  const { x, y, w, h } = bounds;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.lineWidth = 4;
+  ctx.setLineDash([6, 3]);
+  ctx.strokeRect(x, y, w, h);
+  ctx.strokeStyle = '#8b5cf6';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, w, h);
+  ctx.setLineDash([]);
+
+  const R = HANDLE_R * (W / 600);
+  const fakeLayer = { x, y, w, h } as PositionedLayer;
+  getHandlePoints(fakeLayer).forEach(pt => {
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, R, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.strokeStyle = '#8b5cf6';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
 /** 선택 핸들 그리기 (파란색 점 + 점선 테두리) */
 export function drawHandles(
   ctx: CanvasRenderingContext2D,

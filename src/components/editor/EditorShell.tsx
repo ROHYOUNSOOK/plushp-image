@@ -431,7 +431,7 @@ export default function EditorShell() {
             )}
             {pages.length > 1 && (
               <button
-                onClick={() => { deletePage(i); toast('페이지 삭제됨'); }}
+                onClick={() => { if (window.confirm('이 페이지를 삭제하시겠습니까?')) { deletePage(i); toast('페이지 삭제됨'); } }}
                 className="ml-0.5 px-1 text-gray-400 hover:text-red-400 text-xs"
                 title="페이지 삭제"
               >

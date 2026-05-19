@@ -15,7 +15,8 @@ import { drawTextbox } from './drawTextbox';
 import { drawText } from './drawText';
 import { drawLogo } from './drawLogo';
 import { drawDoctorCard } from './drawDoctorCard';
-import { drawGuides, drawHandles } from './drawGuides';
+import { drawGuides, drawHandles, drawGroupHandles } from './drawGuides';
+import { getGroupBounds } from '@/lib/hitTest';
 import { drawMedicalLawPage } from './drawMedicalLaw';
 
 export interface DrawContext {
@@ -105,8 +106,9 @@ export function drawImmediate(dc: DrawContext): void {
     }
 
     // 다중 선택 보조 테두리
+    const isMultiSelect = dc.selectedLayerIds.length > 1;
     dc.selectedLayerIds.forEach(id => {
-      if (id === dc.selectedLayerId) return;
+      if (!isMultiSelect && id === dc.selectedLayerId) return;
       const l = getLayer(page, id);
       if (l && l.visible && l.type !== 'background') {
         ctx.save();
@@ -123,9 +125,17 @@ export function drawImmediate(dc: DrawContext): void {
     });
 
     // 선택 핸들
-    const sel = getLayer(page, dc.selectedLayerId);
-    if (sel && sel.type !== 'background') {
-      drawHandles(ctx, sel as PositionedLayer, dc.frameEditMode);
+    if (isMultiSelect) {
+      const groupLayers = dc.selectedLayerIds
+        .map(id => getLayer(page, id))
+        .filter((l): l is PositionedLayer => l !== null && l.visible && l.type !== 'background') as PositionedLayer[];
+      const bounds = getGroupBounds(groupLayers);
+      if (bounds) drawGroupHandles(ctx, bounds);
+    } else {
+      const sel = getLayer(page, dc.selectedLayerId);
+      if (sel && sel.type !== 'background') {
+        drawHandles(ctx, sel as PositionedLayer, dc.frameEditMode);
+      }
     }
 
     // 드래그 오버 오버레이

@@ -8,7 +8,7 @@
 import { useEffect, useCallback } from 'react';
 import { W, H, ML_H } from '@/types/constants';
 import { useEditorStore } from '@/store/editorStore';
-import { hitTestHandle, hitTestLayer, getOverlappingLayers } from '@/lib/hitTest';
+import { hitTestHandle, hitTestLayer, getOverlappingLayers, getGroupBounds } from '@/lib/hitTest';
 import type { PositionedLayer, BackgroundLayer } from '@/types/layer';
 import {
   loadImageFromFile,
@@ -21,6 +21,8 @@ import {
 import { toast } from '@/components/editor/Toast';
 import { med_getLogoDrawRect } from '@/canvas/drawMedicalLaw';
 
+type LayerSnap = { id: string; x: number; y: number; w: number; h: number };
+
 type DragState = {
   type: 'move' | 'resize' | 'frameImg' | 'medLogo';
   layerId: string;
@@ -31,6 +33,16 @@ type DragState = {
   startOffX?: number; startOffY?: number;
   rotation?: number;
   startXPct?: number; startYPct?: number;
+} | {
+  type: 'group-move';
+  layerSnaps: LayerSnap[];
+  ox: number; oy: number;
+} | {
+  type: 'group-resize';
+  layerSnaps: LayerSnap[];
+  handle: string;
+  ox: number; oy: number;
+  groupX: number; groupY: number; groupW: number; groupH: number;
 } | null;
 
 type CycleState = { x: number; y: number; ids: string[]; idx: number } | null;
@@ -138,6 +150,40 @@ export function useCanvasEvents({
       state.setFrameEditMode(false);
     }
 
+    // 다중 선택 그룹 조작
+    if (state.selectedLayerIds.length > 1) {
+      const groupLayers = state.selectedLayerIds
+        .map(id => page.layers.find(l => l.id === id))
+        .filter((l): l is PositionedLayer => l != null && l.type !== 'background' && 'x' in l);
+      const bounds = getGroupBounds(groupLayers);
+      if (bounds) {
+        const groupHandle = hitTestHandle(bounds as PositionedLayer, x, y);
+        if (groupHandle) {
+          state.pushHistory();
+          dragRef.current = {
+            type: 'group-resize',
+            layerSnaps: groupLayers.map(l => ({ id: l.id, x: l.x, y: l.y, w: l.w, h: l.h })),
+            handle: groupHandle,
+            ox: x, oy: y,
+            groupX: bounds.x, groupY: bounds.y, groupW: bounds.w, groupH: bounds.h,
+          };
+          canvasRef.current?.setPointerCapture(e.pointerId);
+          return;
+        }
+        const hitLayer = hitTestLayer(x, y, page);
+        if (hitLayer && state.selectedLayerIds.includes(hitLayer.id)) {
+          state.pushHistory();
+          dragRef.current = {
+            type: 'group-move',
+            layerSnaps: groupLayers.map(l => ({ id: l.id, x: l.x, y: l.y, w: l.w, h: l.h })),
+            ox: x, oy: y,
+          };
+          canvasRef.current?.setPointerCapture(e.pointerId);
+          return;
+        }
+      }
+    }
+
     if (sel && sel.type !== 'background') {
       const handle = hitTestHandle(sel as PositionedLayer, x, y);
       if (handle) {
@@ -241,6 +287,53 @@ export function useCanvasEvents({
       const newXPct = Math.max(0, Math.min(100, (cx / W) * 100));
       const newYPct = Math.max(0, Math.min(100, (cy / ML_H) * 100));
       state.updateMedConfig(state.currentPage, { logo: { ...logo, xPct: newXPct, yPct: newYPct } });
+      return;
+    }
+
+    if (drag.type === 'group-move') {
+      const state = useEditorStore.getState();
+      state.setPages(state.pages.map((pg, pi) => {
+        if (pi !== state.currentPage) return pg;
+        return {
+          ...pg,
+          layers: pg.layers.map(l => {
+            const snap = drag.layerSnaps.find(s => s.id === l.id);
+            if (!snap) return l;
+            return { ...l, x: snap.x + dx, y: snap.y + dy };
+          }),
+        };
+      }));
+      return;
+    }
+
+    if (drag.type === 'group-resize') {
+      const h = drag.handle;
+      let newGX = drag.groupX, newGY = drag.groupY;
+      let newGW = drag.groupW, newGH = drag.groupH;
+      if (h.includes('e')) newGW = Math.max(20, drag.groupW + dx);
+      if (h.includes('w')) { newGW = Math.max(20, drag.groupW - dx); newGX = drag.groupX + dx; }
+      if (h.includes('s')) newGH = Math.max(20, drag.groupH + dy);
+      if (h.includes('n')) { newGH = Math.max(20, drag.groupH - dy); newGY = drag.groupY + dy; }
+      const scaleX = newGW / drag.groupW;
+      const scaleY = newGH / drag.groupH;
+      const state = useEditorStore.getState();
+      state.setPages(state.pages.map((pg, pi) => {
+        if (pi !== state.currentPage) return pg;
+        return {
+          ...pg,
+          layers: pg.layers.map(l => {
+            const snap = drag.layerSnaps.find(s => s.id === l.id);
+            if (!snap) return l;
+            return {
+              ...l,
+              x: Math.round(newGX + (snap.x - drag.groupX) * scaleX),
+              y: Math.round(newGY + (snap.y - drag.groupY) * scaleY),
+              w: Math.max(10, Math.round(snap.w * scaleX)),
+              h: Math.max(10, Math.round(snap.h * scaleY)),
+            };
+          }),
+        };
+      }));
       return;
     }
 
