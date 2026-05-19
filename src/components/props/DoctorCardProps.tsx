@@ -68,7 +68,7 @@ export default function DoctorCardProps({ layer }: { layer: DoctorCardLayer }) {
       {/* 진료과목 */}
       <div className="text-xs text-gray-500 mt-2 font-bold">진료과목</div>
       <input type="text" value={layer.subject} onChange={e => update({ subject: e.target.value })}
-        className="w-full text-xs p-1.5 border border-gray-300 rounded" />
+        className="w-full text-xs text-gray-900 p-1.5 border border-gray-300 rounded" />
       <div className="grid grid-cols-2 gap-1">
         <NumberInput label="크기" value={layer.subjectSize} onChange={v => update({ subjectSize: v })} min={10} />
         <NumberInput label="굵기" value={layer.subjectWeight} onChange={v => update({ subjectWeight: v })} min={100} max={900} step={100} />
@@ -77,7 +77,7 @@ export default function DoctorCardProps({ layer }: { layer: DoctorCardLayer }) {
       <div className="flex items-center gap-2 mb-1.5">
         <span className="text-xs text-gray-600 w-16 shrink-0">폰트</span>
         <select value={layer.subjectFont} onChange={e => update({ subjectFont: e.target.value })}
-          className="flex-1 text-xs px-1.5 py-1 border border-gray-300 rounded">
+          className="flex-1 text-xs text-gray-900 px-1.5 py-1 border border-gray-300 rounded">
           {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
         </select>
       </div>
@@ -85,7 +85,7 @@ export default function DoctorCardProps({ layer }: { layer: DoctorCardLayer }) {
       {/* 이름 */}
       <div className="text-xs text-gray-500 mt-2 font-bold">원장 이름</div>
       <input type="text" value={layer.doctorName} onChange={e => update({ doctorName: e.target.value })}
-        className="w-full text-xs p-1.5 border border-gray-300 rounded" />
+        className="w-full text-xs text-gray-900 p-1.5 border border-gray-300 rounded" />
       <div className="grid grid-cols-2 gap-1">
         <NumberInput label="크기" value={layer.nameSize} onChange={v => update({ nameSize: v })} min={10} />
         <NumberInput label="굵기" value={layer.nameWeight} onChange={v => update({ nameWeight: v })} min={100} max={900} step={100} />
@@ -94,7 +94,7 @@ export default function DoctorCardProps({ layer }: { layer: DoctorCardLayer }) {
       <div className="flex items-center gap-2 mb-1.5">
         <span className="text-xs text-gray-600 w-16 shrink-0">폰트</span>
         <select value={layer.nameFont} onChange={e => update({ nameFont: e.target.value })}
-          className="flex-1 text-xs px-1.5 py-1 border border-gray-300 rounded">
+          className="flex-1 text-xs text-gray-900 px-1.5 py-1 border border-gray-300 rounded">
           {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
         </select>
       </div>
@@ -102,7 +102,7 @@ export default function DoctorCardProps({ layer }: { layer: DoctorCardLayer }) {
       {/* suffix */}
       <div className="text-xs text-gray-500 mt-2 font-bold">접미사</div>
       <input type="text" value={layer.suffixText} onChange={e => update({ suffixText: e.target.value })}
-        className="w-full text-xs p-1.5 border border-gray-300 rounded" />
+        className="w-full text-xs text-gray-900 p-1.5 border border-gray-300 rounded" />
       <div className="grid grid-cols-2 gap-1">
         <NumberInput label="크기" value={layer.suffixSize} onChange={v => update({ suffixSize: v })} min={10} />
         <NumberInput label="굵기" value={layer.suffixWeight} onChange={v => update({ suffixWeight: v })} min={100} max={900} step={100} />
@@ -115,7 +115,7 @@ export default function DoctorCardProps({ layer }: { layer: DoctorCardLayer }) {
       {/* 전문의 */}
       <div className="text-xs text-gray-500 mt-2 font-bold">전문의</div>
       <input type="text" value={layer.specialty} onChange={e => update({ specialty: e.target.value })}
-        className="w-full text-xs p-1.5 border border-gray-300 rounded" />
+        className="w-full text-xs text-gray-900 p-1.5 border border-gray-300 rounded" />
       <div className="grid grid-cols-2 gap-1">
         <NumberInput label="크기" value={layer.specialtySize} onChange={v => update({ specialtySize: v })} min={10} />
         <NumberInput label="굵기" value={layer.specialtyWeight} onChange={v => update({ specialtyWeight: v })} min={100} max={900} step={100} />

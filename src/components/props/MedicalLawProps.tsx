@@ -129,7 +129,7 @@ export default function MedicalLawProps() {
           <textarea
             value={cfg.title}
             onChange={e => upd({ title: e.target.value })}
-            className="w-full text-xs p-1.5 border border-gray-300 rounded resize-none"
+            className="w-full text-xs text-gray-900 p-1.5 border border-gray-300 rounded resize-none"
             rows={3}
           />
           <div className="grid grid-cols-2 gap-1">
@@ -159,7 +159,7 @@ export default function MedicalLawProps() {
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-600 w-16 shrink-0">폰트</span>
             <select value={cfg.titleFont} onChange={e => upd({ titleFont: e.target.value })}
-              className="flex-1 text-xs px-1.5 py-1 border border-gray-300 rounded">
+              className="flex-1 text-xs text-gray-900 px-1.5 py-1 border border-gray-300 rounded">
               {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
             </select>
           </div>
@@ -173,7 +173,7 @@ export default function MedicalLawProps() {
           <textarea
             value={cfg.desc}
             onChange={e => upd({ desc: e.target.value })}
-            className="w-full text-xs p-1.5 border border-gray-300 rounded resize-none"
+            className="w-full text-xs text-gray-900 p-1.5 border border-gray-300 rounded resize-none"
             rows={3}
           />
           <div className="grid grid-cols-2 gap-1">
@@ -185,7 +185,7 @@ export default function MedicalLawProps() {
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-600 w-16 shrink-0">폰트</span>
             <select value={cfg.descFont} onChange={e => upd({ descFont: e.target.value })}
-              className="flex-1 text-xs px-1.5 py-1 border border-gray-300 rounded">
+              className="flex-1 text-xs text-gray-900 px-1.5 py-1 border border-gray-300 rounded">
               {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
             </select>
           </div>

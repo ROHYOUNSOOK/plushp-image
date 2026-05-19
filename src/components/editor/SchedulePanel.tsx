@@ -30,7 +30,7 @@ export default function SchedulePanel() {
 
         {/* 날짜 선택 */}
         <select
-          className="w-full text-xs border border-gray-300 rounded px-1.5 py-1 bg-white"
+          className="w-full text-xs text-gray-900 border border-gray-300 rounded px-1.5 py-1 bg-white"
           value={selectedDate}
           onChange={e => { setSelectedDate(e.target.value); setSelectedRow(null); }}
           disabled={loading}
@@ -43,7 +43,7 @@ export default function SchedulePanel() {
 
         {/* 키워드 선택 */}
         <select
-          className="w-full text-xs border border-gray-300 rounded px-1.5 py-1 bg-white disabled:opacity-50"
+          className="w-full text-xs text-gray-900 border border-gray-300 rounded px-1.5 py-1 bg-white disabled:opacity-50"
           value={selectedRow?.id ?? ''}
           onChange={e => {
             const row = keywords.find(r => r.id === e.target.value) ?? null;

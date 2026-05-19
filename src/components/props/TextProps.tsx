@@ -21,7 +21,7 @@ export default function TextProps({ layer }: { layer: TextLayer }) {
       <textarea
         value={layer.content}
         onChange={e => update({ content: e.target.value })}
-        className="w-full text-xs p-2 border border-gray-300 rounded resize-y min-h-[60px]"
+        className="w-full text-xs text-gray-900 p-2 border border-gray-300 rounded resize-y min-h-[60px]"
         rows={3}
       />
 
@@ -37,7 +37,7 @@ export default function TextProps({ layer }: { layer: TextLayer }) {
         <select
           value={layer.font}
           onChange={e => update({ font: e.target.value })}
-          className="flex-1 text-xs px-1.5 py-1 border border-gray-300 rounded"
+          className="flex-1 text-xs text-gray-900 px-1.5 py-1 border border-gray-300 rounded"
         >
           {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
         </select>

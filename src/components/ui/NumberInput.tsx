@@ -19,7 +19,7 @@ export default function NumberInput({ label, value, onChange, min, max, step = 1
         min={min}
         max={max}
         step={step}
-        className="flex-1 text-xs px-1.5 py-1 border border-gray-300 rounded w-0 min-w-0"
+        className="flex-1 text-xs text-gray-900 px-1.5 py-1 border border-gray-300 rounded w-0 min-w-0"
       />
     </div>
   );
