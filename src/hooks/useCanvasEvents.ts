@@ -473,7 +473,21 @@ export function useCanvasEvents({
           if (h === 'n') newY = drag.startY + drag.startH - newH;
         }
       }
-      useEditorStore.getState().updateLayer(drag.layerId, { x: newX, y: newY, w: newW, h: newH } as Partial<PositionedLayer>);
+      const _state = useEditorStore.getState();
+      const _layer = _state.pages[_state.currentPage]?.layers.find(l => l.id === drag.layerId);
+      if (_layer?.type === 'doctor-card') {
+        const dc = _layer as import('@/types/layer').DoctorCardLayer;
+        const ratio = drag.startW > 0 ? newW / drag.startW : 1;
+        _state.updateLayer(drag.layerId, {
+          x: newX, y: newY, w: newW, h: newH,
+          subjectSize:   Math.max(6, Math.round(dc.subjectSize   * ratio)),
+          nameSize:      Math.max(6, Math.round(dc.nameSize      * ratio)),
+          suffixSize:    Math.max(6, Math.round(dc.suffixSize    * ratio)),
+          specialtySize: Math.max(6, Math.round(dc.specialtySize * ratio)),
+        } as Partial<import('@/types/layer').DoctorCardLayer>);
+      } else {
+        _state.updateLayer(drag.layerId, { x: newX, y: newY, w: newW, h: newH } as Partial<PositionedLayer>);
+      }
     }
   }, [dragRef, panRef, getPointer, setView]);
 
@@ -656,10 +670,19 @@ export function useCanvasEvents({
       if (sel.type !== 'textbox') {
         const pl = sel as PositionedLayer;
         const cx = pl.x + pl.w / 2, cy = pl.y + pl.h / 2;
+        const prevW = pl.w;
         pl.w = Math.max(20, pl.w * delta);
         pl.h = Math.max(20, pl.h * delta);
         pl.x = cx - pl.w / 2;
         pl.y = cy - pl.h / 2;
+        if (sel.type === 'doctor-card') {
+          const dc = sel as import('@/types/layer').DoctorCardLayer;
+          const ratio = prevW > 0 ? pl.w / prevW : 1;
+          dc.subjectSize   = Math.max(6, Math.round(dc.subjectSize   * ratio));
+          dc.nameSize      = Math.max(6, Math.round(dc.nameSize      * ratio));
+          dc.suffixSize    = Math.max(6, Math.round(dc.suffixSize    * ratio));
+          dc.specialtySize = Math.max(6, Math.round(dc.specialtySize * ratio));
+        }
         state.setPages([...state.pages]);
       }
     };
