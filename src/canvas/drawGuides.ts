@@ -80,12 +80,7 @@ export function drawHandles(
     ctx.setLineDash([]);
 
     const R = HANDLE_R * (W / 600);
-    [
-      { x: bx,      y: by },
-      { x: bx + bw, y: by },
-      { x: bx + bw, y: by + bh },
-      { x: bx,      y: by + bh },
-    ].forEach(pt => {
+    getHandlePoints({ x: bx, y: by, w: bw, h: bh } as PositionedLayer).forEach(pt => {
       ctx.beginPath();
       ctx.arc(pt.x, pt.y, R, 0, Math.PI * 2);
       ctx.fillStyle = '#fff';

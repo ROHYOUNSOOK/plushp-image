@@ -152,7 +152,7 @@ export function useCanvasEvents({
           h: fl.img.naturalHeight * fl.imgScale,
         } as PositionedLayer;
         const ch = hitTestHandle(imgBounds, x, y);
-        if (ch && (ch === 'nw' || ch === 'ne' || ch === 'se' || ch === 'sw')) {
+        if (ch) {
           state.pushHistory();
           dragRef.current = {
             type: 'frameImgResize', layerId: fl.id, handle: ch,
@@ -405,7 +405,10 @@ export function useCanvasEvents({
       const fl = state.pages[state.currentPage]?.layers.find(l => l.id === drag.layerId) as import('@/types/layer').FrameLayer | undefined;
       if (!fl?.img) return;
       const h = drag.handle;
-      const outward = h === 'se' ? dx + dy : h === 'nw' ? -dx - dy : h === 'ne' ? dx - dy : -dx + dy;
+      const isCorner = h.length === 2;
+      const outward = isCorner
+        ? (h === 'se' ? dx + dy : h === 'nw' ? -dx - dy : h === 'ne' ? dx - dy : -dx + dy)
+        : (h === 'e' ? dx : h === 'w' ? -dx : h === 's' ? dy : -dy);
       const refDist = Math.sqrt(drag.frameW * drag.frameW + drag.frameH * drag.frameH);
       const newScale = Math.max(0.02, Math.min(20, drag.startImgScale * Math.max(0.05, 1 + outward / refDist)));
       // 프레임 중앙이 바라보는 이미지 콘텐츠 좌표를 고정
