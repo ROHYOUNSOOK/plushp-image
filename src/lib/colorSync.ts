@@ -49,7 +49,6 @@ export function syncColorsAcrossPages(
         ...pg.medConfig,
         titleColor: autoColor,
         ...(pg.medConfig.boxStrokeEnabled ? { boxStrokeColor: autoColor } : {}),
-        ...(pg.medConfig.logo ? { logo: { ...pg.medConfig.logo, strokeColor: autoColor } } : {}),
       },
     } : {}),
   }));

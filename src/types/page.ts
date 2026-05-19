@@ -58,7 +58,7 @@ export interface MedConfig {
   bgColor?: string;
   bgImg?: HTMLImageElement | null;
   bgUrl?: string | null;
-  logo: MedLogoConfig | null;
+  logo?: MedLogoConfig | null;
 }
 
 /* ── 페이지 ── */

@@ -230,7 +230,6 @@ export function buildSchedulePages({
 
   // 의료법 페이지
   const medIdx = totalCount - 1;
-  const existingMedLogo = pages[medIdx].medConfig?.logo;
   const medConfig: MedConfig = pages[medIdx].medConfig ?? {
     marginX: 20, marginY: 20,
     padL: 20, padR: 20, padT: 35, padB: 35,
@@ -245,27 +244,21 @@ export function buildSchedulePages({
     descSize: 28, descWeight: 400, descColor: '#555555', descFont: 'GmarketSans', descTrack: 0,
     align: 'center', lineHeight: 1.6, titleLineHeight: 1.6, descLineHeight: 1.6,
     bgColor: '#e8f4f7',
-    logo: {
-      img: existingMedLogo?.img ?? refLogo?.img ?? null,
-      url: existingMedLogo?.url ?? refLogo?.url ?? null,
-      sizePct: 7, xPct: 6.3, yPct: 17.8,
-      strokeEnabled: true, strokeWidth: 3, strokeColor: null,
-    },
   };
 
-  if (pages[medIdx].medConfig) {
-    medConfig.logo = {
-      ...pages[medIdx].medConfig!.logo,
-      sizePct: 7,
-      xPct: 6.3, yPct: 17.8,
-      strokeEnabled: true,
-      strokeWidth: pages[medIdx].medConfig!.logo?.strokeWidth ?? 3,
-      strokeColor: pages[medIdx].medConfig!.logo?.strokeColor ?? null,
-      img: existingMedLogo?.img ?? refLogo?.img ?? null,
-      url: existingMedLogo?.url ?? refLogo?.url ?? null,
-    };
-  }
-  pages[medIdx] = { ...pages[medIdx], name: '의료법', isMedicalLaw: true, medConfig };
+  // 의료법 페이지 로고 레이어 (일반 페이지와 동일한 LogoLayer로 관리)
+  const medExistingLogo = pages[medIdx].layers.find(l => l.type === 'logo') as LogoLayer | undefined;
+  const medLogoLayer: LogoLayer = medExistingLogo ?? (() => {
+    const l = makeLayer('logo') as LogoLayer;
+    l.stroke = { enabled: true, color: null, width: 3, radius: 0 };
+    if (refLogo) { l.img = refLogo.img; l.url = refLogo.url; l.w = refLogo.w; l.h = refLogo.h; }
+    return l;
+  })();
+  const medBaseLayers = pages[medIdx].layers.filter(l => l.type !== 'logo');
+  pages[medIdx] = {
+    ...pages[medIdx], name: '의료법', isMedicalLaw: true, medConfig,
+    layers: [...medBaseLayers, medLogoLayer],
+  };
 
   // 전체 색상 동기화
   const bgLayer = pages[0]?.layers.find(l => l.type === 'background');
@@ -287,7 +280,6 @@ export function buildSchedulePages({
         ...pg.medConfig,
         titleColor: autoColor,
         ...(pg.medConfig.boxStrokeEnabled ? { boxStrokeColor: autoColor } : {}),
-        ...(pg.medConfig.logo ? { logo: { ...pg.medConfig.logo, strokeColor: autoColor } } : {}),
       },
     } : {}),
   }));

@@ -6,7 +6,9 @@
 
 import type { Page } from '@/types/page';
 import type { MedLogoConfig } from '@/types/page';
+import type { BackgroundLayer, LogoLayer } from '@/types/layer';
 import { hexToRgb, calcAutoFillColor, calcShadowColor } from '@/lib/colorHelpers';
+import { drawLogo } from './drawLogo';
 
 /* ===========================
    med_ 헬퍼 함수들
@@ -228,14 +230,16 @@ export function drawMedicalLawPage(
   const cfg = page.medConfig;
   if (!cfg) return;
 
-  // 배경: cfg.bgImg 우선, 없으면 1페이지 배경 따라가기
-  const bgImg = cfg.bgImg ?? firstPageBg?.img ?? null;
+  // 배경: BackgroundLayer 우선, 없으면 1페이지 배경 따라가기
+  const bgLayer = page.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
+  const bgImg = bgLayer?.img ?? firstPageBg?.img ?? null;
+  const bgSolid = bgLayer?.solidColor ?? cfg.bgColor ?? firstPageBg?.solidColor ?? '#e8f4f7';
   if (bgImg) {
     const scale = Math.max(canvasW / bgImg.naturalWidth, canvasH / bgImg.naturalHeight);
     const dw = bgImg.naturalWidth * scale, dh = bgImg.naturalHeight * scale;
     ctx.drawImage(bgImg, (canvasW - dw) / 2, (canvasH - dh) / 2, dw, dh);
   } else {
-    ctx.fillStyle = cfg.bgColor || firstPageBg?.solidColor || '#e8f4f7';
+    ctx.fillStyle = bgSolid;
     ctx.fillRect(0, 0, canvasW, canvasH);
   }
 
@@ -318,26 +322,11 @@ export function drawMedicalLawPage(
   med_drawLines(ctx, descLines, tx, ty, descSize * descLineHeight, align, descTrack);
   ctx.restore();
 
-  // 로고
-  if (logo?.img) {
-    const r = med_getLogoDrawRect(logo as MedLogoConfig & { sizePct?: number }, canvasW, canvasH);
-    if (r) {
-      if (logo.strokeEnabled && (logo.strokeWidth || 0) > 0) {
-        const sw = logo.strokeWidth;
-        const { r: sr, g: sg, b: sb } = hexToRgb(logo.strokeColor || calcShadowColor(cfg.bgColor || '#e8f4f7'));
-        ctx.save();
-        ctx.shadowColor = `rgb(${sr},${sg},${sb})`;
-        ctx.shadowBlur = 0;
-        for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
-          ctx.shadowOffsetX = Math.round(Math.cos(a) * sw);
-          ctx.shadowOffsetY = Math.round(Math.sin(a) * sw);
-          ctx.drawImage(logo.img, r.x, r.y, r.w, r.h);
-        }
-        ctx.restore();
-      }
-      ctx.save();
-      ctx.drawImage(logo.img, r.x, r.y, r.w, r.h);
-      ctx.restore();
-    }
+  // 로고: LogoLayer에서 읽어 drawLogo로 렌더
+  const logoLayer = page.layers.find(l => l.type === 'logo') as LogoLayer | undefined;
+  if (logoLayer?.img) {
+    ctx.save();
+    drawLogo(ctx, logoLayer, bgKeyColor, false);
+    ctx.restore();
   }
 }

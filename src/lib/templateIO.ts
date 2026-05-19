@@ -67,11 +67,9 @@ async function serializeLayer(l: Layer): Promise<Record<string, unknown>> {
 async function serializeMedConfig(cfg: MedConfig): Promise<Record<string, unknown>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const out: Record<string, unknown> = { ...(cfg as any) };
-  if (cfg.logo?.img) {
-    const logoDataUrl = await imgToDataUrl(cfg.logo.img, cfg.logo.url ?? null, 'png');
-    out.logo = { ...cfg.logo, img: null, url: logoDataUrl };
-  }
-  // bgImg는 저장하지 않음 (용량 절감)
+  // logo는 LogoLayer로 이관됨 — medConfig에 저장하지 않음
+  delete out.logo;
+  // bgImg, bgColor는 BackgroundLayer로 이관됨
   delete out.bgImg;
   return out;
 }
@@ -186,12 +184,35 @@ async function deserializeLayer(raw: Record<string, unknown>): Promise<Layer> {
 async function deserializeMedConfig(raw: Record<string, unknown>): Promise<MedConfig> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cfg = { ...raw } as any;
-  if (cfg.logo?.url && typeof cfg.logo.url === 'string') {
-    try {
-      cfg.logo = { ...cfg.logo, img: await loadImage(cfg.logo.url) };
-    } catch { cfg.logo = { ...cfg.logo, img: null }; }
-  }
+  // logo는 LogoLayer로 이관됨 — medConfig에서 로드하지 않음
+  cfg.logo = null;
   return cfg as MedConfig;
+}
+
+/** 구버전 템플릿: medConfig.logo가 있고 LogoLayer가 없는 의료법 페이지 → LogoLayer로 마이그레이션 */
+async function migrateMedLogoToLayer(pages: TemplatePage[]): Promise<TemplatePage[]> {
+  const { W, ML_H } = await import('@/types/constants');
+  const { makeLayer } = await import('./layerFactory');
+  return pages.map(pg => {
+    if (!pg.isMedicalLaw) return pg;
+    if (pg.layers.some(l => l.type === 'logo')) return pg;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const oldLogo = (pg.medConfig as any)?.logo;
+    if (!oldLogo?.img) return pg;
+    const imgW = oldLogo.img.naturalWidth, imgH = oldLogo.img.naturalHeight;
+    const drawW = ((oldLogo.sizePct ?? 7) / 100) * W;
+    const drawH = imgW > 0 ? drawW * (imgH / imgW) : drawW;
+    const x = Math.round((oldLogo.xPct / 100) * W - drawW / 2);
+    const y = Math.round((oldLogo.yPct / 100) * ML_H - drawH / 2);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const logoLayer = {
+      ...(makeLayer('logo') as import('@/types/layer').LogoLayer),
+      img: oldLogo.img, url: oldLogo.url ?? null,
+      x, y, w: Math.round(drawW), h: Math.round(drawH),
+      stroke: { enabled: oldLogo.strokeEnabled ?? true, color: oldLogo.strokeColor ?? null, width: oldLogo.strokeWidth ?? 3, radius: 0 },
+    };
+    return { ...pg, layers: [logoLayer, ...pg.layers] };
+  });
 }
 
 /* ── 불러오기 ── */
@@ -245,7 +266,7 @@ export function openTemplatePicker(
         })
       );
 
-      onLoad(restoredPages, savedScheduleRow);
+      onLoad(await migrateMedLogoToLayer(restoredPages), savedScheduleRow);
     } catch {
       onError('파일을 불러오지 못했습니다');
     }
@@ -346,7 +367,7 @@ export async function loadCloudTemplate(
     })
   );
 
-  return { pages: restoredPages, scheduleRow: savedScheduleRow };
+  return { pages: await migrateMedLogoToLayer(restoredPages), scheduleRow: savedScheduleRow };
 }
 
 export async function listCloudTemplates(): Promise<string[]> {

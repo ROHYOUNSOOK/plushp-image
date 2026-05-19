@@ -47,7 +47,7 @@ export async function autoLoadLogos(): Promise<void> {
 
   const needsImg =
     store.pages.some(pg => pg.layers.some(l => l.type === 'logo' && !(l as LogoLayer).img)) ||
-    store.pages.some(pg => pg.isMedicalLaw && pg.medConfig?.logo && !pg.medConfig.logo.img);
+    store.pages.some(pg => pg.isMedicalLaw && !pg.layers.some(l => l.type === 'logo'));
 
   if (!needsImg) return;
 
@@ -57,11 +57,10 @@ export async function autoLoadLogos(): Promise<void> {
     const logoW = Math.round(86 * aspect);
 
     const updatedPages = store.pages.map(pg => {
-      // 일반 레이어 로고
-      const newLayers = pg.layers.map(l => {
+      // 기존 로고 레이어 갱신
+      let newLayers = pg.layers.map(l => {
         if (l.type === 'logo' && !(l as LogoLayer).img) {
           const logo = l as LogoLayer;
-          // 현재 코너 위치 판별 후 새 크기에 맞게 x/y 재계산
           const isRight = logo.x > W / 2;
           const isBottom = logo.y > H / 2;
           const newX = isRight ? W - logoW - LOGO_MARGIN : LOGO_MARGIN;
@@ -71,16 +70,22 @@ export async function autoLoadLogos(): Promise<void> {
         return l;
       });
 
-      // 의료법 페이지 medConfig.logo
-      if (pg.isMedicalLaw && pg.medConfig?.logo && !pg.medConfig.logo.img) {
-        return {
-          ...pg,
-          layers: newLayers,
-          medConfig: {
-            ...pg.medConfig,
-            logo: { ...pg.medConfig.logo, img, url: LOGO_URL },
-          },
+      // 의료법 페이지에 LogoLayer가 없으면 새로 추가
+      if (pg.isMedicalLaw && !newLayers.some(l => l.type === 'logo')) {
+        const medLogo: LogoLayer = {
+          id: `l${Date.now()}_medlogo`,
+          type: 'logo',
+          name: '로고',
+          visible: true,
+          locked: false,
+          img, url: LOGO_URL,
+          x: LOGO_MARGIN, y: LOGO_MARGIN,
+          w: logoW, h: 86,
+          opacity: 1, rotation: 0,
+          stroke: { enabled: true, color: null, width: 3, radius: 0 },
+          shadow: { enabled: false, color: null, alpha: 0.4, blur: 5, offsetX: 0, offsetY: 5 },
         };
+        newLayers = [medLogo, ...newLayers];
       }
 
       return { ...pg, layers: newLayers };
