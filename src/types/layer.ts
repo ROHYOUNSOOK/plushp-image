@@ -87,6 +87,11 @@ export interface FrameLayer extends LayerBase {
   imgRotation: number;
   imgLightness: number;
   imgTemperature: number;
+  imgContrast: number;
+  imgHighlights: number;
+  imgShadows: number;
+  imgVibrance: number;
+  imgSaturation: number;
   fill: string | null;
   stroke: StrokeConfig;
   opacity: number;
@@ -97,7 +102,7 @@ export interface FrameLayer extends LayerBase {
   frameMaskProcessed?: HTMLCanvasElement | null; // 배경색 치환된 마스크
   frameType?: string;
   // 내부 캐시 (직렬화 제외)
-  _imgFilterCache?: { lightness: number; temperature: number; url: string | null; canvas: HTMLCanvasElement } | null;
+  _imgFilterCache?: { filterKey: string; url: string | null; canvas: HTMLCanvasElement } | null;
   _holeCanvas?: HTMLCanvasElement | null;
   _holeCacheKey?: string;
   _holeW?: number;

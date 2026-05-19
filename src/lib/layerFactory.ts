@@ -26,6 +26,7 @@ export function makeLayer(type: LayerType): Layer {
         img: null, url: null,
         imgOffsetX: 0, imgOffsetY: 0, imgScale: 1, imgRotation: 0,
         imgLightness: 0, imgTemperature: 0,
+        imgContrast: 0, imgHighlights: 0, imgShadows: 0, imgVibrance: 0, imgSaturation: 0,
         fill: null,
         stroke: { enabled: false, color: '#111111', width: 3, alpha: 1 },
         opacity: 1,

@@ -67,6 +67,21 @@ export function drawHandles(
     ctx.setLineDash([5, 3]);
     ctx.strokeRect(layer.x, layer.y, layer.w, layer.h);
     ctx.setLineDash([]);
+    const R = HANDLE_R * (W / 600);
+    [
+      { x: layer.x, y: layer.y },
+      { x: layer.x + layer.w, y: layer.y },
+      { x: layer.x + layer.w, y: layer.y + layer.h },
+      { x: layer.x, y: layer.y + layer.h },
+    ].forEach(pt => {
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, R, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,140,0,0.9)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
     ctx.restore();
     return;
   }

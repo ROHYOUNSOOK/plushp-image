@@ -5,9 +5,41 @@
 
 import type { FrameLayer } from '@/types/layer';
 import { hexToRgb, calcShadowColor, calcFrameFillColor, hasTransparentPixels } from '@/lib/colorHelpers';
-import { recolorFrameByHueRotate } from './imageFilters';
+import { recolorFrameByHueRotate, applyFrameColorFilter, buildInnerHoleMask } from './imageFilters';
 import { frameShapePath } from './pathHelpers';
-import { applyFrameColorFilter, buildInnerHoleMask } from './imageFilters';
+import { applyFiltersWebGL, isFilterFrozen, type CameraRawFilters } from './webglFilters';
+
+function buildFilterKey(layer: FrameLayer): string {
+  return `${layer.imgLightness||0}|${layer.imgTemperature||0}|${layer.imgContrast||0}|${layer.imgHighlights||0}|${layer.imgShadows||0}|${layer.imgVibrance||0}|${layer.imgSaturation||0}`;
+}
+
+function hasAnyFilter(layer: FrameLayer): boolean {
+  return (layer.imgLightness||0) !== 0 || (layer.imgTemperature||0) !== 0 ||
+    (layer.imgContrast||0) !== 0 || (layer.imgHighlights||0) !== 0 ||
+    (layer.imgShadows||0) !== 0 || (layer.imgVibrance||0) !== 0 || (layer.imgSaturation||0) !== 0;
+}
+
+function getFilteredSrc(layer: FrameLayer): HTMLImageElement | HTMLCanvasElement {
+  if (!layer.img || layer.frameType === 'design' || !hasAnyFilter(layer)) return layer.img!;
+  const filterKey = buildFilterKey(layer);
+  const cached = layer._imgFilterCache;
+  const hit = cached && cached.filterKey === filterKey && cached.url === layer.url;
+  if (!hit && !isFilterFrozen()) {
+    const f: CameraRawFilters = {
+      exposure: layer.imgLightness || 0,
+      temperature: layer.imgTemperature || 0,
+      contrast: layer.imgContrast || 0,
+      highlights: layer.imgHighlights || 0,
+      shadows: layer.imgShadows || 0,
+      vibrance: layer.imgVibrance || 0,
+      saturation: layer.imgSaturation || 0,
+    };
+    const canvas = applyFiltersWebGL(layer.img, f)
+      ?? applyFrameColorFilter(layer.img, f.exposure, f.temperature);
+    layer._imgFilterCache = { filterKey, url: layer.url, canvas };
+  }
+  return layer._imgFilterCache?.canvas ?? layer.img;
+}
 
 export function drawFrame(
   ctx: CanvasRenderingContext2D,
@@ -68,17 +100,7 @@ export function drawFrame(
     ctx.save();
     ctx.translate(ix, iy);
     ctx.rotate((imgRot - rotation) * Math.PI / 180);
-
-    const _lv = layer.imgLightness || 0, _tv = layer.imgTemperature || 0;
-    let _drawSrc: HTMLImageElement | HTMLCanvasElement = layer.img;
-    if (layer.frameType !== 'design' && (_lv !== 0 || _tv !== 0)) {
-      const _c = layer._imgFilterCache;
-      if (!_c || _c.lightness !== _lv || _c.temperature !== _tv || _c.url !== layer.url) {
-        layer._imgFilterCache = { lightness: _lv, temperature: _tv, url: layer.url, canvas: applyFrameColorFilter(layer.img, _lv, _tv) };
-      }
-      _drawSrc = layer._imgFilterCache!.canvas;
-    }
-    ctx.drawImage(_drawSrc, -iw / 2, -ih / 2, iw, ih);
+    ctx.drawImage(getFilteredSrc(layer), -iw / 2, -ih / 2, iw, ih);
     ctx.restore();
   } else if (!isExporting) {
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
@@ -160,16 +182,7 @@ function _drawPngMaskFrame(
     oCtx.save();
     oCtx.translate(layer.imgOffsetX + iw / 2, layer.imgOffsetY + ih / 2);
     oCtx.rotate((imgRot - (layer.rotation || 0)) * Math.PI / 180);
-    const _lv = layer.imgLightness || 0, _tv = layer.imgTemperature || 0;
-    let _drawSrc: HTMLImageElement | HTMLCanvasElement = layer.img;
-    if (_lv !== 0 || _tv !== 0) {
-      const _c = layer._imgFilterCache;
-      if (!_c || _c.lightness !== _lv || _c.temperature !== _tv || _c.url !== layer.url) {
-        layer._imgFilterCache = { lightness: _lv, temperature: _tv, url: layer.url, canvas: applyFrameColorFilter(layer.img, _lv, _tv) };
-      }
-      _drawSrc = layer._imgFilterCache!.canvas;
-    }
-    oCtx.drawImage(_drawSrc, -iw / 2, -ih / 2, iw, ih);
+    oCtx.drawImage(getFilteredSrc(layer), -iw / 2, -ih / 2, iw, ih);
     oCtx.restore();
   } else if (!isExporting) {
     oCtx.fillStyle = 'rgba(0,0,0,0.25)';

@@ -43,6 +43,14 @@ type DragState = {
   handle: string;
   ox: number; oy: number;
   groupX: number; groupY: number; groupW: number; groupH: number;
+} | {
+  type: 'frameImgResize';
+  layerId: string;
+  handle: string;
+  ox: number; oy: number;
+  startImgScale: number;
+  startOffX: number; startOffY: number;
+  frameW: number; frameH: number;
 } | null;
 
 type CycleState = { x: number; y: number; ids: string[]; idx: number } | null;
@@ -135,6 +143,22 @@ export function useCanvasEvents({
 
     if (state.frameEditMode && sel && sel.type === 'frame') {
       const fl = sel as import('@/types/layer').FrameLayer;
+      // 코너 핸들 → 내부 이미지 리사이즈
+      if (fl.img) {
+        const ch = hitTestHandle(fl as PositionedLayer, x, y);
+        if (ch && (ch === 'nw' || ch === 'ne' || ch === 'se' || ch === 'sw')) {
+          state.pushHistory();
+          dragRef.current = {
+            type: 'frameImgResize', layerId: fl.id, handle: ch,
+            ox: x, oy: y,
+            startImgScale: fl.imgScale,
+            startOffX: fl.imgOffsetX, startOffY: fl.imgOffsetY,
+            frameW: fl.w, frameH: fl.h,
+          };
+          canvasRef.current?.setPointerCapture(e.pointerId);
+          return;
+        }
+      }
       if (x >= fl.x && x <= fl.x + fl.w && y >= fl.y && y <= fl.y + fl.h) {
         state.pushHistory();
         dragRef.current = {
@@ -308,15 +332,31 @@ export function useCanvasEvents({
 
     if (drag.type === 'group-resize') {
       const h = drag.handle;
+      const isSide = h === 'n' || h === 's' || h === 'e' || h === 'w';
+      const isCorner = !isSide;
+      const cx = drag.groupX + drag.groupW / 2;
+      const cy = drag.groupY + drag.groupH / 2;
       let newGX = drag.groupX, newGY = drag.groupY;
       let newGW = drag.groupW, newGH = drag.groupH;
-      if (h.includes('e')) newGW = Math.max(20, drag.groupW + dx);
-      if (h.includes('w')) { newGW = Math.max(20, drag.groupW - dx); newGX = drag.groupX + dx; }
-      if (h.includes('s')) newGH = Math.max(20, drag.groupH + dy);
-      if (h.includes('n')) { newGH = Math.max(20, drag.groupH - dy); newGY = drag.groupY + dy; }
+
+      if (isSide) {
+        // 사이드 핸들: 중앙 고정, 양쪽으로 동등하게 확장
+        if (h === 'e') newGW = Math.max(20, drag.groupW + dx * 2);
+        if (h === 'w') newGW = Math.max(20, drag.groupW - dx * 2);
+        if (h === 's') newGH = Math.max(20, drag.groupH + dy * 2);
+        if (h === 'n') newGH = Math.max(20, drag.groupH - dy * 2);
+        newGX = cx - newGW / 2;
+        newGY = cy - newGH / 2;
+      } else {
+        // 코너 핸들: 반대편 코너 고정
+        if (h.includes('e')) newGW = Math.max(20, drag.groupW + dx);
+        if (h.includes('w')) { newGW = Math.max(20, drag.groupW - dx); newGX = drag.groupX + dx; }
+        if (h.includes('s')) newGH = Math.max(20, drag.groupH + dy);
+        if (h.includes('n')) { newGH = Math.max(20, drag.groupH - dy); newGY = drag.groupY + dy; }
+      }
+
       if (e.shiftKey && drag.groupW > 0 && drag.groupH > 0) {
         const aspect = drag.groupW / drag.groupH;
-        const isCorner = (h.includes('n') || h.includes('s')) && (h.includes('e') || h.includes('w'));
         if (isCorner) {
           const scale = Math.max(0.01, Math.abs(dx) >= Math.abs(dy) ? newGW / drag.groupW : newGH / drag.groupH);
           newGW = Math.max(20, Math.round(drag.groupW * scale));
@@ -325,10 +365,10 @@ export function useCanvasEvents({
           if (h.includes('n')) newGY = drag.groupY + drag.groupH - newGH;
         } else if (h === 'e' || h === 'w') {
           newGH = Math.max(20, Math.round(newGW / aspect));
-          if (h === 'w') newGX = drag.groupX + drag.groupW - newGW;
+          newGY = cy - newGH / 2;
         } else if (h === 'n' || h === 's') {
           newGW = Math.max(20, Math.round(newGH * aspect));
-          if (h === 'n') newGY = drag.groupY + drag.groupH - newGH;
+          newGX = cx - newGW / 2;
         }
       }
       const scaleX = newGW / drag.groupW;
@@ -351,6 +391,25 @@ export function useCanvasEvents({
           }),
         };
       }));
+      return;
+    }
+
+    if (drag.type === 'frameImgResize') {
+      const state = useEditorStore.getState();
+      const fl = state.pages[state.currentPage]?.layers.find(l => l.id === drag.layerId) as import('@/types/layer').FrameLayer | undefined;
+      if (!fl?.img) return;
+      const h = drag.handle;
+      const outward = h === 'se' ? dx + dy : h === 'nw' ? -dx - dy : h === 'ne' ? dx - dy : -dx + dy;
+      const refDist = Math.sqrt(drag.frameW * drag.frameW + drag.frameH * drag.frameH);
+      const newScale = Math.max(0.02, Math.min(20, drag.startImgScale * Math.max(0.05, 1 + outward / refDist)));
+      // 프레임 중앙이 바라보는 이미지 콘텐츠 좌표를 고정
+      const imgCX = (drag.frameW / 2 - drag.startOffX) / drag.startImgScale;
+      const imgCY = (drag.frameH / 2 - drag.startOffY) / drag.startImgScale;
+      state.updateLayer(drag.layerId, {
+        imgScale: newScale,
+        imgOffsetX: drag.frameW / 2 - imgCX * newScale,
+        imgOffsetY: drag.frameH / 2 - imgCY * newScale,
+      } as Partial<import('@/types/layer').FrameLayer>);
       return;
     }
 
