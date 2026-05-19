@@ -4,7 +4,7 @@
 =========================== */
 
 import type { Layer, LayerType } from '@/types/layer';
-import { W, H, LAYER_LABELS } from '@/types/constants';
+import { W, H, ML_H, LAYER_LABELS } from '@/types/constants';
 import { uid, calcTextboxPos } from './utils';
 
 /** 레이어 타입별 기본값으로 새 레이어 생성 */
@@ -73,6 +73,16 @@ export function makeLayer(type: LayerType): Layer {
         img: null, url: null, opacity: 1, rotation: 0,
         stroke: { enabled: true, color: null, width: 3, radius: 0 },
         shadow: { enabled: false, color: null, alpha: 0.4, blur: 5, offsetX: 0, offsetY: 5 },
+      };
+
+    case 'med-box':
+      return {
+        ...base, type: 'med-box',
+        x: 20, y: 20, w: W - 40, h: ML_H - 40,
+        boxColor: '#ffffff', boxAlpha: 0.9,
+        boxStrokeEnabled: false, boxStrokeWidth: 2, boxStrokeColor: '#e0e0e0',
+        shadowColor: '#000000', shadowAlpha: 0.15, shadowBlur: 20, shadowX: 0, shadowY: 8,
+        radiusTL: 16, radiusTR: 16, radiusBR: 16, radiusBL: 16,
       };
 
     case 'doctor-card':

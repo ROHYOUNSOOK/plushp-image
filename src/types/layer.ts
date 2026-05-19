@@ -2,7 +2,7 @@
    Layer Type Definitions
 =========================== */
 
-export type LayerType = 'background' | 'frame' | 'image' | 'textbox' | 'text' | 'logo' | 'doctor-card';
+export type LayerType = 'background' | 'frame' | 'image' | 'textbox' | 'text' | 'logo' | 'doctor-card' | 'med-box';
 
 export type FrameShapeId = 'rect' | 'circle' | 'triangle' | 'rhombus' | 'pentagon' | 'hexagon' | 'star';
 
@@ -205,6 +205,25 @@ export interface DoctorCardLayer extends LayerBase {
   align: TextAlign;
 }
 
+export interface MedBoxLayer extends LayerBase {
+  type: 'med-box';
+  x: number; y: number; w: number; h: number;
+  boxColor: string;
+  boxAlpha: number;
+  boxStrokeEnabled: boolean;
+  boxStrokeWidth: number;
+  boxStrokeColor: string;
+  shadowColor: string;
+  shadowAlpha: number;
+  shadowBlur: number;
+  shadowX: number;
+  shadowY: number;
+  radiusTL: number;
+  radiusTR: number;
+  radiusBR: number;
+  radiusBL: number;
+}
+
 /* ── 유니온 타입 ── */
 
 export type Layer =
@@ -214,7 +233,8 @@ export type Layer =
   | TextboxLayer
   | TextLayer
   | LogoLayer
-  | DoctorCardLayer;
+  | DoctorCardLayer
+  | MedBoxLayer;
 
 /* ── 좌표가 있는 레이어 (배경 제외) ── */
 

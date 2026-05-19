@@ -10,13 +10,24 @@ import TextProps from '@/components/props/TextProps';
 import LogoProps from '@/components/props/LogoProps';
 import DoctorCardProps from '@/components/props/DoctorCardProps';
 import MedicalLawProps from '@/components/props/MedicalLawProps';
+import MedBoxProps from '@/components/props/MedBoxProps';
+import type { MedBoxLayer } from '@/types/layer';
 
 export default function PropsPanel() {
   const layer = useEditorStore(selectSelectedLayer);
   const isMedicalLaw = useEditorStore(s => s.pages[s.currentPage]?.isMedicalLaw ?? false);
 
-  // 의료법 페이지면 전용 패널 표시
+  // 의료법 페이지: 선택된 레이어 타입에 따라 전용 패널 표시
   if (isMedicalLaw) {
+    if (layer?.type === 'med-box') {
+      return <div className="p-3"><MedBoxProps layer={layer as MedBoxLayer} /></div>;
+    }
+    if (layer?.type === 'logo') {
+      return <div className="p-3"><LogoProps layer={layer} /></div>;
+    }
+    if (layer?.type === 'background') {
+      return <div className="p-3"><BackgroundProps layer={layer} /></div>;
+    }
     return (
       <div className="p-3">
         <MedicalLawProps />

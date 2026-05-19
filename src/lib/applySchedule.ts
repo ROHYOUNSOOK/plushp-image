@@ -4,12 +4,12 @@
 =========================== */
 
 import type { Page, MedConfig } from '@/types/page';
-import type { TextboxLayer, LogoLayer, ImageLayer, FrameLayer, BackgroundLayer } from '@/types/layer';
+import type { TextboxLayer, LogoLayer, ImageLayer, FrameLayer, BackgroundLayer, MedBoxLayer } from '@/types/layer';
 import { makeLayer } from '@/lib/layerFactory';
 import { calcTextboxPos } from '@/lib/utils';
 import { applyDoctorCardTemplate, IMG_H_PRESETS, Y_OFFSETS } from '@/lib/doctorCardTemplate';
 import { calcAutoFillColor, calcShadowColor } from '@/lib/colorHelpers';
-import { W, H } from '@/types/constants';
+import { W, H, ML_H } from '@/types/constants';
 
 const TB_CORNERS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const;
 type TbCorner = typeof TB_CORNERS[number];
@@ -246,7 +246,7 @@ export function buildSchedulePages({
     bgColor: '#e8f4f7',
   };
 
-  // 의료법 페이지 로고 레이어 (일반 페이지와 동일한 LogoLayer로 관리)
+  // 의료법 페이지 로고 레이어
   const medExistingLogo = pages[medIdx].layers.find(l => l.type === 'logo') as LogoLayer | undefined;
   const medLogoLayer: LogoLayer = medExistingLogo ?? (() => {
     const l = makeLayer('logo') as LogoLayer;
@@ -254,10 +254,37 @@ export function buildSchedulePages({
     if (refLogo) { l.img = refLogo.img; l.url = refLogo.url; l.w = refLogo.w; l.h = refLogo.h; }
     return l;
   })();
-  const medBaseLayers = pages[medIdx].layers.filter(l => l.type !== 'logo');
+
+  // 의료법 페이지 박스 레이어
+  const medExistingBox = pages[medIdx].layers.find(l => l.type === 'med-box') as MedBoxLayer | undefined;
+  const medBoxLayer: MedBoxLayer = medExistingBox ?? (() => {
+    const box = makeLayer('med-box') as MedBoxLayer;
+    // medConfig 기존 값이 있으면 적용
+    const cfg = pages[medIdx].medConfig;
+    if (cfg) {
+      box.x = cfg.marginX ?? 20; box.y = cfg.marginY ?? 20;
+      box.w = W - (cfg.marginX ?? 20) * 2;
+      box.h = ML_H - (cfg.marginY ?? 20) * 2;
+      box.boxColor   = cfg.boxColor         ?? '#ffffff';
+      box.boxAlpha   = cfg.boxAlpha         ?? 0.9;
+      box.boxStrokeEnabled = cfg.boxStrokeEnabled ?? false;
+      box.boxStrokeWidth   = cfg.boxStrokeWidth   ?? 2;
+      box.boxStrokeColor   = cfg.boxStrokeColor   ?? '#e0e0e0';
+      box.shadowColor = cfg.shadowColor ?? '#000000';
+      box.shadowAlpha = cfg.shadowAlpha ?? 0.15;
+      box.shadowBlur  = cfg.shadowBlur  ?? 20;
+      box.shadowX     = cfg.shadowX     ?? 0;
+      box.shadowY     = cfg.shadowY     ?? 8;
+      box.radiusTL = cfg.radiusTL ?? 16; box.radiusTR = cfg.radiusTR ?? 16;
+      box.radiusBR = cfg.radiusBR ?? 16; box.radiusBL = cfg.radiusBL ?? 16;
+    }
+    return box;
+  })();
+
+  const medBaseLayers = pages[medIdx].layers.filter(l => l.type !== 'logo' && l.type !== 'med-box');
   pages[medIdx] = {
     ...pages[medIdx], name: '의료법', isMedicalLaw: true, medConfig,
-    layers: [...medBaseLayers, medLogoLayer],
+    layers: [...medBaseLayers, medBoxLayer, medLogoLayer],
   };
 
   // 전체 색상 동기화

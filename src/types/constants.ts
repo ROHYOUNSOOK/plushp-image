@@ -19,6 +19,7 @@ export const LAYER_LABELS: Record<LayerType, string> = {
   text: '텍스트',
   logo: '로고',
   'doctor-card': '의사 카드',
+  'med-box': '⬜ 박스',
 };
 
 export const LAYER_ICONS: Record<LayerType, string> = {
@@ -29,6 +30,7 @@ export const LAYER_ICONS: Record<LayerType, string> = {
   text: '✏️',
   logo: '🏷',
   'doctor-card': '🩺',
+  'med-box': '⬜',
 };
 
 /* ── 프레임 도형 목록 ── */

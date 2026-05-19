@@ -80,6 +80,9 @@ export function drawImmediate(dc: DrawContext): void {
         case 'doctor-card':
           drawDoctorCard(ctx, layer);
           break;
+        case 'med-box':
+          // 의료법 페이지에서만 사용 — drawMedicalLawPage가 처리하므로 일반 렌더 루프에선 스킵
+          break;
       }
       ctx.restore();
     });

@@ -6,7 +6,7 @@
 
 import type { Page } from '@/types/page';
 import type { MedLogoConfig } from '@/types/page';
-import type { BackgroundLayer, LogoLayer } from '@/types/layer';
+import type { BackgroundLayer, LogoLayer, MedBoxLayer } from '@/types/layer';
 import { hexToRgb, calcAutoFillColor, calcShadowColor } from '@/lib/colorHelpers';
 import { drawLogo } from './drawLogo';
 
@@ -19,7 +19,7 @@ interface StyledSegment {
   hl: boolean;
 }
 
-function med_hexToRgba(hex: string, a = 1): string {
+export function med_hexToRgba(hex: string, a = 1): string {
   const s = (hex || '#000').replace('#', '');
   const n = parseInt(s.length === 3 ? s.split('').map(c => c + c).join('') : s, 16);
   const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
@@ -180,7 +180,7 @@ function med_drawStyledLines(
   }
 }
 
-function med_roundedRect4(
+export function med_roundedRect4(
   ctx: CanvasRenderingContext2D,
   x: number, y: number, w: number, h: number,
   rtl: number, rtr: number, rbr: number, rbl: number,
@@ -245,53 +245,60 @@ export function drawMedicalLawPage(
 
   const {
     marginX, marginY, padL, padR, padT, padB,
-    boxAlpha, boxColor,
-    boxStrokeEnabled, boxStrokeWidth = 2, boxStrokeColor = '#e0e0e0',
-    midFillEnabled, midFillColor = '#f5f5f5',
-    shadowAlpha, shadowBlur, shadowX, shadowY,
-    radiusTL = 16, radiusTR = 16, radiusBR = 16, radiusBL = 16,
     title, desc,
     titleSize, titleWeight, titleColor, titleAccentColor, titleFont, titleTrack,
     descSize, descWeight, descColor, descFont, descTrack,
-    align, lineHeight, logo,
+    align, lineHeight,
   } = cfg;
   const titleLineHeight = cfg.titleLineHeight ?? lineHeight;
   const descLineHeight = cfg.descLineHeight ?? lineHeight;
 
-  const boxX = marginX, boxY = marginY, boxW = canvasW - marginX * 2, boxH = canvasH - marginY * 2;
+  // 박스 속성: MedBoxLayer 우선, 없으면 medConfig 폴백
+  const boxLayer = page.layers.find(l => l.type === 'med-box') as MedBoxLayer | undefined;
+  const boxX = boxLayer?.x ?? marginX;
+  const boxY = boxLayer?.y ?? marginY;
+  const boxW = boxLayer?.w ?? (canvasW - marginX * 2);
+  const boxH = boxLayer?.h ?? (canvasH - marginY * 2);
+  const _boxColor    = boxLayer?.boxColor         ?? cfg.boxColor         ?? '#ffffff';
+  const _boxAlpha    = boxLayer?.boxAlpha          ?? cfg.boxAlpha         ?? 0.9;
+  const _strokeOn    = boxLayer?.boxStrokeEnabled  ?? cfg.boxStrokeEnabled ?? false;
+  const _strokeW     = boxLayer?.boxStrokeWidth    ?? cfg.boxStrokeWidth   ?? 2;
+  const _strokeColor = boxLayer?.boxStrokeColor    ?? cfg.boxStrokeColor   ?? '#e0e0e0';
+  const _shadowColor = boxLayer?.shadowColor       ?? cfg.shadowColor      ?? '#000000';
+  const _shadowAlpha = boxLayer?.shadowAlpha       ?? cfg.shadowAlpha      ?? 0.15;
+  const _shadowBlur  = boxLayer?.shadowBlur        ?? cfg.shadowBlur       ?? 20;
+  const _shadowX     = boxLayer?.shadowX           ?? cfg.shadowX          ?? 0;
+  const _shadowY     = boxLayer?.shadowY           ?? cfg.shadowY          ?? 8;
+  const _rtl = boxLayer?.radiusTL ?? cfg.radiusTL ?? 16;
+  const _rtr = boxLayer?.radiusTR ?? cfg.radiusTR ?? 16;
+  const _rbr = boxLayer?.radiusBR ?? cfg.radiusBR ?? 16;
+  const _rbl = boxLayer?.radiusBL ?? cfg.radiusBL ?? 16;
 
   // 박스 그림자
   ctx.save();
-  ctx.shadowColor = med_hexToRgba(cfg.shadowColor || '#000000', shadowAlpha);
-  ctx.shadowBlur = shadowBlur;
-  ctx.shadowOffsetX = shadowX;
-  ctx.shadowOffsetY = shadowY;
-  ctx.fillStyle = med_hexToRgba(boxColor, boxAlpha);
-  med_roundedRect4(ctx, boxX, boxY, boxW, boxH, radiusTL, radiusTR, radiusBR, radiusBL);
+  ctx.shadowColor = med_hexToRgba(_shadowColor, _shadowAlpha);
+  ctx.shadowBlur = _shadowBlur;
+  ctx.shadowOffsetX = _shadowX;
+  ctx.shadowOffsetY = _shadowY;
+  ctx.fillStyle = med_hexToRgba(_boxColor, _boxAlpha);
+  med_roundedRect4(ctx, boxX, boxY, boxW, boxH, _rtl, _rtr, _rbr, _rbl);
   ctx.fill();
   ctx.restore();
 
   // 박스 획
-  if (boxStrokeEnabled && boxStrokeWidth > 0) {
+  if (_strokeOn && _strokeW > 0) {
     ctx.save();
-    ctx.strokeStyle = med_hexToRgba(boxStrokeColor, 1);
-    ctx.lineWidth = boxStrokeWidth;
-    med_roundedRect4(ctx, boxX + 1, boxY + 1, boxW - 2, boxH - 2, radiusTL, radiusTR, radiusBR, radiusBL);
+    ctx.strokeStyle = med_hexToRgba(_strokeColor, 1);
+    ctx.lineWidth = _strokeW;
+    med_roundedRect4(ctx, boxX + 1, boxY + 1, boxW - 2, boxH - 2, _rtl, _rtr, _rbr, _rbl);
     ctx.stroke();
     ctx.restore();
   }
 
   // 클리핑 후 텍스트
   ctx.save();
-  med_roundedRect4(ctx, boxX, boxY, boxW, boxH, radiusTL, radiusTR, radiusBR, radiusBL);
+  med_roundedRect4(ctx, boxX, boxY, boxW, boxH, _rtl, _rtr, _rbr, _rbl);
   ctx.clip();
-
-  // 중앙 면 채우기
-  if (midFillEnabled) {
-    const mh = boxH * 0.5, my = boxY + (boxH - mh) / 2;
-    ctx.fillStyle = med_hexToRgba(midFillColor, 0.5);
-    ctx.fillRect(boxX, my, boxW, mh);
-  }
 
   const innerX = boxX + padL, innerY = boxY + padT, innerW = boxW - padL - padR, innerH = boxH - padT - padB;
   let tx = innerX + innerW / 2;
