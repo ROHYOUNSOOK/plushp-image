@@ -4,7 +4,7 @@ import { useEditorStore } from '@/store/editorStore';
 import { makeLayer } from '@/lib/layerFactory';
 import { autoLoadLogos } from '@/lib/logoLoader';
 import { calcAutoFillColor, calcShadowColor } from '@/lib/colorHelpers';
-import type { BackgroundLayer } from '@/types/layer';
+import type { Layer, BackgroundLayer } from '@/types/layer';
 
 export default function MedicalLawProps() {
   const currentPage = useEditorStore(s => s.currentPage);
@@ -16,7 +16,8 @@ export default function MedicalLawProps() {
   const restoreMissingLayers = async () => {
     pushHistory();
     const newPages = [...pages];
-    let layers = [...page.layers];
+    // 의료법 페이지는 background 레이어 불필요 (firstPageBg로 처리)
+    let layers: Layer[] = page.layers.filter(l => l.type !== 'background');
     if (!layers.some(l => l.type === 'med-box'))   layers = [...layers, makeLayer('med-box')];
     if (!layers.some(l => l.type === 'med-title'))  layers = [...layers, makeLayer('med-title')];
     if (!layers.some(l => l.type === 'med-desc'))   layers = [...layers, makeLayer('med-desc')];

@@ -62,14 +62,16 @@ export function buildSchedulePages({
     pages = [...pages, { id: Date.now() + pages.length, name: '', layers: [] }];
   }
 
-  // 새로 추가된 빈 페이지에 page 1 배경 레이어 복사
+  // 새로 추가된 빈 페이지에 page 1 배경 레이어 복사 (의료법 페이지 제외)
   const srcBg = pages[0]?.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
   if (srcBg) {
-    pages = pages.map(pg =>
-      pg.layers.find(l => l.type === 'background')
+    const medPageIdx = totalCount - 1;
+    pages = pages.map((pg, i) => {
+      if (i === medPageIdx) return pg; // 의료법 페이지는 배경 레이어 불필요 (firstPageBg로 처리)
+      return pg.layers.find(l => l.type === 'background')
         ? pg
-        : { ...pg, layers: [{ ...srcBg, id: makeLayer('background').id }, ...pg.layers] }
-    );
+        : { ...pg, layers: [{ ...srcBg, id: makeLayer('background').id }, ...pg.layers] };
+    });
   }
 
   // 기존 페이지에서 로고 이미지 참조 (이미지 자동 복사용)
@@ -254,7 +256,7 @@ export function buildSchedulePages({
   const medDescLayer: MedDescLayer = medExistingDesc ?? (makeLayer('med-desc') as MedDescLayer);
 
   const medBaseLayers = pages[medIdx].layers.filter(
-    l => l.type !== 'logo' && l.type !== 'med-box' && l.type !== 'med-title' && l.type !== 'med-desc'
+    l => l.type !== 'logo' && l.type !== 'med-box' && l.type !== 'med-title' && l.type !== 'med-desc' && l.type !== 'background'
   );
   pages[medIdx] = {
     ...pages[medIdx], name: '의료법', isMedicalLaw: true,

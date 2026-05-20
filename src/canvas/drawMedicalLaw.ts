@@ -210,9 +210,9 @@ export function drawMedicalLawPage(
   bgKeyColor: string,
   firstPageBg?: { img: HTMLImageElement | null; solidColor?: string },
 ): void {
-  // 배경
+  // 배경: firstPageBg 우선, 없으면 페이지 내 BackgroundLayer 폴백
   const bgLayer = page.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-  const bgImg = bgLayer?.img ?? firstPageBg?.img ?? null;
+  const bgImg   = firstPageBg?.img   ?? bgLayer?.img   ?? null;
   const bgSolid = firstPageBg?.solidColor ?? bgLayer?.solidColor ?? '#e8f4f7';
   if (bgImg) {
     const scale = Math.max(canvasW / bgImg.naturalWidth, canvasH / bgImg.naturalHeight);
