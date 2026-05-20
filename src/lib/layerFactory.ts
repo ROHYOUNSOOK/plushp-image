@@ -83,6 +83,25 @@ export function makeLayer(type: LayerType): Layer {
         boxStrokeEnabled: false, boxStrokeWidth: 2, boxStrokeColor: '#e0e0e0',
         shadowColor: '#000000', shadowAlpha: 0.15, shadowBlur: 20, shadowX: 0, shadowY: 8,
         radiusTL: 16, radiusTR: 16, radiusBR: 16, radiusBL: 16,
+        padL: 20, padR: 20, padT: 35, padB: 35,
+      };
+
+    case 'med-title':
+      return {
+        ...base, type: 'med-title',
+        content: '본 포스팅은 본원에서\n의료법 제 56조 1항을 준수하여 직접 작성한 게시물입니다.',
+        font: 'GmarketSans', fontSize: 38, fontWeight: 700,
+        color: null, accentColor: '#e02020',
+        letterSpacing: 0, lineHeight: 1.6, align: 'center' as const,
+      };
+
+    case 'med-desc':
+      return {
+        ...base, type: 'med-desc',
+        content: '모든 시술 및 수술 후에는 개인에 따라 염증, 출혈, 신경 손상 등의\n부작용이 발생할 수 있으므로 의료진과 충분한 상담을 권장드립니다.',
+        font: 'GmarketSans', fontSize: 28, fontWeight: 400,
+        color: '#555555',
+        letterSpacing: 0, lineHeight: 1.6, align: 'center' as const,
       };
 
     case 'doctor-card':

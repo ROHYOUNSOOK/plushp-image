@@ -27,12 +27,9 @@ export function applyBackgroundImage(
   pages.forEach(pg => pg.layers.forEach(l => {
     if (l.type === 'textbox') l.fillColor = autoColor;
   }));
-  pages.forEach(pg => {
-    if (pg.isMedicalLaw && pg.medConfig) {
-      pg.medConfig.titleColor = autoColor;
-      if (pg.medConfig.logo) pg.medConfig.logo.strokeColor = autoColor;
-    }
-  });
+  pages.forEach(pg => pg.layers.forEach(l => {
+    if (l.type === 'med-title') (l as import('@/types/layer').MedTitleLayer).color = autoColor;
+  }));
   pages.forEach(pg => pg.layers.forEach(l => {
     if (l.type === 'logo' && l.stroke?.enabled) l.stroke.color = autoColor;
   }));
@@ -65,12 +62,9 @@ export function applyMaskImageColors(
   pages.forEach(pg => pg.layers.forEach(l => {
     if (l.type === 'textbox') (l as import('@/types/layer').TextboxLayer).fillColor = autoColor;
   }));
-  pages.forEach(pg => {
-    if (pg.isMedicalLaw && pg.medConfig) {
-      pg.medConfig.titleColor = autoColor;
-      if (pg.medConfig.logo) pg.medConfig.logo.strokeColor = autoColor;
-    }
-  });
+  pages.forEach(pg => pg.layers.forEach(l => {
+    if (l.type === 'med-title') (l as import('@/types/layer').MedTitleLayer).color = autoColor;
+  }));
   pages.forEach(pg => pg.layers.forEach(l => {
     if (l.type === 'logo' && (l as import('@/types/layer').LogoLayer).stroke?.enabled)
       (l as import('@/types/layer').LogoLayer).stroke.color = autoColor;

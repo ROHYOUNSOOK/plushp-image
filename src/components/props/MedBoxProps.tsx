@@ -48,6 +48,15 @@ export default function MedBoxProps({ layer }: { layer: MedBoxLayer }) {
         </>
       )}
 
+      {/* 내부 패딩 */}
+      <div className="text-xs text-gray-500 mt-2">내부 패딩</div>
+      <div className="grid grid-cols-2 gap-1">
+        <NumberInput label="좌" value={layer.padL} onChange={v => update({ padL: v })} min={0} />
+        <NumberInput label="우" value={layer.padR} onChange={v => update({ padR: v })} min={0} />
+        <NumberInput label="상" value={layer.padT} onChange={v => update({ padT: v })} min={0} />
+        <NumberInput label="하" value={layer.padB} onChange={v => update({ padB: v })} min={0} />
+      </div>
+
       {/* 그림자 */}
       <div className="text-xs text-gray-500 mt-2">그림자</div>
       <ColorPickerField label="색상" color={layer.shadowColor} onChange={c => update({ shadowColor: c })} />

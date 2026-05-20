@@ -4,7 +4,7 @@
 =========================== */
 
 import type { Page } from '@/types/page';
-import type { TextboxLayer, FrameLayer, LogoLayer, ImageLayer, BackgroundLayer } from '@/types/layer';
+import type { TextboxLayer, FrameLayer, LogoLayer, ImageLayer, BackgroundLayer, MedTitleLayer } from '@/types/layer';
 import { replaceTextboxImageColors } from './colorHelpers';
 
 export function syncColorsAcrossPages(
@@ -16,6 +16,7 @@ export function syncColorsAcrossPages(
   return pages.map(pg => ({
     ...pg,
     layers: pg.layers.map(l => {
+      if (l.type === 'med-title') return { ...l, color: autoColor };
       if (l.type === 'textbox') {
         const tb = l as TextboxLayer;
         return {
@@ -44,13 +45,6 @@ export function syncColorsAcrossPages(
       }
       return l;
     }),
-    ...(pg.isMedicalLaw && pg.medConfig ? {
-      medConfig: {
-        ...pg.medConfig,
-        titleColor: autoColor,
-        ...(pg.medConfig.boxStrokeEnabled ? { boxStrokeColor: autoColor } : {}),
-      },
-    } : {}),
   }));
 }
 

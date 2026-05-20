@@ -17,7 +17,6 @@ type SerializedPage = {
   name: string;
   layers: SerializedLayer[];
   isMedicalLaw?: boolean;
-  medConfig?: Record<string, unknown>;
 };
 
 function serializeLayers(layers: Layer[]): SerializedLayer[] {
@@ -54,17 +53,7 @@ export function createSnapshot(pages: Page[]): SerializedPage[] {
       name: p.name || '',
       layers: serializeLayers(p.layers),
     };
-    if (p.isMedicalLaw) {
-      pageCopy.isMedicalLaw = true;
-      if (p.medConfig) {
-        const cfg = { ...p.medConfig } as Record<string, unknown>;
-        if (p.medConfig.logo?.img) {
-          imageCache.set(p.id + '_medlogo', p.medConfig.logo.img);
-          cfg.logo = { ...p.medConfig.logo, img: '__cached__' };
-        }
-        pageCopy.medConfig = cfg;
-      }
-    }
+    if (p.isMedicalLaw) pageCopy.isMedicalLaw = true;
     return pageCopy;
   });
 }
@@ -76,19 +65,7 @@ export function applySnapshot(snap: SerializedPage[]): Page[] {
       name: p.name || '',
       layers: deserializeLayers(p.layers),
     };
-    if (p.isMedicalLaw) {
-      page.isMedicalLaw = true;
-      if (p.medConfig) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const cfg = { ...(p.medConfig as any) } as any;
-        if (cfg.logo) {
-          const logo = { ...cfg.logo };
-          if (logo.img === '__cached__') logo.img = imageCache.get(p.id + '_medlogo') || null;
-          cfg.logo = logo;
-        }
-        page.medConfig = cfg as Page['medConfig'];
-      }
-    }
+    if (p.isMedicalLaw) page.isMedicalLaw = true;
     return page;
   });
 }

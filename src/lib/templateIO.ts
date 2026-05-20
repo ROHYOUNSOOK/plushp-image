@@ -4,7 +4,7 @@
 =========================== */
 
 import type { Layer, BackgroundLayer } from '@/types/layer';
-import type { Page, MedConfig } from '@/types/page';
+import type { Page } from '@/types/page';
 import { makeLayer } from './layerFactory';
 import { loadImage } from './utils';
 
@@ -62,18 +62,6 @@ async function serializeLayer(l: Layer): Promise<Record<string, unknown>> {
   return out;
 }
 
-/* ── medConfig 직렬화 (로고 이미지 포함) ── */
-
-async function serializeMedConfig(cfg: MedConfig): Promise<Record<string, unknown>> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const out: Record<string, unknown> = { ...(cfg as any) };
-  // logo는 LogoLayer로 이관됨 — medConfig에 저장하지 않음
-  delete out.logo;
-  // bgImg, bgColor는 BackgroundLayer로 이관됨
-  delete out.bgImg;
-  return out;
-}
-
 /* ── 파일명 생성 ── */
 
 function buildTemplateFilename(scheduleRow: Record<string, unknown> | null): string {
@@ -107,7 +95,6 @@ export async function saveTemplate(
         name: pg.name,
         bgColor: bgLayer?.solidColor ?? '#ffffff',
         isMedicalLaw: pg.isMedicalLaw ?? false,
-        medConfig: pg.medConfig ? await serializeMedConfig(pg.medConfig) : undefined,
         layers: await Promise.all(
           pg.layers
             .filter(l => l.type !== 'background')
@@ -179,15 +166,6 @@ async function deserializeLayer(raw: Record<string, unknown>): Promise<Layer> {
   return layer as unknown as Layer;
 }
 
-/* ── medConfig 역직렬화 ── */
-
-async function deserializeMedConfig(raw: Record<string, unknown>): Promise<MedConfig> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cfg = { ...raw } as any;
-  // logo는 LogoLayer로 이관됨 — medConfig에서 로드하지 않음
-  cfg.logo = null;
-  return cfg as MedConfig;
-}
 
 /** 구버전 템플릿: medConfig.logo가 있고 LogoLayer가 없는 의료법 페이지 → LogoLayer로 마이그레이션 */
 async function migrateMedLogoToLayer(pages: TemplatePage[]): Promise<TemplatePage[]> {
@@ -197,7 +175,7 @@ async function migrateMedLogoToLayer(pages: TemplatePage[]): Promise<TemplatePag
     if (!pg.isMedicalLaw) return pg;
     if (pg.layers.some(l => l.type === 'logo')) return pg;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const oldLogo = (pg.medConfig as any)?.logo;
+    const oldLogo = (pg as any)._rawMedConfig?.logo;
     if (!oldLogo?.img) return pg;
     const imgW = oldLogo.img.naturalWidth, imgH = oldLogo.img.naturalHeight;
     const drawW = ((oldLogo.sizePct ?? 7) / 100) * W;
@@ -215,6 +193,40 @@ async function migrateMedLogoToLayer(pages: TemplatePage[]): Promise<TemplatePag
   });
 }
 
+/** 구버전 템플릿: med-title/med-desc 레이어가 없는 의료법 페이지 → medConfig에서 마이그레이션 */
+async function migrateMedTextToLayers(pages: TemplatePage[]): Promise<TemplatePage[]> {
+  const { makeLayer } = await import('./layerFactory');
+  return pages.map(pg => {
+    if (!pg.isMedicalLaw) return pg;
+    if (pg.layers.some(l => l.type === 'med-title')) return pg;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cfg = (pg as any)._rawMedConfig;
+    if (!cfg) return pg;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const titleLayer = makeLayer('med-title') as import('@/types/layer').MedTitleLayer;
+    titleLayer.content       = cfg.title          ?? titleLayer.content;
+    titleLayer.font          = cfg.titleFont       ?? titleLayer.font;
+    titleLayer.fontSize      = cfg.titleSize       ?? titleLayer.fontSize;
+    titleLayer.fontWeight    = cfg.titleWeight     ?? titleLayer.fontWeight;
+    titleLayer.color         = cfg.titleColor      ?? null;
+    titleLayer.accentColor   = cfg.titleAccentColor ?? titleLayer.accentColor;
+    titleLayer.letterSpacing = cfg.titleTrack      ?? titleLayer.letterSpacing;
+    titleLayer.lineHeight    = cfg.titleLineHeight  ?? cfg.lineHeight ?? titleLayer.lineHeight;
+    titleLayer.align         = cfg.align           ?? titleLayer.align;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const descLayer = makeLayer('med-desc') as import('@/types/layer').MedDescLayer;
+    descLayer.content       = cfg.desc           ?? descLayer.content;
+    descLayer.font          = cfg.descFont        ?? descLayer.font;
+    descLayer.fontSize      = cfg.descSize        ?? descLayer.fontSize;
+    descLayer.fontWeight    = cfg.descWeight      ?? descLayer.fontWeight;
+    descLayer.color         = cfg.descColor       ?? descLayer.color;
+    descLayer.letterSpacing = cfg.descTrack       ?? descLayer.letterSpacing;
+    descLayer.lineHeight    = cfg.descLineHeight   ?? cfg.lineHeight ?? descLayer.lineHeight;
+    descLayer.align         = cfg.align           ?? descLayer.align;
+    return { ...pg, layers: [...pg.layers, titleLayer, descLayer] };
+  });
+}
+
 /* ── 불러오기 ── */
 
 export interface TemplatePage {
@@ -222,8 +234,8 @@ export interface TemplatePage {
   name: string;
   bgColor?: string;
   isMedicalLaw?: boolean;
-  medConfig?: MedConfig;
   layers: Layer[];
+  _rawMedConfig?: Record<string, unknown>; // 구버전 템플릿 마이그레이션 전용
 }
 
 export function openTemplatePicker(
@@ -252,21 +264,19 @@ export function openTemplatePicker(
           const layers = await Promise.all(
             ((pg.layers ?? []) as Record<string, unknown>[]).map(l => deserializeLayer(l))
           );
-          const medConfig = pg.medConfig
-            ? await deserializeMedConfig(pg.medConfig as Record<string, unknown>)
-            : undefined;
           return {
             id: (pg.id as number) ?? i + 1,
             name: (pg.name as string) ?? '',
             bgColor: (pg.bgColor as string) ?? '#ffffff',
             isMedicalLaw: (pg.isMedicalLaw as boolean) ?? false,
-            medConfig,
+            _rawMedConfig: pg.medConfig as Record<string, unknown> | undefined,
             layers,
           } as TemplatePage;
         })
       );
 
-      onLoad(await migrateMedLogoToLayer(restoredPages), savedScheduleRow);
+      const migratedLogo = await migrateMedLogoToLayer(restoredPages);
+      onLoad(await migrateMedTextToLayers(migratedLogo), savedScheduleRow);
     } catch {
       onError('파일을 불러오지 못했습니다');
     }
@@ -317,7 +327,6 @@ export async function saveCloudTemplate(
         name: pg.name,
         bgColor: bgLayer?.solidColor ?? '#ffffff',
         isMedicalLaw: pg.isMedicalLaw ?? false,
-        medConfig: pg.medConfig ? await serializeMedConfig(pg.medConfig) : undefined,
         layers: await Promise.all(
           pg.layers
             .filter(l => l.type !== 'background')
@@ -353,21 +362,19 @@ export async function loadCloudTemplate(
       const layers = await Promise.all(
         ((pg.layers ?? []) as Record<string, unknown>[]).map(l => deserializeLayer(l))
       );
-      const medConfig = pg.medConfig
-        ? await deserializeMedConfig(pg.medConfig as Record<string, unknown>)
-        : undefined;
       return {
         id: (pg.id as number) ?? i + 1,
         name: (pg.name as string) ?? '',
         bgColor: (pg.bgColor as string) ?? '#ffffff',
         isMedicalLaw: (pg.isMedicalLaw as boolean) ?? false,
-        medConfig,
+        _rawMedConfig: pg.medConfig as Record<string, unknown> | undefined,
         layers,
       } as TemplatePage;
     })
   );
 
-  return { pages: await migrateMedLogoToLayer(restoredPages), scheduleRow: savedScheduleRow };
+  const migratedLogo2 = await migrateMedLogoToLayer(restoredPages);
+  return { pages: await migrateMedTextToLayers(migratedLogo2), scheduleRow: savedScheduleRow };
 }
 
 export async function listCloudTemplates(): Promise<string[]> {
@@ -386,8 +393,7 @@ export function mergeTemplateIntoPage(currentPage: Page, tpl: TemplatePage): Pag
     ? { ...existingBg }
     : makeLayer('background') as BackgroundLayer;
 
-  // 의료법 페이지는 medConfig.bgColor가 배경을 제어하므로 bgLayer 색상 적용 생략
-  if (tpl.bgColor && !tpl.isMedicalLaw && !existingBg?.solidColor) {
+  if (tpl.bgColor && !existingBg?.solidColor) {
     bgLayer.solidColor = tpl.bgColor;
   }
 
@@ -395,7 +401,6 @@ export function mergeTemplateIntoPage(currentPage: Page, tpl: TemplatePage): Pag
     ...currentPage,
     name: tpl.name || currentPage.name,
     isMedicalLaw: tpl.isMedicalLaw ?? false,
-    medConfig: tpl.medConfig ?? currentPage.medConfig,
     layers: [bgLayer, ...tpl.layers],
   };
 }

@@ -146,7 +146,7 @@ export function hitTestLayer(px: number, py: number, page: Page): Layer | null {
   if (!layers) return null;
   for (let i = layers.length - 1; i >= 0; i--) {
     const l = layers[i];
-    if (!l.visible || l.locked || l.type === 'background') continue;
+    if (!l.visible || l.locked || l.type === 'background' || l.type === 'med-title' || l.type === 'med-desc') continue;
     const pl = l as PositionedLayer;
     if (px < pl.x || px > pl.x + pl.w || py < pl.y || py > pl.y + pl.h) continue;
     // 프레임: 바운딩박스 전체가 fill로 채워지므로 마스크 체크 없이 항상 히트
@@ -160,7 +160,7 @@ export function getOverlappingLayers(px: number, py: number, page: Page): Layer[
   const layers = page?.layers;
   if (!layers) return [];
   return layers
-    .filter((l): l is PositionedLayer => l.visible && !l.locked && l.type !== 'background')
+    .filter((l): l is PositionedLayer => l.visible && !l.locked && l.type !== 'background' && l.type !== 'med-title' && l.type !== 'med-desc')
     .filter(l => px >= l.x && px <= l.x + l.w && py >= l.y && py <= l.y + l.h)
     .reverse();
 }

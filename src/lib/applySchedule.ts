@@ -3,8 +3,8 @@
    editorStore.ts에서 분리
 =========================== */
 
-import type { Page, MedConfig } from '@/types/page';
-import type { TextboxLayer, LogoLayer, ImageLayer, FrameLayer, BackgroundLayer, MedBoxLayer } from '@/types/layer';
+import type { Page } from '@/types/page';
+import type { TextboxLayer, LogoLayer, ImageLayer, FrameLayer, BackgroundLayer, MedBoxLayer, MedTitleLayer, MedDescLayer } from '@/types/layer';
 import { makeLayer } from '@/lib/layerFactory';
 import { calcTextboxPos } from '@/lib/utils';
 import { applyDoctorCardTemplate, IMG_H_PRESETS, Y_OFFSETS } from '@/lib/doctorCardTemplate';
@@ -230,23 +230,8 @@ export function buildSchedulePages({
 
   // 의료법 페이지
   const medIdx = totalCount - 1;
-  const medConfig: MedConfig = pages[medIdx].medConfig ?? {
-    marginX: 20, marginY: 20,
-    padL: 20, padR: 20, padT: 35, padB: 35,
-    boxAlpha: 0.9, boxColor: '#ffffff',
-    boxStrokeEnabled: false, boxStrokeWidth: 2, boxStrokeColor: '#e0e0e0',
-    midFillEnabled: false, midFillColor: '#f5f5f5',
-    shadowColor: '#000000', shadowAlpha: 0.15, shadowBlur: 20, shadowX: 0, shadowY: 8,
-    radiusTL: 16, radiusTR: 16, radiusBR: 16, radiusBL: 16,
-    title: '본 포스팅은 본원에서\n의료법 제 56조 1항을 준수하여 직접 작성한 게시물입니다.',
-    desc: '모든 시술 및 수술 후에는 개인에 따라 염증, 출혈, 신경 손상 등의\n부작용이 발생할 수 있으므로 의료진과 충분한 상담을 권장드립니다.',
-    titleSize: 38, titleWeight: 700, titleColor: null, titleAccentColor: '#e02020', titleFont: 'GmarketSans', titleTrack: 0,
-    descSize: 28, descWeight: 400, descColor: '#555555', descFont: 'GmarketSans', descTrack: 0,
-    align: 'center', lineHeight: 1.6, titleLineHeight: 1.6, descLineHeight: 1.6,
-    bgColor: '#e8f4f7',
-  };
 
-  // 의료법 페이지 로고 레이어
+  // 로고 레이어
   const medExistingLogo = pages[medIdx].layers.find(l => l.type === 'logo') as LogoLayer | undefined;
   const medLogoLayer: LogoLayer = medExistingLogo ?? (() => {
     const l = makeLayer('logo') as LogoLayer;
@@ -255,36 +240,23 @@ export function buildSchedulePages({
     return l;
   })();
 
-  // 의료법 페이지 박스 레이어
+  // 박스 레이어
   const medExistingBox = pages[medIdx].layers.find(l => l.type === 'med-box') as MedBoxLayer | undefined;
-  const medBoxLayer: MedBoxLayer = medExistingBox ?? (() => {
-    const box = makeLayer('med-box') as MedBoxLayer;
-    // medConfig 기존 값이 있으면 적용
-    const cfg = pages[medIdx].medConfig;
-    if (cfg) {
-      box.x = cfg.marginX ?? 20; box.y = cfg.marginY ?? 20;
-      box.w = W - (cfg.marginX ?? 20) * 2;
-      box.h = ML_H - (cfg.marginY ?? 20) * 2;
-      box.boxColor   = cfg.boxColor         ?? '#ffffff';
-      box.boxAlpha   = cfg.boxAlpha         ?? 0.9;
-      box.boxStrokeEnabled = cfg.boxStrokeEnabled ?? false;
-      box.boxStrokeWidth   = cfg.boxStrokeWidth   ?? 2;
-      box.boxStrokeColor   = cfg.boxStrokeColor   ?? '#e0e0e0';
-      box.shadowColor = cfg.shadowColor ?? '#000000';
-      box.shadowAlpha = cfg.shadowAlpha ?? 0.15;
-      box.shadowBlur  = cfg.shadowBlur  ?? 20;
-      box.shadowX     = cfg.shadowX     ?? 0;
-      box.shadowY     = cfg.shadowY     ?? 8;
-      box.radiusTL = cfg.radiusTL ?? 16; box.radiusTR = cfg.radiusTR ?? 16;
-      box.radiusBR = cfg.radiusBR ?? 16; box.radiusBL = cfg.radiusBL ?? 16;
-    }
-    return box;
-  })();
+  const medBoxLayer: MedBoxLayer = medExistingBox ?? (makeLayer('med-box') as MedBoxLayer);
 
-  const medBaseLayers = pages[medIdx].layers.filter(l => l.type !== 'logo' && l.type !== 'med-box');
+  // 제목/설명 레이어
+  const medExistingTitle = pages[medIdx].layers.find(l => l.type === 'med-title') as MedTitleLayer | undefined;
+  const medTitleLayer: MedTitleLayer = medExistingTitle ?? (makeLayer('med-title') as MedTitleLayer);
+
+  const medExistingDesc = pages[medIdx].layers.find(l => l.type === 'med-desc') as MedDescLayer | undefined;
+  const medDescLayer: MedDescLayer = medExistingDesc ?? (makeLayer('med-desc') as MedDescLayer);
+
+  const medBaseLayers = pages[medIdx].layers.filter(
+    l => l.type !== 'logo' && l.type !== 'med-box' && l.type !== 'med-title' && l.type !== 'med-desc'
+  );
   pages[medIdx] = {
-    ...pages[medIdx], name: '의료법', isMedicalLaw: true, medConfig,
-    layers: [...medBaseLayers, medBoxLayer, medLogoLayer],
+    ...pages[medIdx], name: '의료법', isMedicalLaw: true,
+    layers: [...medBaseLayers, medBoxLayer, medTitleLayer, medDescLayer, medLogoLayer],
   };
 
   // 전체 색상 동기화
@@ -296,19 +268,13 @@ export function buildSchedulePages({
     ...pg,
     layers: pg.layers.map(l => {
       if (l.type === 'textbox') return { ...l, fillColor: autoColor };
+      if (l.type === 'med-title') return { ...l, color: autoColor };
       if (l.type === 'logo' && (l as LogoLayer).stroke?.enabled)
         return { ...l, stroke: { ...(l as LogoLayer).stroke, color: autoColor } };
       if (l.type === 'logo' && (l as LogoLayer).shadow?.enabled)
         return { ...l, shadow: { ...(l as LogoLayer).shadow, color: shadowColor } };
       return l;
     }),
-    ...(pg.isMedicalLaw && pg.medConfig ? {
-      medConfig: {
-        ...pg.medConfig,
-        titleColor: autoColor,
-        ...(pg.medConfig.boxStrokeEnabled ? { boxStrokeColor: autoColor } : {}),
-      },
-    } : {}),
   }));
 
   return pages;

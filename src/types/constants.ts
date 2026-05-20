@@ -20,6 +20,8 @@ export const LAYER_LABELS: Record<LayerType, string> = {
   logo: '로고',
   'doctor-card': '의사 카드',
   'med-box': '⬜ 박스',
+  'med-title': '📝 제목',
+  'med-desc': '📄 설명',
 };
 
 export const LAYER_ICONS: Record<LayerType, string> = {
@@ -31,6 +33,8 @@ export const LAYER_ICONS: Record<LayerType, string> = {
   logo: '🏷',
   'doctor-card': '🩺',
   'med-box': '⬜',
+  'med-title': '📝',
+  'med-desc': '📄',
 };
 
 /* ── 프레임 도형 목록 ── */

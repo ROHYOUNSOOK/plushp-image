@@ -81,7 +81,9 @@ export function drawImmediate(dc: DrawContext): void {
           drawDoctorCard(ctx, layer);
           break;
         case 'med-box':
-          // 의료법 페이지에서만 사용 — drawMedicalLawPage가 처리하므로 일반 렌더 루프에선 스킵
+        case 'med-title':
+        case 'med-desc':
+          // 의료법 전용 — drawMedicalLawPage가 처리하므로 일반 렌더 루프에선 스킵
           break;
       }
       ctx.restore();
@@ -98,7 +100,7 @@ export function drawImmediate(dc: DrawContext): void {
     // 호버 하이라이트
     if (dc.hoverId && dc.hoverId !== dc.selectedLayerId) {
       const hov = getLayer(page, dc.hoverId);
-      if (hov && hov.visible && hov.type !== 'background') {
+      if (hov && hov.visible && hov.type !== 'background' && hov.type !== 'med-title' && hov.type !== 'med-desc') {
         ctx.save();
         ctx.setLineDash([6, 4]);
         ctx.strokeStyle = 'rgba(255,255,255,0.9)';
@@ -113,7 +115,7 @@ export function drawImmediate(dc: DrawContext): void {
     dc.selectedLayerIds.forEach(id => {
       if (!isMultiSelect && id === dc.selectedLayerId) return;
       const l = getLayer(page, id);
-      if (l && l.visible && l.type !== 'background') {
+      if (l && l.visible && l.type !== 'background' && l.type !== 'med-title' && l.type !== 'med-desc') {
         ctx.save();
         ctx.setLineDash([4, 3]);
         ctx.strokeStyle = 'rgba(255,255,255,0.8)';

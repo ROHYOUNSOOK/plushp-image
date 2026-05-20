@@ -37,7 +37,7 @@ export async function getDefaultLogoImage(): Promise<HTMLImageElement> {
 }
 
 /**
- * 이미지가 없는 모든 페이지의 로고 레이어 + 의료법 medConfig.logo 에 기본 로고 자동 로드
+ * 이미지가 없는 모든 페이지의 로고 레이어에 기본 로고 자동 로드
  * addPage / applySchedule 후 호출
  */
 export async function autoLoadLogos(): Promise<void> {

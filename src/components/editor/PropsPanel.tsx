@@ -11,7 +11,9 @@ import LogoProps from '@/components/props/LogoProps';
 import DoctorCardProps from '@/components/props/DoctorCardProps';
 import MedicalLawProps from '@/components/props/MedicalLawProps';
 import MedBoxProps from '@/components/props/MedBoxProps';
-import type { MedBoxLayer } from '@/types/layer';
+import MedTitleProps from '@/components/props/MedTitleProps';
+import MedDescProps from '@/components/props/MedDescProps';
+import type { MedBoxLayer, MedTitleLayer, MedDescLayer } from '@/types/layer';
 
 export default function PropsPanel() {
   const layer = useEditorStore(selectSelectedLayer);
@@ -21,6 +23,12 @@ export default function PropsPanel() {
   if (isMedicalLaw) {
     if (layer?.type === 'med-box') {
       return <div className="p-3"><MedBoxProps layer={layer as MedBoxLayer} /></div>;
+    }
+    if (layer?.type === 'med-title') {
+      return <div className="p-3"><MedTitleProps layer={layer as MedTitleLayer} /></div>;
+    }
+    if (layer?.type === 'med-desc') {
+      return <div className="p-3"><MedDescProps layer={layer as MedDescLayer} /></div>;
     }
     if (layer?.type === 'logo') {
       return <div className="p-3"><LogoProps layer={layer} /></div>;

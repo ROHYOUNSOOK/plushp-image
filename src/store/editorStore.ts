@@ -10,7 +10,7 @@
 import { create } from 'zustand';
 import type { Layer } from '@/types/layer';
 import type { TextboxLayer } from '@/types/layer';
-import type { Page, MedConfig } from '@/types/page';
+import type { Page } from '@/types/page';
 import { syncColorsAcrossPages, getBgKeyColor } from '@/lib/colorSync';
 import { makeLayer } from '@/lib/layerFactory';
 import { calcTextboxPos } from '@/lib/utils';
@@ -87,7 +87,6 @@ export interface EditorState extends HistoryState {
   setIsDragOver: (v: boolean) => void;
   setDropTargetId: (id: string | null) => void;
   toggleMedicalLaw: (index: number) => void;
-  updateMedConfig: (index: number, updates: Partial<import('@/types/page').MedConfig>) => void;
   applySchedule: (texts: string[], doctors: string[], doctorSpecialty: string, doctorSpecialties?: string[], doctorDepartments?: string[], doctorImageUrls?: (string | null)[], doctorImages?: (HTMLImageElement | null)[], frameImages?: { img: HTMLImageElement | null; url: string | null }[], frameInnerImages?: { img: HTMLImageElement | null; url: string | null }[]) => void;
   setCurrentScheduleRow: (row: Record<string, unknown> | null) => void;
 }
@@ -401,38 +400,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   toggleMedicalLaw: (index) => set(state => {
     const pages = [...state.pages];
     const page = { ...pages[index] };
-    if (page.isMedicalLaw) {
-      page.isMedicalLaw = false;
-    } else {
-      page.isMedicalLaw = true;
-      if (!page.medConfig) {
-        page.medConfig = {
-          marginX: 20, marginY: 20,
-          padL: 20, padR: 20, padT: 35, padB: 35,
-          boxAlpha: 0.9, boxColor: '#ffffff',
-          boxStrokeEnabled: false, boxStrokeWidth: 2, boxStrokeColor: '#e0e0e0',
-          midFillEnabled: false, midFillColor: '#f5f5f5',
-          shadowColor: '#000000', shadowAlpha: 0.15, shadowBlur: 20, shadowX: 0, shadowY: 8,
-          radiusTL: 16, radiusTR: 16, radiusBR: 16, radiusBL: 16,
-          title: '본 포스팅은 본원에서\n의료법 제 56조 1항을 준수하여 직접 작성한 게시물입니다.',
-          desc: '모든 시술 및 수술 후에는 개인에 따라 염증, 출혈, 신경 손상 등의\n부작용이 발생할 수 있으므로 의료진과 충분한 상담을 권장드립니다.',
-          titleSize: 38, titleWeight: 700, titleColor: null, titleAccentColor: '#e02020', titleFont: 'GmarketSans', titleTrack: 0,
-          descSize: 28, descWeight: 400, descColor: '#555555', descFont: 'GmarketSans', descTrack: 0,
-          align: 'center', lineHeight: 1.6, titleLineHeight: 1.6, descLineHeight: 1.6,
-          bgColor: '#e8f4f7',
-          logo: { img: null, url: null, sizePct: 7, xPct: 6.3, yPct: 17.8, strokeEnabled: true, strokeWidth: 3, strokeColor: null },
-        };
-      }
-    }
-    pages[index] = page;
-    return { pages };
-  }),
-
-  updateMedConfig: (index, updates) => set(state => {
-    const pages = [...state.pages];
-    const page = { ...pages[index] };
-    if (!page.medConfig) return state;
-    page.medConfig = { ...page.medConfig, ...updates };
+    page.isMedicalLaw = !page.isMedicalLaw;
     pages[index] = page;
     return { pages };
   }),

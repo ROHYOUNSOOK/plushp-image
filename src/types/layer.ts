@@ -2,7 +2,7 @@
    Layer Type Definitions
 =========================== */
 
-export type LayerType = 'background' | 'frame' | 'image' | 'textbox' | 'text' | 'logo' | 'doctor-card' | 'med-box';
+export type LayerType = 'background' | 'frame' | 'image' | 'textbox' | 'text' | 'logo' | 'doctor-card' | 'med-box' | 'med-title' | 'med-desc';
 
 export type FrameShapeId = 'rect' | 'circle' | 'triangle' | 'rhombus' | 'pentagon' | 'hexagon' | 'star';
 
@@ -222,6 +222,35 @@ export interface MedBoxLayer extends LayerBase {
   radiusTR: number;
   radiusBR: number;
   radiusBL: number;
+  padL: number;
+  padR: number;
+  padT: number;
+  padB: number;
+}
+
+export interface MedTitleLayer extends LayerBase {
+  type: 'med-title';
+  content: string;
+  font: string;
+  fontSize: number;
+  fontWeight: number;
+  color: string | null;
+  accentColor: string | null;
+  letterSpacing: number;
+  lineHeight: number;
+  align: TextAlign;
+}
+
+export interface MedDescLayer extends LayerBase {
+  type: 'med-desc';
+  content: string;
+  font: string;
+  fontSize: number;
+  fontWeight: number;
+  color: string;
+  letterSpacing: number;
+  lineHeight: number;
+  align: TextAlign;
 }
 
 /* ── 유니온 타입 ── */
@@ -234,8 +263,10 @@ export type Layer =
   | TextLayer
   | LogoLayer
   | DoctorCardLayer
-  | MedBoxLayer;
+  | MedBoxLayer
+  | MedTitleLayer
+  | MedDescLayer;
 
-/* ── 좌표가 있는 레이어 (배경 제외) ── */
+/* ── 좌표가 있는 레이어 (배경·med텍스트 제외) ── */
 
-export type PositionedLayer = Exclude<Layer, BackgroundLayer>;
+export type PositionedLayer = Exclude<Layer, BackgroundLayer | MedTitleLayer | MedDescLayer>;

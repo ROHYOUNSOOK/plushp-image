@@ -23,9 +23,6 @@ export function useSyncColors() {
           return { ...l, stroke: { ...(l as LogoLayer).stroke, color: autoColor } } as LogoLayer;
         return l;
       });
-      if (pg.isMedicalLaw && pg.medConfig) {
-        return { ...pg, layers: updatedLayers, medConfig: { ...pg.medConfig, titleColor: autoColor } };
-      }
       return { ...pg, layers: updatedLayers };
     });
     setPages(newPages);

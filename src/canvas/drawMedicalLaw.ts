@@ -5,9 +5,8 @@
 =========================== */
 
 import type { Page } from '@/types/page';
-import type { MedLogoConfig } from '@/types/page';
-import type { BackgroundLayer, LogoLayer, MedBoxLayer } from '@/types/layer';
-import { hexToRgb, calcAutoFillColor, calcShadowColor } from '@/lib/colorHelpers';
+import type { BackgroundLayer, LogoLayer, MedBoxLayer, MedTitleLayer, MedDescLayer } from '@/types/layer';
+import { calcAutoFillColor } from '@/lib/colorHelpers';
 import { drawLogo } from './drawLogo';
 
 /* ===========================
@@ -198,22 +197,6 @@ export function med_roundedRect4(
   ctx.closePath();
 }
 
-/** 의료법 로고 그리기 영역 계산 */
-export function med_getLogoDrawRect(
-  logo: MedLogoConfig & { sizePct?: number },
-  canvasW: number,
-  canvasH: number,
-): { x: number; y: number; w: number; h: number } | null {
-  if (!logo.img) return null;
-  const drawW = ((logo.sizePct ?? 20) / 100) * canvasW;
-  const drawH = drawW * (logo.img.naturalHeight / logo.img.naturalWidth);
-  return {
-    x: (logo.xPct / 100) * canvasW - drawW / 2,
-    y: (logo.yPct / 100) * canvasH - drawH / 2,
-    w: drawW,
-    h: drawH,
-  };
-}
 
 /* ===========================
    drawMedicalLawPage 메인 함수
@@ -227,13 +210,10 @@ export function drawMedicalLawPage(
   bgKeyColor: string,
   firstPageBg?: { img: HTMLImageElement | null; solidColor?: string },
 ): void {
-  const cfg = page.medConfig;
-  if (!cfg) return;
-
-  // 배경: 이미지는 BackgroundLayer 우선, 색상은 1페이지 배경 실시간 동기화
+  // 배경
   const bgLayer = page.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
   const bgImg = bgLayer?.img ?? firstPageBg?.img ?? null;
-  const bgSolid = firstPageBg?.solidColor ?? bgLayer?.solidColor ?? cfg.bgColor ?? '#e8f4f7';
+  const bgSolid = firstPageBg?.solidColor ?? bgLayer?.solidColor ?? '#e8f4f7';
   if (bgImg) {
     const scale = Math.max(canvasW / bgImg.naturalWidth, canvasH / bgImg.naturalHeight);
     const dw = bgImg.naturalWidth * scale, dh = bgImg.naturalHeight * scale;
@@ -243,36 +223,53 @@ export function drawMedicalLawPage(
     ctx.fillRect(0, 0, canvasW, canvasH);
   }
 
-  const {
-    marginX, marginY, padL, padR, padT, padB,
-    title, desc,
-    titleSize, titleWeight, titleColor, titleAccentColor, titleFont, titleTrack,
-    descSize, descWeight, descColor, descFont, descTrack,
-    align, lineHeight,
-  } = cfg;
-  const titleLineHeight = cfg.titleLineHeight ?? lineHeight;
-  const descLineHeight = cfg.descLineHeight ?? lineHeight;
+  // 제목/설명 레이어
+  const titleLayer = page.layers.find(l => l.type === 'med-title') as MedTitleLayer | undefined;
+  const descLayer  = page.layers.find(l => l.type === 'med-desc')  as MedDescLayer  | undefined;
 
-  // 박스 속성: MedBoxLayer 우선, 없으면 medConfig 폴백
+  const title            = titleLayer?.content      ?? '';
+  const titleSize        = titleLayer?.fontSize      ?? 38;
+  const titleWeight      = titleLayer?.fontWeight    ?? 700;
+  const titleColor       = titleLayer?.color         ?? null;
+  const titleAccentColor = titleLayer?.accentColor   ?? null;
+  const titleFont        = titleLayer?.font          ?? 'GmarketSans';
+  const titleTrack       = titleLayer?.letterSpacing ?? 0;
+  const titleLineHeight  = titleLayer?.lineHeight    ?? 1.6;
+  const titleAlign       = titleLayer?.align         ?? 'center';
+
+  const desc            = descLayer?.content       ?? '';
+  const descSize        = descLayer?.fontSize       ?? 28;
+  const descWeight      = descLayer?.fontWeight     ?? 400;
+  const descColor       = descLayer?.color          ?? '#555555';
+  const descFont        = descLayer?.font           ?? 'GmarketSans';
+  const descTrack       = descLayer?.letterSpacing  ?? 0;
+  const descLineHeight  = descLayer?.lineHeight     ?? 1.6;
+  const descAlign       = descLayer?.align          ?? 'center';
+
+  // 박스 레이어
   const boxLayer = page.layers.find(l => l.type === 'med-box') as MedBoxLayer | undefined;
-  const boxX = boxLayer?.x ?? marginX;
-  const boxY = boxLayer?.y ?? marginY;
-  const boxW = boxLayer?.w ?? (canvasW - marginX * 2);
-  const boxH = boxLayer?.h ?? (canvasH - marginY * 2);
-  const _boxColor    = boxLayer?.boxColor         ?? cfg.boxColor         ?? '#ffffff';
-  const _boxAlpha    = boxLayer?.boxAlpha          ?? cfg.boxAlpha         ?? 0.9;
-  const _strokeOn    = boxLayer?.boxStrokeEnabled  ?? cfg.boxStrokeEnabled ?? false;
-  const _strokeW     = boxLayer?.boxStrokeWidth    ?? cfg.boxStrokeWidth   ?? 2;
-  const _strokeColor = boxLayer?.boxStrokeColor    ?? cfg.boxStrokeColor   ?? '#e0e0e0';
-  const _shadowColor = boxLayer?.shadowColor       ?? cfg.shadowColor      ?? '#000000';
-  const _shadowAlpha = boxLayer?.shadowAlpha       ?? cfg.shadowAlpha      ?? 0.15;
-  const _shadowBlur  = boxLayer?.shadowBlur        ?? cfg.shadowBlur       ?? 20;
-  const _shadowX     = boxLayer?.shadowX           ?? cfg.shadowX          ?? 0;
-  const _shadowY     = boxLayer?.shadowY           ?? cfg.shadowY          ?? 8;
-  const _rtl = boxLayer?.radiusTL ?? cfg.radiusTL ?? 16;
-  const _rtr = boxLayer?.radiusTR ?? cfg.radiusTR ?? 16;
-  const _rbr = boxLayer?.radiusBR ?? cfg.radiusBR ?? 16;
-  const _rbl = boxLayer?.radiusBL ?? cfg.radiusBL ?? 16;
+  const boxX = boxLayer?.x ?? 20;
+  const boxY = boxLayer?.y ?? 20;
+  const boxW = boxLayer?.w ?? (canvasW - 40);
+  const boxH = boxLayer?.h ?? (canvasH - 40);
+  const _boxColor    = boxLayer?.boxColor         ?? '#ffffff';
+  const _boxAlpha    = boxLayer?.boxAlpha          ?? 0.9;
+  const _strokeOn    = boxLayer?.boxStrokeEnabled  ?? false;
+  const _strokeW     = boxLayer?.boxStrokeWidth    ?? 2;
+  const _strokeColor = boxLayer?.boxStrokeColor    ?? '#e0e0e0';
+  const _shadowColor = boxLayer?.shadowColor       ?? '#000000';
+  const _shadowAlpha = boxLayer?.shadowAlpha       ?? 0.15;
+  const _shadowBlur  = boxLayer?.shadowBlur        ?? 20;
+  const _shadowX     = boxLayer?.shadowX           ?? 0;
+  const _shadowY     = boxLayer?.shadowY           ?? 8;
+  const _rtl = boxLayer?.radiusTL ?? 16;
+  const _rtr = boxLayer?.radiusTR ?? 16;
+  const _rbr = boxLayer?.radiusBR ?? 16;
+  const _rbl = boxLayer?.radiusBL ?? 16;
+  const padL = boxLayer?.padL ?? 20;
+  const padR = boxLayer?.padR ?? 20;
+  const padT = boxLayer?.padT ?? 35;
+  const padB = boxLayer?.padB ?? 35;
 
   // 박스 그림자
   ctx.save();
@@ -301,9 +298,6 @@ export function drawMedicalLawPage(
   ctx.clip();
 
   const innerX = boxX + padL, innerY = boxY + padT, innerW = boxW - padL - padR, innerH = boxH - padT - padB;
-  let tx = innerX + innerW / 2;
-  if (align === 'left') tx = innerX;
-  if (align === 'right') tx = innerX + innerW;
   ctx.textBaseline = 'top';
 
   ctx.font = `${titleWeight} ${titleSize}px "${titleFont}", system-ui, sans-serif`;
@@ -319,14 +313,20 @@ export function drawMedicalLawPage(
   let ty = innerY + (innerH - (titleH + gap + descH)) / 2;
 
   ctx.font = `${titleWeight} ${titleSize}px "${titleFont}", system-ui, sans-serif`;
-  const _titleColor = titleColor || calcAutoFillColor(cfg.bgColor || bgKeyColor);
+  const _titleColor = titleColor || calcAutoFillColor(bgSolid || bgKeyColor);
   ctx.fillStyle = _titleColor;
-  med_drawStyledLines(ctx, wrappedTitle, tx, ty, titleSize * titleLineHeight, align, titleTrack, _titleColor, titleAccentColor || null);
+  let titleTx = innerX + innerW / 2;
+  if (titleAlign === 'left') titleTx = innerX;
+  if (titleAlign === 'right') titleTx = innerX + innerW;
+  med_drawStyledLines(ctx, wrappedTitle, titleTx, ty, titleSize * titleLineHeight, titleAlign, titleTrack, _titleColor, titleAccentColor || null);
   ty += titleH + gap;
 
   ctx.font = `${descWeight} ${descSize}px "${descFont}", system-ui, sans-serif`;
   ctx.fillStyle = descColor;
-  med_drawLines(ctx, descLines, tx, ty, descSize * descLineHeight, align, descTrack);
+  let descTx = innerX + innerW / 2;
+  if (descAlign === 'left') descTx = innerX;
+  if (descAlign === 'right') descTx = innerX + innerW;
+  med_drawLines(ctx, descLines, descTx, ty, descSize * descLineHeight, descAlign, descTrack);
   ctx.restore();
 
   // 로고: LogoLayer에서 읽어 drawLogo로 렌더
