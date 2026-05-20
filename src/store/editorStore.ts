@@ -401,6 +401,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const pages = [...state.pages];
     const page = { ...pages[index] };
     page.isMedicalLaw = !page.isMedicalLaw;
+    if (page.isMedicalLaw) {
+      // 누락된 의료법 레이어 자동 생성
+      let layers = [...page.layers];
+      if (!layers.some(l => l.type === 'med-box'))   layers = [...layers, makeLayer('med-box')];
+      if (!layers.some(l => l.type === 'med-title'))  layers = [...layers, makeLayer('med-title')];
+      if (!layers.some(l => l.type === 'med-desc'))   layers = [...layers, makeLayer('med-desc')];
+      page.layers = layers;
+    }
     pages[index] = page;
     return { pages };
   }),

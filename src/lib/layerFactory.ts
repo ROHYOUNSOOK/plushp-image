@@ -69,7 +69,7 @@ export function makeLayer(type: LayerType): Layer {
     case 'logo':
       return {
         ...base, type: 'logo',
-        x: 30, y: 30, w: 130, h: 86,
+        x: 30, y: 30, w: 70, h: 70,
         img: null, url: null, opacity: 1, rotation: 0,
         stroke: { enabled: true, color: null, width: 3, radius: 0 },
         shadow: { enabled: false, color: null, alpha: 0.4, blur: 5, offsetX: 0, offsetY: 5 },

@@ -5,7 +5,7 @@ import React, { useRef, useState } from 'react';
 import { useEditorStore } from '@/store/editorStore';
 import { alignLayers, distributeLayers, type AlignDir, type DistributeDir } from '@/lib/snapAndAlign';
 import type { PositionedLayer } from '@/types/layer';
-import { W, H } from '@/types/constants';
+import { W, H, ML_H } from '@/types/constants';
 import { toast } from './Toast';
 
 /* ── SVG 아이콘 (원본 HTML 동일) ── */
@@ -134,7 +134,7 @@ export default function AlignToolbar() {
       const maxX = Math.max(...targets.map(l => l.x + l.w));
       const maxY = Math.max(...targets.map(l => l.y + l.h));
       const gw = maxX - minX, gh = maxY - minY;
-      const coordH = page.isMedicalLaw ? H : H;
+      const coordH = page.isMedicalLaw ? ML_H : H;
       let dx = 0, dy = 0;
       if (dir === 'left')    dx = 0 - minX;
       if (dir === 'centerH') dx = (W - gw) / 2 - minX;
@@ -155,7 +155,7 @@ export default function AlignToolbar() {
     // 일반 정렬
     const copies = targets.map(l => ({ ...l })) as PositionedLayer[];
     state.pushHistory();
-    alignLayers(copies, dir);
+    alignLayers(copies, dir, page.isMedicalLaw ? ML_H : H);
     copies.forEach(c => {
       const upd: Record<string, unknown> = { x: c.x, y: c.y };
       if (c.type === 'textbox') { upd.positionPreset = null; upd.freePos = true; }

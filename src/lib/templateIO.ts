@@ -393,9 +393,7 @@ export function mergeTemplateIntoPage(currentPage: Page, tpl: TemplatePage): Pag
     ? { ...existingBg }
     : makeLayer('background') as BackgroundLayer;
 
-  if (tpl.bgColor && !existingBg?.solidColor) {
-    bgLayer.solidColor = tpl.bgColor;
-  }
+  if (tpl.bgColor) bgLayer.solidColor = tpl.bgColor;
 
   return {
     ...currentPage,

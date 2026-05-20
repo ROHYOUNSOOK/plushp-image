@@ -10,7 +10,7 @@ export type AlignDir = 'left' | 'right' | 'centerH' | 'top' | 'bottom' | 'center
 export type DistributeDir = 'h' | 'v';
 
 /** 레이어 정렬 (단일: 캔버스 기준, 다중: 바운딩 박스 기준) */
-export function alignLayers(layers: PositionedLayer[], dir: AlignDir): void {
+export function alignLayers(layers: PositionedLayer[], dir: AlignDir, canvasH: number = H): void {
   if (layers.length === 0) return;
 
   if (layers.length === 1) {
@@ -21,8 +21,8 @@ export function alignLayers(layers: PositionedLayer[], dir: AlignDir): void {
       case 'right':   sel.x = W - sel.w; break;
       case 'centerH': sel.x = (W - sel.w) / 2; break;
       case 'top':     sel.y = 0; break;
-      case 'bottom':  sel.y = H - sel.h; break;
-      case 'centerV': sel.y = (H - sel.h) / 2; break;
+      case 'bottom':  sel.y = canvasH - sel.h; break;
+      case 'centerV': sel.y = (canvasH - sel.h) / 2; break;
     }
   } else {
     const bbLeft   = Math.min(...layers.map(l => l.x));
