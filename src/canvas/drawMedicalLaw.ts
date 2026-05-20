@@ -223,11 +223,13 @@ export function drawMedicalLawPage(
     ctx.fillRect(0, 0, canvasW, canvasH);
   }
 
-  // 제목/설명 레이어
+  // 제목/설명 레이어 (visible=false면 빈 문자열로 처리)
   const titleLayer = page.layers.find(l => l.type === 'med-title') as MedTitleLayer | undefined;
   const descLayer  = page.layers.find(l => l.type === 'med-desc')  as MedDescLayer  | undefined;
+  const titleVisible = titleLayer?.visible ?? true;
+  const descVisible  = descLayer?.visible  ?? true;
 
-  const title            = titleLayer?.content      ?? '';
+  const title            = (titleVisible ? titleLayer?.content : '') ?? '';
   const titleSize        = titleLayer?.fontSize      ?? 38;
   const titleWeight      = titleLayer?.fontWeight    ?? 700;
   const titleColor       = titleLayer?.color         ?? null;
@@ -237,7 +239,7 @@ export function drawMedicalLawPage(
   const titleLineHeight  = titleLayer?.lineHeight    ?? 1.6;
   const titleAlign       = titleLayer?.align         ?? 'center';
 
-  const desc            = descLayer?.content       ?? '';
+  const desc            = (descVisible ? descLayer?.content : '') ?? '';
   const descSize        = descLayer?.fontSize       ?? 28;
   const descWeight      = descLayer?.fontWeight     ?? 400;
   const descColor       = descLayer?.color          ?? '#555555';
@@ -246,9 +248,9 @@ export function drawMedicalLawPage(
   const descLineHeight  = descLayer?.lineHeight     ?? 1.6;
   const descAlign       = descLayer?.align          ?? 'center';
 
-  // 박스 레이어 — 없으면 렌더 스킵
+  // 박스 레이어 — 없거나 숨겨져 있으면 렌더 스킵
   const boxLayer = page.layers.find(l => l.type === 'med-box') as MedBoxLayer | undefined;
-  if (!boxLayer) {
+  if (!boxLayer || !boxLayer.visible) {
     const logoLayer2 = page.layers.find(l => l.type === 'logo') as LogoLayer | undefined;
     if (logoLayer2?.img) { ctx.save(); drawLogo(ctx, logoLayer2, bgKeyColor, false); ctx.restore(); }
     return;

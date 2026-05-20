@@ -9,7 +9,8 @@ import { useEffect, useCallback } from 'react';
 import { W, H, ML_H } from '@/types/constants';
 import { useEditorStore } from '@/store/editorStore';
 import { hitTestHandle, hitTestLayer, getOverlappingLayers, getGroupBounds } from '@/lib/hitTest';
-import type { PositionedLayer, BackgroundLayer } from '@/types/layer';
+import type { PositionedLayer, BackgroundLayer, MedBoxLayer, Layer } from '@/types/layer';
+import type { Page } from '@/types/page';
 import {
   loadImageFromFile,
   applyBackgroundImage,
@@ -21,6 +22,22 @@ import {
 import { toast } from '@/components/editor/Toast';
 
 type LayerSnap = { id: string; x: number; y: number; w: number; h: number };
+
+/** 의료법 페이지: 클릭 위치가 박스 내부 텍스트 영역이면 med-title/med-desc 반환 */
+function hitTestMedText(x: number, y: number, page: Page): Layer | null {
+  const boxLayer = page.layers.find(l => l.type === 'med-box') as MedBoxLayer | undefined;
+  if (!boxLayer || !boxLayer.visible) return null;
+  const innerX = boxLayer.x + boxLayer.padL;
+  const innerY = boxLayer.y + boxLayer.padT;
+  const innerW = boxLayer.w - boxLayer.padL - boxLayer.padR;
+  const innerH = boxLayer.h - boxLayer.padT - boxLayer.padB;
+  if (x < innerX || x > innerX + innerW || y < innerY || y > innerY + innerH) return null;
+  const titleLayer = page.layers.find(l => l.type === 'med-title' && l.visible);
+  const descLayer  = page.layers.find(l => l.type === 'med-desc'  && l.visible);
+  const midY = innerY + innerH / 2;
+  if (y <= midY) return titleLayer ?? descLayer ?? null;
+  return descLayer ?? titleLayer ?? null;
+}
 
 type DragState = {
   type: 'move' | 'resize' | 'frameImg';
@@ -216,6 +233,12 @@ export function useCanvasEvents({
     const overlapping = getOverlappingLayers(x, y, page);
     let hit = hitTestLayer(x, y, page);
 
+    // 의료법 페이지: 박스 내부 텍스트 영역 클릭 → med-title/med-desc 우선 선택
+    if (page.isMedicalLaw && hit?.type === 'med-box') {
+      const textHit = hitTestMedText(x, y, page);
+      if (textHit) hit = textHit;
+    }
+
     if (!e.shiftKey && overlapping.length > 1 && hit) {
       const nearPrev = prev && Math.hypot(x - prev.x, y - prev.y) < CYCLE_RADIUS;
       if (nearPrev && prev) {
@@ -236,7 +259,8 @@ export function useCanvasEvents({
     if (hit) {
       if (e.shiftKey) {
         state.selectToggle(hit.id);
-        if (hit.type !== 'background') {
+        const noPosSh = hit.type === 'background' || hit.type === 'med-title' || hit.type === 'med-desc';
+        if (!noPosSh) {
           const pl = hit as PositionedLayer;
           state.pushHistory();
           dragRef.current = { type: 'move', layerId: hit.id, ox: x, oy: y, startX: pl.x, startY: pl.y, startW: pl.w, startH: pl.h };
@@ -256,7 +280,8 @@ export function useCanvasEvents({
         canvasRef.current?.setPointerCapture(e.pointerId);
       } else {
         state.selectSingle(hit.id);
-        if (hit.type !== 'background') {
+        const noPos = hit.type === 'background' || hit.type === 'med-title' || hit.type === 'med-desc';
+        if (!noPos) {
           const pl = hit as PositionedLayer;
           state.pushHistory();
           dragRef.current = { type: 'move', layerId: hit.id, ox: x, oy: y, startX: pl.x, startY: pl.y, startW: pl.w, startH: pl.h };
@@ -477,7 +502,19 @@ export function useCanvasEvents({
     const { x, y } = getPointer(e as unknown as React.PointerEvent);
     const state = useEditorStore.getState();
     const page = state.pages[state.currentPage];
-    if (!page || page.isMedicalLaw) return;
+    if (!page) return;
+
+    // 의료법 페이지: 박스 내부 텍스트 영역 더블클릭 → 해당 레이어 선택
+    if (page.isMedicalLaw) {
+      let hit = hitTestLayer(x, y, page);
+      if (hit?.type === 'med-box') {
+        const textHit = hitTestMedText(x, y, page);
+        if (textHit) hit = textHit;
+      }
+      if (hit) state.selectSingle(hit.id);
+      return;
+    }
+
     const hit = hitTestLayer(x, y, page);
     if (hit?.type === 'frame') {
       state.selectSingle(hit.id);
