@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import type { MedTitleLayer } from '@/types/layer';
 import { useEditorStore } from '@/store/editorStore';
 import ColorPickerField from '@/components/ui/ColorPickerField';
@@ -18,13 +19,16 @@ export default function MedTitleProps({ layer }: { layer: MedTitleLayer }) {
   });
   const update = (u: Partial<MedTitleLayer>) => updateLayer(layer.id, u);
 
+  const [content, setContent] = useState(layer.content);
+  useEffect(() => { setContent(layer.content); }, [layer.id]);
+
   return (
     <div className="space-y-3">
       <div className="font-bold text-xs text-gray-500 uppercase">📝 제목 텍스트</div>
 
       <textarea
-        value={layer.content}
-        onChange={e => update({ content: e.target.value })}
+        value={content}
+        onChange={e => { setContent(e.target.value); update({ content: e.target.value }); }}
         className="w-full text-xs text-gray-900 p-1.5 border border-gray-300 rounded resize-none"
         rows={4}
       />

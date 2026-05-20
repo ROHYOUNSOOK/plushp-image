@@ -130,6 +130,7 @@ export function createDroppedImageLayer(
 /** 전 페이지에 배경 이미지 일괄 적용 (의료법 페이지 제외) */
 export function applyBgToAllPages(img: HTMLImageElement, url: string, pages: Page[]): void {
   pages.forEach(pg => {
+    if (pg.isMedicalLaw) return; // 의료법 페이지는 배경 레이어 불필요
     if (!pg.layers.find(l => l.type === 'background')) {
       pg.layers.unshift(makeLayer('background') as BackgroundLayer);
     }

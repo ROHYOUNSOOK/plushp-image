@@ -22,19 +22,19 @@ export default function PropsPanel() {
   // 의료법 페이지: 선택된 레이어 타입에 따라 전용 패널 표시
   if (isMedicalLaw) {
     if (layer?.type === 'med-box') {
-      return <div className="p-3"><MedBoxProps layer={layer as MedBoxLayer} /></div>;
+      return <div className="p-3" key={layer.id}><MedBoxProps layer={layer as MedBoxLayer} /></div>;
     }
     if (layer?.type === 'med-title') {
-      return <div className="p-3"><MedTitleProps layer={layer as MedTitleLayer} /></div>;
+      return <div className="p-3" key={layer.id}><MedTitleProps layer={layer as MedTitleLayer} /></div>;
     }
     if (layer?.type === 'med-desc') {
-      return <div className="p-3"><MedDescProps layer={layer as MedDescLayer} /></div>;
+      return <div className="p-3" key={layer.id}><MedDescProps layer={layer as MedDescLayer} /></div>;
     }
     if (layer?.type === 'logo') {
-      return <div className="p-3"><LogoProps layer={layer} /></div>;
+      return <div className="p-3" key={layer.id}><LogoProps layer={layer} /></div>;
     }
     if (layer?.type === 'background') {
-      return <div className="p-3"><BackgroundProps layer={layer} /></div>;
+      return <div className="p-3" key={layer.id}><BackgroundProps layer={layer} /></div>;
     }
     return (
       <div className="p-3">
