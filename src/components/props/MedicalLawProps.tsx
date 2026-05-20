@@ -2,6 +2,7 @@
 
 import { useEditorStore } from '@/store/editorStore';
 import { makeLayer } from '@/lib/layerFactory';
+import { autoLoadLogos } from '@/lib/logoLoader';
 
 export default function MedicalLawProps() {
   const currentPage = useEditorStore(s => s.currentPage);
@@ -10,7 +11,7 @@ export default function MedicalLawProps() {
   const pages = useEditorStore(s => s.pages);
   const pushHistory = useEditorStore(s => s.pushHistory);
 
-  const restoreMissingLayers = () => {
+  const restoreMissingLayers = async () => {
     pushHistory();
     const newPages = [...pages];
     let layers = [...page.layers];
@@ -20,6 +21,7 @@ export default function MedicalLawProps() {
     if (!layers.some(l => l.type === 'logo'))        layers = [...layers, makeLayer('logo')];
     newPages[currentPage] = { ...page, layers };
     setPages(newPages);
+    await autoLoadLogos();
   };
 
   return (

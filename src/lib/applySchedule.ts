@@ -236,7 +236,7 @@ export function buildSchedulePages({
   const medLogoLayer: LogoLayer = medExistingLogo ?? (() => {
     const l = makeLayer('logo') as LogoLayer;
     l.stroke = { enabled: true, color: null, width: 3, radius: 0 };
-    if (refLogo) { l.img = refLogo.img; l.url = refLogo.url; l.w = refLogo.w; l.h = refLogo.h; }
+    if (refLogo) { l.img = refLogo.img; l.url = refLogo.url; }
     return l;
   })();
 
