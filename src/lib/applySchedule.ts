@@ -233,11 +233,13 @@ export function buildSchedulePages({
 
   // 로고 레이어
   const medExistingLogo = pages[medIdx].layers.find(l => l.type === 'logo') as LogoLayer | undefined;
-  const medLogoLayer: LogoLayer = medExistingLogo ?? (() => {
-    const l = makeLayer('logo') as LogoLayer;
-    l.stroke = { enabled: true, color: null, width: 3, radius: 0 };
-    if (refLogo) { l.img = refLogo.img; l.url = refLogo.url; }
-    return l;
+  const medLogoLayer: LogoLayer = (() => {
+    const base = medExistingLogo ?? (makeLayer('logo') as LogoLayer);
+    // 의료법 로고는 항상 70×70 고정 (스케줄 재적용 시에도 크기 리셋)
+    const img  = medExistingLogo?.img  ?? refLogo?.img  ?? null;
+    const url  = medExistingLogo?.url  ?? refLogo?.url  ?? null;
+    return { ...base, img, url, w: 70, h: 70,
+      stroke: { enabled: true, color: base.stroke?.color ?? null, width: 3, radius: 0 } };
   })();
 
   // 박스 레이어

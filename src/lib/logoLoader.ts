@@ -2,7 +2,6 @@
 
 import { loadImage } from './utils';
 import type { LogoLayer } from '@/types/layer';
-import { W, H } from '@/types/constants';
 
 const LOGO_MARGIN = 30;
 
@@ -53,19 +52,13 @@ export async function autoLoadLogos(): Promise<void> {
 
   try {
     const img = await getDefaultLogoImage();
-    const aspect = img.naturalWidth / img.naturalHeight;
-    const logoW = Math.round(86 * aspect);
+    const LOGO_SIZE = 70;
 
     const updatedPages = store.pages.map(pg => {
-      // 기존 로고 레이어 갱신
+      // 이미지 없는 로고 레이어: img/url만 채우고 w/h/x/y는 레이어 값 유지
       let newLayers = pg.layers.map(l => {
         if (l.type === 'logo' && !(l as LogoLayer).img) {
-          const logo = l as LogoLayer;
-          const isRight = logo.x > W / 2;
-          const isBottom = logo.y > H / 2;
-          const newX = isRight ? W - logoW - LOGO_MARGIN : LOGO_MARGIN;
-          const newY = isBottom ? H - 86 - LOGO_MARGIN : LOGO_MARGIN;
-          return { ...logo, img, url: LOGO_URL, h: 86, w: logoW, x: newX, y: newY } as LogoLayer;
+          return { ...(l as LogoLayer), img, url: LOGO_URL } as LogoLayer;
         }
         return l;
       });
@@ -80,7 +73,7 @@ export async function autoLoadLogos(): Promise<void> {
           locked: false,
           img, url: LOGO_URL,
           x: LOGO_MARGIN, y: LOGO_MARGIN,
-          w: logoW, h: 86,
+          w: LOGO_SIZE, h: LOGO_SIZE,
           opacity: 1, rotation: 0,
           stroke: { enabled: true, color: null, width: 3, radius: 0 },
           shadow: { enabled: false, color: null, alpha: 0.4, blur: 5, offsetX: 0, offsetY: 5 },

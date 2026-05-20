@@ -3,6 +3,8 @@
 import { useEditorStore } from '@/store/editorStore';
 import { makeLayer } from '@/lib/layerFactory';
 import { autoLoadLogos } from '@/lib/logoLoader';
+import { calcAutoFillColor, calcShadowColor } from '@/lib/colorHelpers';
+import type { BackgroundLayer } from '@/types/layer';
 
 export default function MedicalLawProps() {
   const currentPage = useEditorStore(s => s.currentPage);
@@ -22,6 +24,10 @@ export default function MedicalLawProps() {
     newPages[currentPage] = { ...page, layers };
     setPages(newPages);
     await autoLoadLogos();
+    // 로고 외곽선 색상 동기화
+    const bg = useEditorStore.getState().pages[0]?.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
+    const bgColor = bg?.solidColor ?? '#ffffff';
+    useEditorStore.getState().applySyncColors(calcAutoFillColor(bgColor), calcShadowColor(bgColor));
   };
 
   return (

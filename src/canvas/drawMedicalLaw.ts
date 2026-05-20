@@ -246,8 +246,13 @@ export function drawMedicalLawPage(
   const descLineHeight  = descLayer?.lineHeight     ?? 1.6;
   const descAlign       = descLayer?.align          ?? 'center';
 
-  // 박스 레이어
+  // 박스 레이어 — 없으면 렌더 스킵
   const boxLayer = page.layers.find(l => l.type === 'med-box') as MedBoxLayer | undefined;
+  if (!boxLayer) {
+    const logoLayer2 = page.layers.find(l => l.type === 'logo') as LogoLayer | undefined;
+    if (logoLayer2?.img) { ctx.save(); drawLogo(ctx, logoLayer2, bgKeyColor, false); ctx.restore(); }
+    return;
+  }
   const boxX = boxLayer?.x ?? 20;
   const boxY = boxLayer?.y ?? 20;
   const boxW = boxLayer?.w ?? (canvasW - 40);
