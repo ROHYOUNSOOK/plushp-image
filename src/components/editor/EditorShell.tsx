@@ -165,7 +165,7 @@ export default function EditorShell() {
       {/* 상단 툴바 */}
       <div className="flex items-center gap-2 p-2 bg-[#0d8fa8] text-white text-sm">
         <Link
-          href="/"
+          href="/plan"
           className="px-2 py-1 rounded text-gray-300 hover:bg-[#1a5cba] hover:text-white transition-colors text-xs"
           title="기획안 페이지로 돌아가기"
         >
