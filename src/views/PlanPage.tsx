@@ -5,10 +5,12 @@ import Link from 'next/link';
 import type { ScheduleRow } from '@/lib/supabase';
 import PlanList from '@/components/plan/PlanList';
 import PlanForm from '@/components/plan/PlanForm';
+import PlanFilter from '@/components/plan/PlanFilter';
 import { usePlanData } from '@/hooks/usePlanData';
 
 export default function PlanPage() {
-  const { rows, loading, allDoctors, blogAccounts, upsertRow, deleteRow } = usePlanData();
+  const [filterUserId, setFilterUserId] = useState<string | undefined>();
+  const { rows, loading, allDoctors, blogAccounts, isAdmin, upsertRow, deleteRow } = usePlanData(filterUserId);
   const [selectedRow, setSelectedRow] = useState<ScheduleRow | null>(null);
   const [isNew, setIsNew] = useState(true);
 
@@ -37,12 +39,14 @@ export default function PlanPage() {
           <span className="text-sm font-semibold text-white">Plus 기획안</span>
         </div>
         <Link
-          href="/editor"
+          href="/home"
           className="text-xs px-3 py-1.5 rounded-lg border border-white text-white hover:bg-[#0b7a8f] transition-colors"
         >
-          편집기로 →
+          홈으로 →
         </Link>
       </header>
+
+      {isAdmin && <PlanFilter onSelect={setFilterUserId} />}
 
       <div className="flex flex-1 overflow-hidden">
         <div className="w-64 border-r border-gray-200 flex flex-col bg-white">

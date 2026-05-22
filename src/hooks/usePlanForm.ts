@@ -41,19 +41,23 @@ export function usePlanForm(
   const setCurrentScheduleRow = useEditorStore(s => s.setCurrentScheduleRow);
   const pushHistory = useEditorStore(s => s.pushHistory);
 
-  const buildPayload = (form: FormValues) => ({
-    marketer: form.marketer,
-    date: form.date,
-    account_id: form.account_id,
-    keyword: form.keyword,
-    texts: form.texts.filter(t => t.trim()),
-    doctors: form.doctors.filter(d => d.trim()),
-    doctor_specialty: form.doctor_specialty,
-    completed: row?.completed ?? false,
-  });
+  const buildPayload = async (form: FormValues) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    return {
+      marketer: form.marketer,
+      date: form.date,
+      account_id: form.account_id,
+      keyword: form.keyword,
+      texts: form.texts.filter(t => t.trim()),
+      doctors: form.doctors.filter(d => d.trim()),
+      doctor_specialty: form.doctor_specialty,
+      completed: row?.completed ?? false,
+      ...(row?.id ? {} : { created_by: user?.id ?? null }),
+    };
+  };
 
   const saveToDb = async (form: FormValues): Promise<ScheduleRow> => {
-    const payload = buildPayload(form);
+    const payload = await buildPayload(form);
     if (row?.id) {
       const { data, error } = await supabase.from('plus_schedule').update(payload).eq('id', row.id).select().single();
       if (error) throw error;
