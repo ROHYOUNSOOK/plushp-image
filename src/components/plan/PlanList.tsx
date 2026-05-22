@@ -6,9 +6,10 @@ interface Props {
   selectedId: string | null;
   onSelect: (row: ScheduleRow) => void;
   onNew: () => void;
+  canCreate: boolean;
 }
 
-export default function PlanList({ rows, selectedId, onSelect, onNew }: Props) {
+export default function PlanList({ rows, selectedId, onSelect, onNew, canCreate }: Props) {
   const grouped: Record<string, ScheduleRow[]> = {};
   for (const row of rows) {
     const key = row.date || '날짜 없음';
@@ -23,12 +24,14 @@ export default function PlanList({ rows, selectedId, onSelect, onNew }: Props) {
       <div className="px-4 py-3.5 border-b border-gray-100">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">기획안</span>
-          <button
-            onClick={onNew}
-            className="text-[11px] font-medium text-[#1450a0] hover:text-[#1045a0] transition-colors"
-          >
-            + 새 기획안
-          </button>
+          {canCreate && (
+            <button
+              onClick={onNew}
+              className="text-[11px] font-medium text-[#1450a0] hover:text-[#1045a0] transition-colors"
+            >
+              + 새 기획안
+            </button>
+          )}
         </div>
       </div>
 

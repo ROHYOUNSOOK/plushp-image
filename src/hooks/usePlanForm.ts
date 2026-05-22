@@ -101,10 +101,11 @@ export function usePlanForm(
     }
   };
 
-  const handleSaveAndEdit = async (form: FormValues): Promise<void> => {
+  const navigateToEditor = async (): Promise<void> => {
+    if (!row?.id) return;
     toast('이미지 불러오는 중...', 0);
     try {
-      const saved = await saveToDb(form);
+      const saved = row;
       setCurrentScheduleRow(saved as unknown as Record<string, unknown>);
       pushHistory();
 
@@ -149,9 +150,9 @@ export function usePlanForm(
       router.push('/editor');
     } catch (e: unknown) {
       hideToast();
-      toast('저장 실패: ' + (e instanceof Error ? e.message : String(e)));
+      toast('이동 실패: ' + (e instanceof Error ? e.message : String(e)));
     }
   };
 
-  return { handleSave, handleSaveAndEdit, handleDelete };
+  return { handleSave, navigateToEditor, handleDelete };
 }

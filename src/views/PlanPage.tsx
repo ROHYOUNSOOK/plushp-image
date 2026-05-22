@@ -7,13 +7,15 @@ import PlanList from '@/components/plan/PlanList';
 import PlanForm from '@/components/plan/PlanForm';
 import PlanFilter from '@/components/plan/PlanFilter';
 import { usePlanData } from '@/hooks/usePlanData';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 import Toast from '@/components/editor/Toast';
 
 export default function PlanPage() {
   const [filterUserId, setFilterUserId] = useState<string | undefined>();
   const { rows, loading, allDoctors, blogAccounts, isAdmin, upsertRow, deleteRow } = usePlanData(filterUserId);
+  const permissions = useUserPermissions();
   const [selectedRow, setSelectedRow] = useState<ScheduleRow | null>(null);
-  const [isNew, setIsNew] = useState(true);
+  const [isNew, setIsNew] = useState(false);
 
   const handleSelect = (row: ScheduleRow) => { setSelectedRow(row); setIsNew(false); };
   const handleNew = () => { setSelectedRow(null); setIsNew(true); };
@@ -60,6 +62,7 @@ export default function PlanPage() {
               selectedId={selectedRow?.id ?? null}
               onSelect={handleSelect}
               onNew={handleNew}
+              canCreate={permissions.canEditPlans}
             />
           )}
         </div>
@@ -71,6 +74,7 @@ export default function PlanPage() {
               row={formRow}
               allDoctors={allDoctors}
               blogAccounts={blogAccounts}
+              permissions={permissions}
               onSaved={handleSaved}
               onDeleted={handleDeleted}
             />

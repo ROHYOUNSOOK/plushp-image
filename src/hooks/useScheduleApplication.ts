@@ -7,6 +7,8 @@ import { toast, hideToast } from '@/components/editor/Toast';
 import { autoLoadLogos } from '@/lib/logoLoader';
 import { applyBgToAllPages, applyFrameImage } from '@/lib/imageUpload';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
+import { loadCloudTemplate, mergeTemplateIntoPage } from '@/lib/templateIO';
+import { applyScheduleImagesToTemplatePages } from '@/lib/scheduleImageApply';
 import type { FrameLayer } from '@/types/layer';
 import type { DoctorInfo } from './useScheduleData';
 
@@ -24,53 +26,102 @@ export function resolveDoctorInfo(doctors: string[], allDoctors: DoctorInfo[]) {
   };
 }
 
+async function checkTemplateExists(folderName: string): Promise<boolean> {
+  try {
+    const res = await fetch('/api/check-template', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folderName }),
+    });
+    const data = await res.json();
+    return !!data.exists;
+  } catch {
+    return false;
+  }
+}
+
 export function useScheduleApplication() {
   const [isApplying, setIsApplying] = useState(false);
   const pushHistory = useEditorStore(s => s.pushHistory);
   const applySchedule = useEditorStore(s => s.applySchedule);
   const setCurrentScheduleRow = useEditorStore(s => s.setCurrentScheduleRow);
 
+  const applyCloudTemplate = async (selectedRow: ScheduleRow, folderName: string) => {
+    toast('템플릿 불러오는 중...', 0);
+    setCurrentScheduleRow(selectedRow as unknown as Record<string, unknown>);
+    const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folderName);
+    const pagesWithImages = await applyScheduleImagesToTemplatePages(tplPages, folderName);
+
+    const state = useEditorStore.getState();
+    const newPages = [...state.pages];
+    pagesWithImages.forEach((tpl, i) => {
+      if (i < newPages.length) {
+        newPages[i] = mergeTemplateIntoPage(newPages[i], tpl);
+      } else {
+        newPages.push(mergeTemplateIntoPage(
+          { id: newPages.length + 1, name: tpl.name || '', layers: [] },
+          tpl,
+        ));
+      }
+    });
+    state.setPages(newPages);
+    if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow);
+    await autoLoadLogos();
+  };
+
+  const applyRandomFlow = async (selectedRow: ScheduleRow, allDoctors: DoctorInfo[], folderName: string) => {
+    toast('이미지 불러오는 중...', 0);
+    const { specialties, departments, ids } = resolveDoctorInfo(selectedRow.doctors, allDoctors);
+
+    const [doctorImagesResult, frameImages, frameInnerImages] = await Promise.all([
+      loadDoctorImages(ids),
+      loadRandomFrameImages(selectedRow.texts.length),
+      loadScheduleInnerImages(folderName, selectedRow.texts.length),
+      fetch('/api/ensure-schedule-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderName }),
+      }).catch(() => {}),
+    ]) as [Awaited<ReturnType<typeof loadDoctorImages>>, { img: HTMLImageElement | null; url: string | null }[], { img: HTMLImageElement | null; url: string | null }[], unknown];
+
+    const doctorImages = doctorImagesResult.map(r => r?.img ?? null);
+    const doctorImageUrls = doctorImagesResult.map(r => r?.url ?? null);
+
+    toast('스케줄 적용 중...', 0);
+    setCurrentScheduleRow(selectedRow as unknown as Record<string, unknown>);
+    applySchedule(
+      selectedRow.texts, selectedRow.doctors, selectedRow.doctor_specialty,
+      specialties, departments, doctorImageUrls, doctorImages, frameImages, frameInnerImages,
+    );
+    await autoLoadLogos();
+
+    toast('배경 불러오는 중...', 0);
+    try {
+      const { img, url } = await pickRandomBackground();
+      const state = useEditorStore.getState();
+      applyBgToAllPages(img, url, state.pages);
+      state.setPages([...state.pages]);
+    } catch { /* 실패 시 기존 배경 유지 */ }
+  };
+
   const applySelectedSchedule = async (selectedRow: ScheduleRow, allDoctors: DoctorInfo[]) => {
     setIsApplying(true);
     pushHistory();
 
     try {
-      toast('이미지 불러오는 중...', 0);
-      const { specialties, departments, ids } = resolveDoctorInfo(selectedRow.doctors, allDoctors);
       const folderName = buildScheduleFolderName(selectedRow);
+      toast('템플릿 확인 중...', 0);
+      const hasTemplate = await checkTemplateExists(folderName);
 
-      const [doctorImagesResult, frameImages, frameInnerImages] = await Promise.all([
-        loadDoctorImages(ids),
-        loadRandomFrameImages(selectedRow.texts.length),
-        loadScheduleInnerImages(folderName, selectedRow.texts.length),
-        fetch('/api/ensure-schedule-folder', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ folderName }),
-        }).catch(() => {}),
-      ]) as [Awaited<ReturnType<typeof loadDoctorImages>>, { img: HTMLImageElement | null; url: string | null }[], { img: HTMLImageElement | null; url: string | null }[], unknown];
-
-      const doctorImages = doctorImagesResult.map(r => r?.img ?? null);
-      const doctorImageUrls = doctorImagesResult.map(r => r?.url ?? null);
-
-      toast('스케줄 적용 중...', 0);
-      setCurrentScheduleRow(selectedRow as unknown as Record<string, unknown>);
-      applySchedule(
-        selectedRow.texts, selectedRow.doctors, selectedRow.doctor_specialty,
-        specialties, departments, doctorImageUrls, doctorImages, frameImages, frameInnerImages,
-      );
-      await autoLoadLogos();
-
-      toast('배경 불러오는 중...', 0);
-      try {
-        const { img, url } = await pickRandomBackground();
-        const state = useEditorStore.getState();
-        applyBgToAllPages(img, url, state.pages);
-        state.setPages([...state.pages]);
-      } catch { /* 실패 시 기존 배경 유지 */ }
-
-      hideToast();
-      toast(`총 ${selectedRow.texts.length + (selectedRow.doctors.length > 0 ? 1 : 0) + 1}페이지 적용됨`);
+      if (hasTemplate) {
+        await applyCloudTemplate(selectedRow, folderName);
+        hideToast();
+        toast('저장된 템플릿 적용 완료');
+      } else {
+        await applyRandomFlow(selectedRow, allDoctors, folderName);
+        hideToast();
+        toast(`총 ${selectedRow.texts.length + (selectedRow.doctors.length > 0 ? 1 : 0) + 1}페이지 적용됨`);
+      }
     } catch {
       hideToast();
       toast('스케줄 적용 실패');
