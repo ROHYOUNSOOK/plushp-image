@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 
@@ -22,12 +23,39 @@ const MENUS = [
   },
 ];
 
+const ADMIN_MENUS = [
+  {
+    id: 'users',
+    label: '직원 관리',
+    icon: '👥',
+    href: '/admin/users',
+    color: 'bg-orange-50 hover:bg-orange-100 border-orange-200',
+    labelColor: 'text-orange-700',
+  },
+];
+
 export default function HomePage() {
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   );
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) return;
+      supabase
+        .from('users')
+        .select('role')
+        .eq('id', data.user.id)
+        .single()
+        .then(({ data: userData }) => {
+          if (userData?.role === '관리자') setIsAdmin(true);
+        });
+    });
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -50,17 +78,40 @@ export default function HomePage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          {MENUS.map(menu => (
-            <button
-              key={menu.id}
-              onClick={() => router.push(menu.href)}
-              className={`flex flex-col items-center justify-center gap-2 rounded-xl border py-8 transition-colors ${menu.color}`}
-            >
-              <span className="text-3xl">{menu.icon}</span>
-              <span className={`text-sm font-semibold ${menu.labelColor}`}>{menu.label}</span>
-            </button>
-          ))}
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">바로가기</p>
+            <div className="grid grid-cols-2 gap-4">
+              {MENUS.map(menu => (
+                <button
+                  key={menu.id}
+                  onClick={() => router.push(menu.href)}
+                  className={`flex flex-col items-center justify-center gap-2 rounded-xl border py-8 transition-colors ${menu.color}`}
+                >
+                  <span className="text-3xl">{menu.icon}</span>
+                  <span className={`text-sm font-semibold ${menu.labelColor}`}>{menu.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {isAdmin && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">관리자</p>
+              <div className="grid grid-cols-2 gap-4">
+                {ADMIN_MENUS.map(menu => (
+                  <button
+                    key={menu.id}
+                    onClick={() => router.push(menu.href)}
+                    className={`flex flex-col items-center justify-center gap-2 rounded-xl border py-8 transition-colors ${menu.color}`}
+                  >
+                    <span className="text-3xl">{menu.icon}</span>
+                    <span className={`text-sm font-semibold ${menu.labelColor}`}>{menu.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

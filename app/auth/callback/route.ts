@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/?error=unauthorized`);
   }
 
-  await supabase.from('plus_users').upsert(
+  await supabase.from('users').upsert(
     {
       id: data.user.id,
       email,
