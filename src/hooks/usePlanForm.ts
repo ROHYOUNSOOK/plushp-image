@@ -6,7 +6,8 @@
 =========================== */
 
 import { useRouter } from 'next/navigation';
-import { supabase, type ScheduleRow, loadDoctorImages, loadRandomFrameImages, loadScheduleInnerImages } from '@/lib/supabase';
+import { createBrowserClient } from '@supabase/ssr';
+import { type ScheduleRow, loadDoctorImages, loadRandomFrameImages, loadScheduleInnerImages } from '@/lib/supabase';
 import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
 import { autoLoadLogos } from '@/lib/logoLoader';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
@@ -37,6 +38,10 @@ export function usePlanForm(
   onSaved: (row: ScheduleRow) => void,
 ) {
   const router = useRouter();
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
   const applySchedule = useEditorStore(s => s.applySchedule);
   const setCurrentScheduleRow = useEditorStore(s => s.setCurrentScheduleRow);
   const pushHistory = useEditorStore(s => s.pushHistory);
