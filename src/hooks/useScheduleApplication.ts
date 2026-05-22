@@ -5,8 +5,9 @@ import { type ScheduleRow, loadDoctorImages, loadRandomFrameImages, loadSchedule
 import { useEditorStore } from '@/store/editorStore';
 import { toast, hideToast } from '@/components/editor/Toast';
 import { autoLoadLogos } from '@/lib/logoLoader';
-import { applyBgToAllPages } from '@/lib/imageUpload';
+import { applyBgToAllPages, applyFrameImage } from '@/lib/imageUpload';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
+import type { FrameLayer } from '@/types/layer';
 import type { DoctorInfo } from './useScheduleData';
 
 export function buildScheduleFolderName(row: ScheduleRow): string {
@@ -78,22 +79,37 @@ export function useScheduleApplication() {
     }
   };
 
-  const applyRandomBackground = async (onApplied?: () => void) => {
+  const applyRandomBackgroundAndFrames = async () => {
     try {
-      toast('배경 불러오는 중...', 0);
-      const { img, url } = await pickRandomBackground();
+      toast('배경 및 프레임 변경 중...', 0);
       const state = useEditorStore.getState();
+      const textPages = state.pages.filter(
+        p => !p.isMedicalLaw && !p.layers.some(l => l.type === 'doctor-card'),
+      );
+
+      const [bgResult, frameImages] = await Promise.all([
+        pickRandomBackground(),
+        loadRandomFrameImages(textPages.length),
+      ]);
+
       state.pushHistory();
-      applyBgToAllPages(img, url, state.pages);
+      applyBgToAllPages(bgResult.img, bgResult.url, state.pages);
+
+      textPages.forEach((page, idx) => {
+        const frameResult = frameImages[idx];
+        if (!frameResult?.img) return;
+        const frameLayer = page.layers.find(l => l.type === 'frame') as FrameLayer | undefined;
+        if (frameLayer) applyFrameImage(frameLayer, frameResult.img, frameResult.url!);
+      });
+
       state.setPages([...state.pages]);
-      onApplied?.();
       hideToast();
-      toast('전 페이지 배경 적용됨');
+      toast('배경 및 프레임 변경 완료');
     } catch {
       hideToast();
-      toast('배경 로드 실패');
+      toast('변경 실패');
     }
   };
 
-  return { isApplying, applySelectedSchedule, applyRandomBackground };
+  return { isApplying, applySelectedSchedule, applyRandomBackgroundAndFrames };
 }

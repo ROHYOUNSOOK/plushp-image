@@ -44,8 +44,9 @@ export async function GET(request: Request) {
       id: data.user.id,
       email,
       name: data.user.user_metadata?.full_name ?? '',
+      role: '직원',
     },
-    { onConflict: 'id' },
+    { onConflict: 'id', ignoreDuplicates: true },
   );
 
   return NextResponse.redirect(`${origin}/home`);
