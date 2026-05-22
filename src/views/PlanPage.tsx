@@ -7,6 +7,7 @@ import PlanList from '@/components/plan/PlanList';
 import PlanForm from '@/components/plan/PlanForm';
 import PlanFilter from '@/components/plan/PlanFilter';
 import { usePlanData } from '@/hooks/usePlanData';
+import Toast from '@/components/editor/Toast';
 
 export default function PlanPage() {
   const [filterUserId, setFilterUserId] = useState<string | undefined>();
@@ -34,6 +35,7 @@ export default function PlanPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
+      <Toast />
       <header className="flex items-center justify-between px-6 py-3 border-b border-[#0b7a8f] bg-[#0d8fa8]">
         <div className="flex items-center gap-3">
           <span className="text-sm font-semibold text-white">Plus 기획안</span>

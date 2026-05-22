@@ -13,7 +13,7 @@ import { autoLoadLogos } from '@/lib/logoLoader';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
 import { applyBgToAllPages } from '@/lib/imageUpload';
 import { useEditorStore } from '@/store/editorStore';
-import { toast } from '@/components/editor/Toast';
+import { toast, hideToast } from '@/components/editor/Toast';
 
 interface Doctor {
   id: string;
@@ -96,6 +96,7 @@ export function usePlanForm(
   };
 
   const handleSaveAndEdit = async (form: FormValues): Promise<void> => {
+    toast('이미지 불러오는 중...', 0);
     try {
       const saved = await saveToDb(form);
       setCurrentScheduleRow(saved as unknown as Record<string, unknown>);
@@ -138,8 +139,10 @@ export function usePlanForm(
         state.setPages([...state.pages]);
       } catch { /* 실패 시 기존 배경 유지 */ }
 
+      hideToast();
       router.push('/editor');
     } catch (e: unknown) {
+      hideToast();
       toast('저장 실패: ' + (e instanceof Error ? e.message : String(e)));
     }
   };
