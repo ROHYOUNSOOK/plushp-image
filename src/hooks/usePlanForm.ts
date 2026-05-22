@@ -79,6 +79,12 @@ export function usePlanForm(
     if (!confirm(`"${row.keyword || '이 기획안'}"을 삭제하시겠습니까?`)) return false;
     const { error } = await supabase.from('plus_schedule').delete().eq('id', row.id);
     if (error) { toast('삭제 실패: ' + error.message); return false; }
+    const folderName = buildScheduleFolderName(row);
+    fetch('/api/delete-schedule-folder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folderName }),
+    }).catch(() => {});
     toast('삭제 완료');
     return true;
   };
