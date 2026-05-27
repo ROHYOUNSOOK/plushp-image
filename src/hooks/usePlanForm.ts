@@ -12,6 +12,8 @@ import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
 import { autoLoadLogos } from '@/lib/logoLoader';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
 import { applyBgToAllPages } from '@/lib/imageUpload';
+import { loadCloudTemplate, mergeTemplateIntoPage } from '@/lib/templateIO';
+import { applyScheduleImagesToTemplatePages } from '@/lib/scheduleImageApply';
 import { useEditorStore } from '@/store/editorStore';
 import { toast, hideToast } from '@/components/editor/Toast';
 
@@ -103,48 +105,90 @@ export function usePlanForm(
 
   const navigateToEditor = async (): Promise<void> => {
     if (!row?.id) return;
-    toast('이미지 불러오는 중...', 0);
+    toast('템플릿 확인 중...', 0);
     try {
       const saved = row;
-      setCurrentScheduleRow(saved as unknown as Record<string, unknown>);
       pushHistory();
-
-      const doctors = saved.doctors ?? [];
-      const doctorSpecialties = doctors.map(n => allDoctors.find(d => d.doctor_name === n.trim())?.specialty ?? '');
-      const doctorDepartments = doctors.map(n => allDoctors.find(d => d.doctor_name === n.trim())?.department ?? '');
-      const doctorIds = doctors.map(n => allDoctors.find(d => d.doctor_name === n.trim())?.id ?? null);
+      setCurrentScheduleRow(saved as unknown as Record<string, unknown>);
 
       const folderName = buildScheduleFolderName(saved);
-      const textCount = (saved.texts ?? []).length;
 
-      const [doctorImagesResult, frameImages, frameInnerImages] = await Promise.all([
-        loadDoctorImages(doctorIds),
-        loadRandomFrameImages(textCount),
-        loadScheduleInnerImages(folderName, textCount),
-        fetch('/api/ensure-schedule-folder', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ folderName }),
-        }).catch(() => {}),
-      ]) as [Awaited<ReturnType<typeof loadDoctorImages>>, { img: HTMLImageElement | null; url: string | null }[], { img: HTMLImageElement | null; url: string | null }[], unknown];
+      // 저장된 템플릿이 있는지 확인
+      const checkRes = await fetch('/api/check-template', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderName }),
+      }).catch(() => null);
+      const hasTemplate = checkRes?.ok ? (await checkRes.json()).exists : false;
 
-      const doctorImages = doctorImagesResult.map(r => r?.img ?? null);
-      const resolvedDoctorImageUrls = doctorImagesResult.map(r => r?.url ?? null);
+      if (hasTemplate) {
+        // ── 클라우드 템플릿 로드 경로 ──
+        toast('저장된 템플릿 불러오는 중...', 0);
+        const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folderName);
+        const pagesWithImages = await applyScheduleImagesToTemplatePages(tplPages, folderName);
 
-      applySchedule(
-        saved.texts ?? [], doctors, saved.doctor_specialty,
-        doctorSpecialties, doctorDepartments, resolvedDoctorImageUrls, doctorImages, frameImages, frameInnerImages,
-      );
-      onSaved(saved);
-      await autoLoadLogos();
-
-      // 랜덤 배경 자동 적용
-      try {
-        const { img, url } = await pickRandomBackground();
         const state = useEditorStore.getState();
-        applyBgToAllPages(img, url, state.pages);
-        state.setPages([...state.pages]);
-      } catch { /* 실패 시 기존 배경 유지 */ }
+        const newPages = [...state.pages];
+        pagesWithImages.forEach((tpl, i) => {
+          if (i < newPages.length) {
+            newPages[i] = mergeTemplateIntoPage(newPages[i], tpl);
+          } else {
+            newPages.push(mergeTemplateIntoPage(
+              { id: newPages.length + 1, name: tpl.name || '', layers: [] },
+              tpl,
+            ));
+          }
+        });
+        state.setPages(newPages);
+        if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow as unknown as Record<string, unknown>);
+        await autoLoadLogos();
+
+        // 배경 이미지 재적용 (템플릿에 배경 img 미저장) + 색상 동기화
+        try {
+          const { img, url } = await pickRandomBackground();
+          const freshState = useEditorStore.getState();
+          applyBgToAllPages(img, url, freshState.pages);
+          freshState.setPages([...freshState.pages]);
+        } catch { /* 실패 시 solidColor 유지 */ }
+
+        onSaved(saved);
+      } else {
+        // ── 랜덤 플로우 경로 ──
+        toast('이미지 불러오는 중...', 0);
+        const doctors = saved.doctors ?? [];
+        const doctorSpecialties = doctors.map(n => allDoctors.find(d => d.doctor_name === n.trim())?.specialty ?? '');
+        const doctorDepartments = doctors.map(n => allDoctors.find(d => d.doctor_name === n.trim())?.department ?? '');
+        const doctorIds = doctors.map(n => allDoctors.find(d => d.doctor_name === n.trim())?.id ?? null);
+        const textCount = (saved.texts ?? []).length;
+
+        const [doctorImagesResult, frameImages, frameInnerImages] = await Promise.all([
+          loadDoctorImages(doctorIds),
+          loadRandomFrameImages(textCount),
+          loadScheduleInnerImages(folderName, textCount),
+          fetch('/api/ensure-schedule-folder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ folderName }),
+          }).catch(() => {}),
+        ]) as [Awaited<ReturnType<typeof loadDoctorImages>>, { img: HTMLImageElement | null; url: string | null }[], { img: HTMLImageElement | null; url: string | null }[], unknown];
+
+        const doctorImages = doctorImagesResult.map(r => r?.img ?? null);
+        const resolvedDoctorImageUrls = doctorImagesResult.map(r => r?.url ?? null);
+
+        applySchedule(
+          saved.texts ?? [], doctors, saved.doctor_specialty,
+          doctorSpecialties, doctorDepartments, resolvedDoctorImageUrls, doctorImages, frameImages, frameInnerImages,
+        );
+        onSaved(saved);
+        await autoLoadLogos();
+
+        try {
+          const { img, url } = await pickRandomBackground();
+          const state = useEditorStore.getState();
+          applyBgToAllPages(img, url, state.pages);
+          state.setPages([...state.pages]);
+        } catch { /* 실패 시 기존 배경 유지 */ }
+      }
 
       hideToast();
       router.push('/editor');

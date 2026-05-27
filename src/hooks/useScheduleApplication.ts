@@ -67,6 +67,14 @@ export function useScheduleApplication() {
     state.setPages(newPages);
     if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow);
     await autoLoadLogos();
+
+    // 템플릿에 배경 이미지가 저장되지 않으므로 랜덤 배경 재적용 → 색상 자동 동기화
+    try {
+      const { img, url } = await pickRandomBackground();
+      const freshState = useEditorStore.getState();
+      applyBgToAllPages(img, url, freshState.pages);
+      freshState.setPages([...freshState.pages]);
+    } catch { /* 실패 시 solidColor 유지 */ }
   };
 
   const applyRandomFlow = async (selectedRow: ScheduleRow, allDoctors: DoctorInfo[], folderName: string) => {
