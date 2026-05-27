@@ -320,9 +320,22 @@ export default function EditorShell() {
                   onClick={async () => {
                     setTplOpen(false);
                     try {
-                      toast('클라우드 저장 중...');
                       const state = useEditorStore.getState();
-                      await saveCloudTemplate(state.pages, state.currentScheduleRow);
+                      const row = state.currentScheduleRow;
+                      if (row) {
+                        const date = (row.date as string) ?? '';
+                        const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
+                        const folderName = [yy + mm + dd, row.account_id, row.keyword].filter(Boolean).join('_');
+                        const checkRes = await fetch('/api/check-template', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ folderName }),
+                        }).catch(() => null);
+                        const exists = checkRes?.ok ? (await checkRes.json()).exists : false;
+                        if (exists && !confirm(`"${folderName}" 템플릿이 이미 존재합니다.\n덮어쓰시겠습니까?`)) return;
+                      }
+                      toast('클라우드 저장 중...');
+                      await saveCloudTemplate(state.pages, row);
                       toast('클라우드 저장 완료');
                     } catch {
                       toast('클라우드 저장 실패');
