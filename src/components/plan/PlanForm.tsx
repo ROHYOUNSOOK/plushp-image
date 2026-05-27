@@ -32,7 +32,7 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [activeDoctorIdx, setActiveDoctorIdx] = useState<number | null>(null);
 
-  const { handleSave, navigateToEditor, handleDelete } = usePlanForm(row, allDoctors, onSaved);
+  const { handleSave, navigateToEditor, handleDelete, handleRevision } = usePlanForm(row, allDoctors, onSaved);
   const { hasTemplate, checking } = useTemplateCheck(row);
 
   const readOnly = !permissions.canEditPlans;
@@ -231,7 +231,15 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
       </div>
 
       <div className="px-6 py-4 bg-white border-t border-gray-200 flex gap-2">
-        {!readOnly && (
+        {row?.completed && permissions.canEditPlans ? (
+          <button
+            onClick={async () => { setSaving(true); await handleRevision(); setSaving(false); }}
+            disabled={saving}
+            className="flex-1 py-2.5 text-sm font-medium rounded-lg border border-orange-300 bg-orange-50 text-orange-600 hover:bg-orange-100 disabled:opacity-40 transition-colors"
+          >
+            {saving ? '처리 중...' : '수정요청'}
+          </button>
+        ) : !readOnly && (
           <button
             onClick={async () => { setSaving(true); await handleSave(form); setSaving(false); }}
             disabled={saving}
