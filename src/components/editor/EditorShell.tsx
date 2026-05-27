@@ -402,6 +402,12 @@ export default function EditorShell() {
           )}
         </div>
 
+        <Link
+          href="/home"
+          className="ml-auto text-xs px-3 py-1.5 rounded-lg border border-white/40 text-white hover:bg-white/10 transition-colors whitespace-nowrap"
+        >
+          홈으로 →
+        </Link>
       </div>
 
       {/* 페이지 탭 */}
