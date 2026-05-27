@@ -28,7 +28,7 @@ export function resolveDoctorInfo(doctors: string[], allDoctors: DoctorInfo[]) {
   };
 }
 
-async function checkTemplateExists(folderName: string): Promise<boolean> {
+export async function checkTemplateExists(folderName: string): Promise<boolean> {
   try {
     const res = await fetch('/api/check-template', {
       method: 'POST',
@@ -42,72 +42,73 @@ async function checkTemplateExists(folderName: string): Promise<boolean> {
   }
 }
 
+export async function applyCloudTemplate(selectedRow: ScheduleRow, folderName: string): Promise<void> {
+  toast('템플릿 불러오는 중...', 0);
+  const store = useEditorStore.getState();
+  store.setCurrentScheduleRow(selectedRow as unknown as Record<string, unknown>);
+
+  const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folderName);
+  const pagesWithImages = applyScheduleTextsToTemplatePages(
+    await applyScheduleImagesToTemplatePages(tplPages, folderName),
+    selectedRow.texts,
+  );
+
+  const state = useEditorStore.getState();
+  const newPages = [...state.pages];
+  pagesWithImages.forEach((tpl, i) => {
+    if (i < newPages.length) {
+      newPages[i] = mergeTemplateIntoPage(newPages[i], tpl);
+    } else {
+      newPages.push(mergeTemplateIntoPage(
+        { id: newPages.length + 1, name: tpl.name || '', layers: [] },
+        tpl,
+      ));
+    }
+  });
+  state.setPages(newPages);
+  if (savedScheduleRow) state.setCurrentScheduleRow(savedScheduleRow);
+  await autoLoadLogos();
+}
+
+export async function applyRandomFlow(selectedRow: ScheduleRow, allDoctors: DoctorInfo[], folderName: string): Promise<void> {
+  toast('이미지 불러오는 중...', 0);
+  const { specialties, departments, ids } = resolveDoctorInfo(selectedRow.doctors, allDoctors);
+
+  const [doctorImagesResult, frameImages, frameInnerImages] = await Promise.all([
+    loadDoctorImages(ids),
+    loadRandomFrameImages(selectedRow.texts.length),
+    loadScheduleInnerImages(folderName, selectedRow.texts.length),
+    fetch('/api/ensure-schedule-folder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folderName }),
+    }).catch(() => {}),
+  ]) as [Awaited<ReturnType<typeof loadDoctorImages>>, { img: HTMLImageElement | null; url: string | null }[], { img: HTMLImageElement | null; url: string | null }[], unknown];
+
+  const doctorImages = doctorImagesResult.map(r => r?.img ?? null);
+  const doctorImageUrls = doctorImagesResult.map(r => r?.url ?? null);
+
+  toast('스케줄 적용 중...', 0);
+  const state = useEditorStore.getState();
+  state.setCurrentScheduleRow(selectedRow as unknown as Record<string, unknown>);
+  state.applySchedule(
+    selectedRow.texts, selectedRow.doctors, selectedRow.doctor_specialty,
+    specialties, departments, doctorImageUrls, doctorImages, frameImages, frameInnerImages,
+  );
+  await autoLoadLogos();
+
+  toast('배경 불러오는 중...', 0);
+  try {
+    const { img, url } = await pickRandomBackground();
+    const s = useEditorStore.getState();
+    applyBgToAllPages(img, url, s.pages);
+    s.setPages([...s.pages]);
+  } catch { /* 실패 시 기존 배경 유지 */ }
+}
+
 export function useScheduleApplication() {
   const [isApplying, setIsApplying] = useState(false);
   const pushHistory = useEditorStore(s => s.pushHistory);
-  const applySchedule = useEditorStore(s => s.applySchedule);
-  const setCurrentScheduleRow = useEditorStore(s => s.setCurrentScheduleRow);
-
-  const applyCloudTemplate = async (selectedRow: ScheduleRow, folderName: string) => {
-    toast('템플릿 불러오는 중...', 0);
-    setCurrentScheduleRow(selectedRow as unknown as Record<string, unknown>);
-    const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folderName);
-    const pagesWithImages = applyScheduleTextsToTemplatePages(
-      await applyScheduleImagesToTemplatePages(tplPages, folderName),
-      selectedRow.texts,
-    );
-
-    const state = useEditorStore.getState();
-    const newPages = [...state.pages];
-    pagesWithImages.forEach((tpl, i) => {
-      if (i < newPages.length) {
-        newPages[i] = mergeTemplateIntoPage(newPages[i], tpl);
-      } else {
-        newPages.push(mergeTemplateIntoPage(
-          { id: newPages.length + 1, name: tpl.name || '', layers: [] },
-          tpl,
-        ));
-      }
-    });
-    state.setPages(newPages);
-    if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow);
-    await autoLoadLogos();
-  };
-
-  const applyRandomFlow = async (selectedRow: ScheduleRow, allDoctors: DoctorInfo[], folderName: string) => {
-    toast('이미지 불러오는 중...', 0);
-    const { specialties, departments, ids } = resolveDoctorInfo(selectedRow.doctors, allDoctors);
-
-    const [doctorImagesResult, frameImages, frameInnerImages] = await Promise.all([
-      loadDoctorImages(ids),
-      loadRandomFrameImages(selectedRow.texts.length),
-      loadScheduleInnerImages(folderName, selectedRow.texts.length),
-      fetch('/api/ensure-schedule-folder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ folderName }),
-      }).catch(() => {}),
-    ]) as [Awaited<ReturnType<typeof loadDoctorImages>>, { img: HTMLImageElement | null; url: string | null }[], { img: HTMLImageElement | null; url: string | null }[], unknown];
-
-    const doctorImages = doctorImagesResult.map(r => r?.img ?? null);
-    const doctorImageUrls = doctorImagesResult.map(r => r?.url ?? null);
-
-    toast('스케줄 적용 중...', 0);
-    setCurrentScheduleRow(selectedRow as unknown as Record<string, unknown>);
-    applySchedule(
-      selectedRow.texts, selectedRow.doctors, selectedRow.doctor_specialty,
-      specialties, departments, doctorImageUrls, doctorImages, frameImages, frameInnerImages,
-    );
-    await autoLoadLogos();
-
-    toast('배경 불러오는 중...', 0);
-    try {
-      const { img, url } = await pickRandomBackground();
-      const state = useEditorStore.getState();
-      applyBgToAllPages(img, url, state.pages);
-      state.setPages([...state.pages]);
-    } catch { /* 실패 시 기존 배경 유지 */ }
-  };
 
   const applySelectedSchedule = async (selectedRow: ScheduleRow, allDoctors: DoctorInfo[]) => {
     setIsApplying(true);

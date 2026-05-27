@@ -7,13 +7,13 @@
 
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
-import { type ScheduleRow, loadDoctorImages, loadRandomFrameImages, loadScheduleInnerImages } from '@/lib/supabase';
-import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
-import { autoLoadLogos } from '@/lib/logoLoader';
-import { pickRandomBackground } from '@/lib/backgroundLoader';
-import { applyBgToAllPages } from '@/lib/imageUpload';
-import { loadCloudTemplate, mergeTemplateIntoPage } from '@/lib/templateIO';
-import { applyScheduleImagesToTemplatePages, applyScheduleTextsToTemplatePages } from '@/lib/scheduleImageApply';
+import { type ScheduleRow } from '@/lib/supabase';
+import {
+  buildScheduleFolderName,
+  checkTemplateExists,
+  applyCloudTemplate,
+  applyRandomFlow,
+} from '@/hooks/useScheduleApplication';
 import { useEditorStore } from '@/store/editorStore';
 import { toast, hideToast } from '@/components/editor/Toast';
 
@@ -44,8 +44,6 @@ export function usePlanForm(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   );
-  const applySchedule = useEditorStore(s => s.applySchedule);
-  const setCurrentScheduleRow = useEditorStore(s => s.setCurrentScheduleRow);
   const pushHistory = useEditorStore(s => s.pushHistory);
 
   const buildPayload = async (form: FormValues) => {
@@ -107,84 +105,21 @@ export function usePlanForm(
     if (!row?.id) return;
     toast('템플릿 확인 중...', 0);
     try {
-      const saved = row;
       pushHistory();
-      setCurrentScheduleRow(saved as unknown as Record<string, unknown>);
-
-      const folderName = buildScheduleFolderName(saved);
-
-      // 저장된 템플릿이 있는지 확인
-      const checkRes = await fetch('/api/check-template', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ folderName }),
-      }).catch(() => null);
-      const hasTemplate = checkRes?.ok ? (await checkRes.json()).exists : false;
+      const folderName = buildScheduleFolderName(row);
+      const hasTemplate = await checkTemplateExists(folderName);
 
       if (hasTemplate) {
-        // ── 클라우드 템플릿 로드 경로 ──
-        toast('저장된 템플릿 불러오는 중...', 0);
-        const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folderName);
-        const pagesWithImages = applyScheduleTextsToTemplatePages(
-          await applyScheduleImagesToTemplatePages(tplPages, folderName),
-          saved.texts ?? [],
-        );
-
-        const state = useEditorStore.getState();
-        const newPages = [...state.pages];
-        pagesWithImages.forEach((tpl, i) => {
-          if (i < newPages.length) {
-            newPages[i] = mergeTemplateIntoPage(newPages[i], tpl);
-          } else {
-            newPages.push(mergeTemplateIntoPage(
-              { id: newPages.length + 1, name: tpl.name || '', layers: [] },
-              tpl,
-            ));
-          }
-        });
-        state.setPages(newPages);
-        if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow as unknown as Record<string, unknown>);
-        await autoLoadLogos();
-        onSaved(saved);
+        await applyCloudTemplate(row, folderName);
+        hideToast();
+        toast('저장된 템플릿 적용 완료');
       } else {
-        // ── 랜덤 플로우 경로 ──
-        toast('이미지 불러오는 중...', 0);
-        const doctors = saved.doctors ?? [];
-        const doctorSpecialties = doctors.map(n => allDoctors.find(d => d.doctor_name === n.trim())?.specialty ?? '');
-        const doctorDepartments = doctors.map(n => allDoctors.find(d => d.doctor_name === n.trim())?.department ?? '');
-        const doctorIds = doctors.map(n => allDoctors.find(d => d.doctor_name === n.trim())?.id ?? null);
-        const textCount = (saved.texts ?? []).length;
-
-        const [doctorImagesResult, frameImages, frameInnerImages] = await Promise.all([
-          loadDoctorImages(doctorIds),
-          loadRandomFrameImages(textCount),
-          loadScheduleInnerImages(folderName, textCount),
-          fetch('/api/ensure-schedule-folder', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ folderName }),
-          }).catch(() => {}),
-        ]) as [Awaited<ReturnType<typeof loadDoctorImages>>, { img: HTMLImageElement | null; url: string | null }[], { img: HTMLImageElement | null; url: string | null }[], unknown];
-
-        const doctorImages = doctorImagesResult.map(r => r?.img ?? null);
-        const resolvedDoctorImageUrls = doctorImagesResult.map(r => r?.url ?? null);
-
-        applySchedule(
-          saved.texts ?? [], doctors, saved.doctor_specialty,
-          doctorSpecialties, doctorDepartments, resolvedDoctorImageUrls, doctorImages, frameImages, frameInnerImages,
-        );
-        onSaved(saved);
-        await autoLoadLogos();
-
-        try {
-          const { img, url } = await pickRandomBackground();
-          const state = useEditorStore.getState();
-          applyBgToAllPages(img, url, state.pages);
-          state.setPages([...state.pages]);
-        } catch { /* 실패 시 기존 배경 유지 */ }
+        await applyRandomFlow(row, allDoctors, folderName);
+        hideToast();
+        toast(`총 ${row.texts.length + (row.doctors.length > 0 ? 1 : 0) + 1}페이지 적용됨`);
       }
 
-      hideToast();
+      onSaved(row);
       router.push('/editor');
     } catch (e: unknown) {
       hideToast();
