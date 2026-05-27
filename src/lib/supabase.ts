@@ -18,6 +18,7 @@ export interface ScheduleRow {
   marketer: string;
   assigned_to?: string | null;
   created_by?: string | null;
+  deadline?: string | null;
 }
 
 export interface DoctorRow {

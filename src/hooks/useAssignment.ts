@@ -37,10 +37,10 @@ export function useAssignment() {
     setRows(prev => prev.map(r => r.id === scheduleId ? { ...r, assigned_to: designerId } : r));
   };
 
-  const updateDate = async (scheduleId: string, date: string) => {
-    await supabase.from('plus_schedule').update({ date }).eq('id', scheduleId);
-    setRows(prev => prev.map(r => r.id === scheduleId ? { ...r, date } : r));
+  const updateDeadline = async (scheduleId: string, deadline: string) => {
+    await supabase.from('plus_schedule').update({ deadline }).eq('id', scheduleId);
+    setRows(prev => prev.map(r => r.id === scheduleId ? { ...r, deadline } : r));
   };
 
-  return { rows, designers, loading, assign, updateDate };
+  return { rows, designers, loading, assign, updateDeadline };
 }

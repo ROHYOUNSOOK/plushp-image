@@ -39,7 +39,8 @@ export default function MyTasksPage() {
                       <div className="flex-1 min-w-0">
                         <span className="text-sm font-medium text-gray-800 truncate block">{row.keyword || '(키워드 없음)'}</span>
                         <div className="flex items-center gap-3 mt-0.5">
-                          {row.date && <span className="text-[11px] text-gray-400">{row.date}</span>}
+                          {row.deadline && <span className="text-[11px] text-orange-400 font-medium">마감 {row.deadline}</span>}
+                          {row.date && <span className="text-[11px] text-gray-400">업로드 {row.date}</span>}
                           {row.marketer && <span className="text-[11px] text-gray-300">{row.marketer}</span>}
                         </div>
                       </div>
