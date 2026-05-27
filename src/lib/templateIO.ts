@@ -413,10 +413,10 @@ export function mergeTemplateIntoPage(currentPage: Page, tpl: TemplatePage): Pag
     : makeLayer('background') as BackgroundLayer;
 
   if (tpl.bgColor) bgLayer.solidColor = tpl.bgColor;
-  if (tpl.bgImg) {
-    bgLayer.img = tpl.bgImg;
-    bgLayer.url = tpl.bgUrl ?? '';
-  }
+  // 템플릿 배경 이미지 유무에 관계없이 명시적으로 덮어씀
+  // (이전 세션의 배경 이미지가 남아있는 버그 방지)
+  bgLayer.img = tpl.bgImg ?? null;
+  bgLayer.url = tpl.bgImg ? (tpl.bgUrl ?? '') : '';
 
   return {
     ...currentPage,

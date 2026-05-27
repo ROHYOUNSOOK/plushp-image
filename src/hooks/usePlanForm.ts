@@ -13,7 +13,7 @@ import { autoLoadLogos } from '@/lib/logoLoader';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
 import { applyBgToAllPages } from '@/lib/imageUpload';
 import { loadCloudTemplate, mergeTemplateIntoPage } from '@/lib/templateIO';
-import { applyScheduleImagesToTemplatePages } from '@/lib/scheduleImageApply';
+import { applyScheduleImagesToTemplatePages, applyScheduleTextsToTemplatePages } from '@/lib/scheduleImageApply';
 import { useEditorStore } from '@/store/editorStore';
 import { toast, hideToast } from '@/components/editor/Toast';
 
@@ -125,7 +125,10 @@ export function usePlanForm(
         // ── 클라우드 템플릿 로드 경로 ──
         toast('저장된 템플릿 불러오는 중...', 0);
         const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folderName);
-        const pagesWithImages = await applyScheduleImagesToTemplatePages(tplPages, folderName);
+        const pagesWithImages = applyScheduleTextsToTemplatePages(
+          await applyScheduleImagesToTemplatePages(tplPages, folderName),
+          saved.texts ?? [],
+        );
 
         const state = useEditorStore.getState();
         const newPages = [...state.pages];

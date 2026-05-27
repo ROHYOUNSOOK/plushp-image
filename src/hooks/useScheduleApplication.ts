@@ -10,7 +10,7 @@ import { replaceTextboxImageColors } from '@/lib/colorHelpers';
 import type { BackgroundLayer } from '@/types/layer';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
 import { loadCloudTemplate, mergeTemplateIntoPage } from '@/lib/templateIO';
-import { applyScheduleImagesToTemplatePages } from '@/lib/scheduleImageApply';
+import { applyScheduleImagesToTemplatePages, applyScheduleTextsToTemplatePages } from '@/lib/scheduleImageApply';
 import type { FrameLayer } from '@/types/layer';
 import type { DoctorInfo } from './useScheduleData';
 
@@ -52,7 +52,10 @@ export function useScheduleApplication() {
     toast('템플릿 불러오는 중...', 0);
     setCurrentScheduleRow(selectedRow as unknown as Record<string, unknown>);
     const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folderName);
-    const pagesWithImages = await applyScheduleImagesToTemplatePages(tplPages, folderName);
+    const pagesWithImages = applyScheduleTextsToTemplatePages(
+      await applyScheduleImagesToTemplatePages(tplPages, folderName),
+      selectedRow.texts,
+    );
 
     const state = useEditorStore.getState();
     const newPages = [...state.pages];
