@@ -142,15 +142,6 @@ export function usePlanForm(
         state.setPages(newPages);
         if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow as unknown as Record<string, unknown>);
         await autoLoadLogos();
-
-        // 배경 이미지 재적용 (템플릿에 배경 img 미저장) + 색상 동기화
-        try {
-          const { img, url } = await pickRandomBackground();
-          const freshState = useEditorStore.getState();
-          applyBgToAllPages(img, url, freshState.pages);
-          freshState.setPages([...freshState.pages]);
-        } catch { /* 실패 시 solidColor 유지 */ }
-
         onSaved(saved);
       } else {
         // ── 랜덤 플로우 경로 ──

@@ -233,6 +233,8 @@ export interface TemplatePage {
   id: number;
   name: string;
   bgColor?: string;
+  bgUrl?: string | null;
+  bgImg?: HTMLImageElement | null;
   isMedicalLaw?: boolean;
   layers: Layer[];
   _rawMedConfig?: Record<string, unknown>; // 구버전 템플릿 마이그레이션 전용
@@ -322,15 +324,19 @@ export async function saveCloudTemplate(
   const data = await Promise.all(
     pages.map(async pg => {
       const bgLayer = pg.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
+      const bgUrl = bgLayer?.url ?? null;
+      const isBgRemote = bgUrl && !bgUrl.startsWith('blob:') &&
+        (bgUrl.startsWith('http') || bgUrl.startsWith('/api/proxy-image') || bgUrl.startsWith('/plus/'));
       return {
         id: pg.id,
         name: pg.name,
         bgColor: bgLayer?.solidColor ?? '#ffffff',
+        bgUrl: isBgRemote ? bgUrl : null,
         isMedicalLaw: pg.isMedicalLaw ?? false,
         layers: await Promise.all(
           pg.layers
             .filter(l => l.type !== 'background')
-            .map(l => serializeLayer(l))
+            .map(l => serializeLayerCloud(l))
         ),
       };
     })
@@ -362,10 +368,17 @@ export async function loadCloudTemplate(
       const layers = await Promise.all(
         ((pg.layers ?? []) as Record<string, unknown>[]).map(l => deserializeLayer(l))
       );
+      const bgUrl = (pg.bgUrl as string | null) ?? null;
+      let bgImg: HTMLImageElement | null = null;
+      if (bgUrl) {
+        try { bgImg = await loadImage(bgUrl); } catch { bgImg = null; }
+      }
       return {
         id: (pg.id as number) ?? i + 1,
         name: (pg.name as string) ?? '',
         bgColor: (pg.bgColor as string) ?? '#ffffff',
+        bgUrl,
+        bgImg,
         isMedicalLaw: (pg.isMedicalLaw as boolean) ?? false,
         _rawMedConfig: pg.medConfig as Record<string, unknown> | undefined,
         layers,
@@ -388,12 +401,15 @@ export async function listCloudTemplates(): Promise<string[]> {
 
 export function mergeTemplateIntoPage(currentPage: Page, tpl: TemplatePage): Page {
   const existingBg = currentPage.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-  // 원본 변경 방지를 위해 복사
   const bgLayer: BackgroundLayer = existingBg
     ? { ...existingBg }
     : makeLayer('background') as BackgroundLayer;
 
   if (tpl.bgColor) bgLayer.solidColor = tpl.bgColor;
+  if (tpl.bgImg) {
+    bgLayer.img = tpl.bgImg;
+    bgLayer.url = tpl.bgUrl ?? '';
+  }
 
   return {
     ...currentPage,
