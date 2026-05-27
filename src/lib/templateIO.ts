@@ -327,29 +327,13 @@ export async function saveCloudTemplate(
     pages.map(async pg => {
       const bgLayer = pg.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
       const bgUrl = bgLayer?.url ?? null;
-      const bgImgSrc = (bgLayer?.img as HTMLImageElement | null | undefined)?.src ?? '';
-      let savedBgUrl: string | null = null;
-      if (bgLayer?.img) {
-        if (bgImgSrc.startsWith('blob:')) {
-          // hue 회전 등으로 가공된 이미지 → data URL로 변환해서 저장
-          try {
-            const ofc = document.createElement('canvas');
-            ofc.width = bgLayer.img.naturalWidth;
-            ofc.height = bgLayer.img.naturalHeight;
-            ofc.getContext('2d')!.drawImage(bgLayer.img, 0, 0);
-            savedBgUrl = ofc.toDataURL('image/jpeg', 0.85);
-          } catch { savedBgUrl = null; }
-        } else {
-          const isBgRemote = bgUrl && !bgUrl.startsWith('blob:') &&
-            (bgUrl.startsWith('http') || bgUrl.startsWith('/api/proxy-image') || bgUrl.startsWith('/plus/') || bgUrl.startsWith('data:'));
-          savedBgUrl = isBgRemote ? bgUrl : null;
-        }
-      }
+      const isBgRemote = bgUrl && !bgUrl.startsWith('blob:') &&
+        (bgUrl.startsWith('http') || bgUrl.startsWith('/api/proxy-image') || bgUrl.startsWith('/plus/'));
       return {
         id: pg.id,
         name: pg.name,
         bgColor: bgLayer?.solidColor ?? '#ffffff',
-        bgUrl: savedBgUrl,
+        bgUrl: isBgRemote ? bgUrl : null,
         isMedicalLaw: pg.isMedicalLaw ?? false,
         layers: await Promise.all(
           pg.layers
