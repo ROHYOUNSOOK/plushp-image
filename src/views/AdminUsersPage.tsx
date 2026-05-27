@@ -63,26 +63,35 @@ export default function AdminUsersPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white">
-        <div className="flex items-center gap-3">
-          <Link href="/home" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">← 홈</Link>
-          <span className="text-sm font-semibold text-gray-800">관리자</span>
-        </div>
-        <div className="flex gap-1">
+        <Link
+          href="/home"
+          className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+        >
+          ← 홈
+        </Link>
+      </header>
+
+      <div className="px-6 pt-6 pb-4">
+        <h1 className="text-xl font-bold text-gray-900">관리자 페이지</h1>
+        <p className="text-sm text-gray-400 mt-0.5">전체 현황을 관리합니다.</p>
+        <div className="flex gap-2 mt-4">
           {(['직원관리', '업무배분'] as Tab[]).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`text-xs px-3 py-1.5 rounded-lg transition-colors ${
-                tab === t ? 'bg-[#1450a0] text-white' : 'text-gray-500 hover:bg-gray-100'
+              className={`text-sm px-4 py-2 rounded-full border transition-colors ${
+                tab === t
+                  ? 'bg-[#1450a0] text-white border-[#1450a0]'
+                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'
               }`}
             >
               {t}
             </button>
           ))}
         </div>
-      </header>
+      </div>
 
-      <div className="p-6">
+      <div className="px-6 pb-6">
         {tab === '업무배분' ? (
           <AdminAssignView />
         ) : loading ? (

@@ -166,7 +166,7 @@ export default function EditorShell() {
       <div className="flex items-center gap-2 p-2 bg-[#0d8fa8] text-white text-sm">
         <Link
           href="/plan"
-          className="px-2 py-1 rounded text-gray-300 hover:bg-[#1a5cba] hover:text-white transition-colors text-xs"
+          className="text-xs px-3 py-1.5 rounded-lg border border-white/40 text-white hover:bg-white/10 transition-colors"
           title="기획안 페이지로 돌아가기"
         >
           ← 기획안
