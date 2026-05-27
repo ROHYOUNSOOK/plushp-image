@@ -37,7 +37,7 @@ async function imgToDataUrl(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function serializeLayer(l: Layer): Promise<Record<string, unknown>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { img, frameMaskImg, _imgFilterCache, _holeCanvas, ...rest } = l as any;
+  const { img, frameMaskImg, frameMaskProcessed, _imgFilterCache, _holeCanvas, ...rest } = l as any;
   const out: Record<string, unknown> = { ...rest };
 
   if ('img' in l) {
@@ -118,6 +118,8 @@ export async function saveTemplate(
 
 async function deserializeLayer(raw: Record<string, unknown>): Promise<Layer> {
   const layer = { ...raw } as Record<string, unknown>;
+  // frameMaskProcessed는 HTMLCanvasElement로 직렬화 불가 — 항상 null로 초기화
+  layer.frameMaskProcessed = null;
 
   if ('dataUrl' in layer && layer.dataUrl) {
     // 로고는 autoLoadLogos가 blob URL로 재로드하므로 img = null 유지
@@ -291,7 +293,7 @@ export function openTemplatePicker(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function serializeLayerCloud(l: Layer): Record<string, unknown> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { img, frameMaskImg, _imgFilterCache, _holeCanvas, ...rest } = l as any;
+  const { img, frameMaskImg, frameMaskProcessed, _imgFilterCache, _holeCanvas, ...rest } = l as any;
   const out: Record<string, unknown> = { ...rest };
 
   if ('img' in l) {
