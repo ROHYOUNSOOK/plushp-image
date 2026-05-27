@@ -16,6 +16,8 @@ export interface ScheduleRow {
   doctor_specialty: string;
   page6_medical_law: string;
   marketer: string;
+  assigned_to?: string | null;
+  created_by?: string | null;
 }
 
 export interface DoctorRow {

@@ -1,6 +1,12 @@
 
 import type { ScheduleRow } from '@/lib/supabase';
 
+function RowStatusDot({ row }: { row: ScheduleRow }) {
+  if (row.completed) return <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" title="완료" />;
+  if (row.assigned_to) return <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" title="진행중" />;
+  return <span className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" title="미배분" />;
+}
+
 interface Props {
   rows: ScheduleRow[];
   selectedId: string | null;
@@ -55,8 +61,11 @@ export default function PlanList({ rows, selectedId, onSelect, onNew, canCreate 
                     : 'hover:bg-gray-50 border-l-[3px] border-l-transparent'
                 }`}
               >
-                <div className={`text-xs font-medium truncate ${selectedId === row.id ? 'text-[#1045a0]' : 'text-gray-700'}`}>
-                  {row.keyword || '(키워드 없음)'}
+                <div className="flex items-center gap-1.5">
+                  <RowStatusDot row={row} />
+                  <span className={`text-xs font-medium truncate ${selectedId === row.id ? 'text-[#1045a0]' : 'text-gray-700'}`}>
+                    {row.keyword || '(키워드 없음)'}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
                   {row.marketer && (

@@ -13,6 +13,7 @@ interface Props {
   permissions: UserPermissions;
   onSaved: (row: ScheduleRow) => void;
   onDeleted: (id: string) => void;
+  onCompleted?: (id: string) => void;
 }
 
 const EMPTY_FORM = {
@@ -25,7 +26,7 @@ const EMPTY_FORM = {
   doctor_specialty: '',
 };
 
-export default function PlanForm({ row, allDoctors, blogAccounts, permissions, onSaved, onDeleted }: Props) {
+export default function PlanForm({ row, allDoctors, blogAccounts, permissions, onSaved, onDeleted, onCompleted }: Props) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -37,6 +38,7 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
   const readOnly = !permissions.canEditPlans;
   const canDelete = permissions.canDeletePlans;
   const canGoToEditor = permissions.canAccessEditorWithoutTemplate || hasTemplate;
+  const canComplete = permissions.isDesigner && !!row?.id && row.assigned_to === permissions.userId && !row.completed;
 
   useEffect(() => {
     if (row) {
@@ -236,6 +238,15 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
             className="flex-1 py-2.5 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors"
           >
             {saving ? '저장 중...' : '저장'}
+          </button>
+        )}
+        {canComplete && (
+          <button
+            onClick={() => row?.id && onCompleted?.(row.id)}
+            disabled={saving}
+            className="flex-1 py-2.5 text-sm font-medium rounded-lg bg-green-500 text-white hover:bg-green-600 disabled:opacity-40 transition-colors"
+          >
+            완료 처리
           </button>
         )}
         <button

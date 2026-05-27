@@ -5,6 +5,7 @@ import { createBrowserClient } from '@supabase/ssr';
 
 export interface UserPermissions {
   loaded: boolean;
+  userId: string;
   role: string;
   team: string;
   department: string;
@@ -17,6 +18,7 @@ export interface UserPermissions {
 
 const DEFAULT: UserPermissions = {
   loaded: false,
+  userId: '',
   role: '',
   team: '',
   department: '',
@@ -38,10 +40,11 @@ export function useUserPermissions(): UserPermissions {
 
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) { setPerms({ ...DEFAULT, loaded: true }); return; }
+      const userId = data.user.id;
       supabase
         .from('users')
         .select('role, team, department')
-        .eq('id', data.user.id)
+        .eq('id', userId)
         .single()
         .then(({ data: u }) => {
           const role = u?.role ?? '직원';
@@ -51,6 +54,7 @@ export function useUserPermissions(): UserPermissions {
           const isDesigner = department === '디자인부';
           setPerms({
             loaded: true,
+            userId,
             role, team, department,
             isAdmin, isDesigner,
             canEditPlans: isAdmin || !isDesigner,

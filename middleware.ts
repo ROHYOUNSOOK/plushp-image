@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // 비로그인 상태에서 보호된 경로 접근 시 → /
-  const protectedPaths = ['/home', '/plan', '/editor', '/admin'];
+  const protectedPaths = ['/home', '/plan', '/editor', '/admin', '/my-tasks'];
   if (!session && protectedPaths.some(p => pathname.startsWith(p))) {
     return NextResponse.redirect(new URL('/', request.url));
   }

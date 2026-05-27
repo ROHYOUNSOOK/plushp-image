@@ -90,5 +90,10 @@ export function usePlanData(filterUserId?: string) {
     setRows(prev => prev.filter(r => r.id !== id));
   };
 
-  return { rows, loading, allDoctors, blogAccounts, isAdmin, upsertRow, deleteRow };
+  const markCompleted = async (id: string) => {
+    await supabase.from('plus_schedule').update({ completed: true }).eq('id', id);
+    setRows(prev => prev.map(r => r.id === id ? { ...r, completed: true } : r));
+  };
+
+  return { rows, loading, allDoctors, blogAccounts, isAdmin, upsertRow, deleteRow, markCompleted };
 }

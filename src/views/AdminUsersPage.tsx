@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAdminUsers, type UserRow } from '@/hooks/useAdminUsers';
+import AdminAssignView from '@/views/AdminAssignView';
+
+type Tab = '직원관리' | '업무배분';
 
 const DEPT_TEAMS: Record<string, string[]> = {
   '마케팅부': ['블로그팀', '플친팀', '콘텐츠팀', '마케팅기획실', '영상팀'],
@@ -23,6 +26,7 @@ interface EditState {
 export default function AdminUsersPage() {
   const { users, loading, updateUser } = useAdminUsers();
   const [editing, setEditing] = useState<Record<string, EditState>>({});
+  const [tab, setTab] = useState<Tab>('직원관리');
 
   const startEdit = (user: UserRow) => {
     setEditing(prev => ({
@@ -61,12 +65,27 @@ export default function AdminUsersPage() {
       <header className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white">
         <div className="flex items-center gap-3">
           <Link href="/home" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">← 홈</Link>
-          <span className="text-sm font-semibold text-gray-800">직원 관리</span>
+          <span className="text-sm font-semibold text-gray-800">관리자</span>
+        </div>
+        <div className="flex gap-1">
+          {(['직원관리', '업무배분'] as Tab[]).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`text-xs px-3 py-1.5 rounded-lg transition-colors ${
+                tab === t ? 'bg-[#1450a0] text-white' : 'text-gray-500 hover:bg-gray-100'
+              }`}
+            >
+              {t}
+            </button>
+          ))}
         </div>
       </header>
 
       <div className="p-6">
-        {loading ? (
+        {tab === '업무배분' ? (
+          <AdminAssignView />
+        ) : loading ? (
           <div className="text-sm text-gray-400 text-center py-20">로딩 중...</div>
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">

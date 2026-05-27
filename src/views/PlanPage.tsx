@@ -12,7 +12,7 @@ import Toast from '@/components/editor/Toast';
 
 export default function PlanPage() {
   const [filterUserId, setFilterUserId] = useState<string | undefined>();
-  const { rows, loading, allDoctors, blogAccounts, isAdmin, upsertRow, deleteRow } = usePlanData(filterUserId);
+  const { rows, loading, allDoctors, blogAccounts, isAdmin, upsertRow, deleteRow, markCompleted } = usePlanData(filterUserId);
   const permissions = useUserPermissions();
   const [selectedRow, setSelectedRow] = useState<ScheduleRow | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -77,6 +77,7 @@ export default function PlanPage() {
               permissions={permissions}
               onSaved={handleSaved}
               onDeleted={handleDeleted}
+              onCompleted={id => { markCompleted(id); setSelectedRow(prev => prev?.id === id ? { ...prev, completed: true } : prev); }}
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-3">

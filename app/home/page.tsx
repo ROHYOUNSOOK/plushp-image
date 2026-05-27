@@ -37,6 +37,7 @@ const ADMIN_MENUS = [
 export default function HomePage() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isDesigner, setIsDesigner] = useState(false);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -48,11 +49,12 @@ export default function HomePage() {
       if (!data.user) return;
       supabase
         .from('users')
-        .select('role')
+        .select('role, department')
         .eq('id', data.user.id)
         .single()
         .then(({ data: userData }) => {
           if (userData?.role === '관리자') setIsAdmin(true);
+          if (userData?.department === '디자인부') setIsDesigner(true);
         });
     });
   }, []);
@@ -94,6 +96,21 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+
+          {isDesigner && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">디자이너</p>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => router.push('/my-tasks')}
+                  className="flex flex-col items-center justify-center gap-2 rounded-xl border py-8 transition-colors bg-purple-50 hover:bg-purple-100 border-purple-200"
+                >
+                  <span className="text-3xl">✅</span>
+                  <span className="text-sm font-semibold text-purple-700">내 업무</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {isAdmin && (
             <div>
