@@ -887,10 +887,13 @@ export function useCanvasEvents({
         const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
         const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
         const page = state.pages[state.currentPage];
-        const sel = page?.layers.find(l => l.id === state.selectedLayerId);
-        if (sel && sel.type !== 'background' && 'x' in sel) {
+        const activeIds = state.selectedLayerIds?.length > 1 ? state.selectedLayerIds : [state.selectedLayerId];
+        const movable = page?.layers.filter(l => activeIds.includes(l.id) && l.type !== 'background' && 'x' in l);
+        if (movable && movable.length > 0) {
           state.pushHistory();
-          state.updateLayer(sel.id, { x: (sel as { x: number }).x + dx, y: (sel as { y: number }).y + dy } as Partial<PositionedLayer>);
+          movable.forEach(l => {
+            state.updateLayer(l.id, { x: (l as { x: number }).x + dx, y: (l as { y: number }).y + dy } as Partial<PositionedLayer>);
+          });
         }
       }
     };

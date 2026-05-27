@@ -96,29 +96,34 @@ export default function AdminAssignView() {
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-0.5">
-                      <span className="text-[10px] text-gray-400">마감일</span>
-                      <input
-                        type="date"
-                        className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:border-[#1450a0] transition"
-                        value={row.deadline ?? ''}
-                        onChange={e => updateDeadline(row.id, e.target.value)}
-                        disabled={saving === row.id}
-                      />
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-gray-400 whitespace-nowrap">마감일</span>
+                        <input
+                          type="date"
+                          className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:border-[#1450a0] transition"
+                          value={row.deadline ?? ''}
+                          onChange={e => updateDeadline(row.id, e.target.value)}
+                          disabled={saving === row.id}
+                        />
+                      </div>
+                      {!row.completed && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] text-gray-400 whitespace-nowrap">담당자</span>
+                          <select
+                            className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:border-[#1450a0] transition min-w-[120px]"
+                            value={row.assigned_to ?? ''}
+                            onChange={e => handleAssign(row.id, e.target.value)}
+                            disabled={saving === row.id}
+                          >
+                            <option value="">미배분</option>
+                            {designers.map(d => (
+                              <option key={d.id} value={d.id}>{d.name} ({d.team || '-'})</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                     </div>
-                    {!row.completed && (
-                      <select
-                        className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:border-[#1450a0] transition min-w-[100px]"
-                        value={row.assigned_to ?? ''}
-                        onChange={e => handleAssign(row.id, e.target.value)}
-                        disabled={saving === row.id}
-                      >
-                        <option value="">미배분</option>
-                        {designers.map(d => (
-                          <option key={d.id} value={d.id}>{d.name} ({d.team || '-'})</option>
-                        ))}
-                      </select>
-                    )}
                   </div>
                 );
               })}
