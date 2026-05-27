@@ -5,7 +5,9 @@ import { type ScheduleRow, loadDoctorImages, loadRandomFrameImages, loadSchedule
 import { useEditorStore } from '@/store/editorStore';
 import { toast, hideToast } from '@/components/editor/Toast';
 import { autoLoadLogos } from '@/lib/logoLoader';
-import { applyBgToAllPages, applyFrameImage } from '@/lib/imageUpload';
+import { applyBgToAllPages } from '@/lib/imageUpload';
+import { replaceTextboxImageColors } from '@/lib/colorHelpers';
+import type { BackgroundLayer } from '@/types/layer';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
 import { loadCloudTemplate, mergeTemplateIntoPage } from '@/lib/templateIO';
 import { applyScheduleImagesToTemplatePages } from '@/lib/scheduleImageApply';
@@ -150,7 +152,14 @@ export function useScheduleApplication() {
         const frameResult = frameImages[idx];
         if (!frameResult?.img) return;
         const frameLayer = page.layers.find(l => l.type === 'frame') as FrameLayer | undefined;
-        if (frameLayer) applyFrameImage(frameLayer, frameResult.img, frameResult.url!);
+        if (frameLayer) {
+          frameLayer.frameMaskImg = frameResult.img;
+          frameLayer.frameMaskUrl = frameResult.url ?? '';
+          const bgLayer = page.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
+          if (bgLayer?.solidColor && frameResult.img) {
+            frameLayer.frameMaskProcessed = replaceTextboxImageColors(frameResult.img, bgLayer.solidColor);
+          }
+        }
       });
 
       state.setPages([...state.pages]);

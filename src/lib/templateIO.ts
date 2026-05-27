@@ -371,7 +371,12 @@ export async function loadCloudTemplate(
       const bgUrl = (pg.bgUrl as string | null) ?? null;
       let bgImg: HTMLImageElement | null = null;
       if (bgUrl) {
-        try { bgImg = await loadImage(bgUrl); } catch { bgImg = null; }
+        try {
+          const loadUrl = (bgUrl.startsWith('http://') && typeof window !== 'undefined' && window.location.protocol === 'https:')
+            ? `/api/proxy-image?url=${encodeURIComponent(bgUrl)}`
+            : bgUrl;
+          bgImg = await loadImage(loadUrl);
+        } catch { bgImg = null; }
       }
       return {
         id: (pg.id as number) ?? i + 1,
