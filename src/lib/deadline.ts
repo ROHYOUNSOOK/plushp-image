@@ -1,4 +1,3 @@
-/** 업로드 날짜 기준 전날 마감, 토/일이면 금요일로 당김 */
 export function calcDeadline(dateStr: string): string {
   const d = new Date(dateStr);
   d.setDate(d.getDate() - 1);

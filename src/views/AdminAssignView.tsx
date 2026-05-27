@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useAssignment, type Designer } from '@/hooks/useAssignment';
 import type { ScheduleRow } from '@/lib/supabase';
-import { calcDeadline, isOverdue } from '@/lib/deadline';
 
 type StatusFilter = '전체' | '미배분' | '진행중' | '완료';
 
@@ -19,17 +18,6 @@ function StatusBadge({ status }: { status: string }) {
     status === '진행중' ? 'bg-blue-100 text-blue-700' :
     'bg-gray-100 text-gray-500';
   return <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${cls}`}>{status}</span>;
-}
-
-function DeadlineBadge({ date }: { date: string }) {
-  if (!date) return null;
-  const dl = calcDeadline(date);
-  const over = isOverdue(dl);
-  return (
-    <span className={`text-[10px] ${over ? 'text-red-500' : 'text-gray-400'}`}>
-      마감 {dl}
-    </span>
-  );
 }
 
 export default function AdminAssignView() {
@@ -103,7 +91,6 @@ export default function AdminAssignView() {
                       </div>
                       <div className="flex items-center gap-3 mt-0.5">
                         {row.marketer && <span className="text-[11px] text-gray-400">{row.marketer}</span>}
-                        <DeadlineBadge date={row.date} />
                         {row.assigned_to && (
                           <span className="text-[11px] text-blue-500">→ {designerMap[row.assigned_to] ?? '알 수 없음'}</span>
                         )}
