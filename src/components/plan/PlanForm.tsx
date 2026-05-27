@@ -240,15 +240,6 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
             {saving ? '저장 중...' : '저장'}
           </button>
         )}
-        {canComplete && (
-          <button
-            onClick={() => row?.id && onCompleted?.(row.id)}
-            disabled={saving}
-            className="flex-1 py-2.5 text-sm font-medium rounded-lg bg-green-500 text-white hover:bg-green-600 disabled:opacity-40 transition-colors"
-          >
-            완료 처리
-          </button>
-        )}
         <button
           onClick={async () => { setSaving(true); await navigateToEditor(); setSaving(false); }}
           disabled={saving || checking || !row?.id || !canGoToEditor}

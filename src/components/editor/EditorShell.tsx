@@ -16,8 +16,9 @@ import { useEditorStore, selectCurrentPage, selectBgKeyColor } from '@/store/edi
 import { makeLayer } from '@/lib/layerFactory';
 import { downloadCurrentPage, downloadAllAsZip } from '@/canvas/export';
 import { saveTemplate, openTemplatePicker, mergeTemplateIntoPage, saveCloudTemplate, loadCloudTemplate, listCloudTemplates, type TemplatePage } from '@/lib/templateIO';
-import { loadScheduleInnerImages } from '@/lib/supabase';
+import { loadScheduleInnerImages, supabase } from '@/lib/supabase';
 import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 import type { FrameLayer } from '@/types/layer';
 import { applyFrameImage } from '@/lib/imageUpload';
 import type { LayerType, LogoLayer, BackgroundLayer } from '@/types/layer';
@@ -77,6 +78,8 @@ export default function EditorShell() {
   const [dlOpen, setDlOpen] = React.useState(false);
   const [tplOpen, setTplOpen] = React.useState(false);
   const [showShortcuts, setShowShortcuts] = React.useState(false);
+  const permissions = useUserPermissions();
+  const currentScheduleRow = useEditorStore(s => s.currentScheduleRow);
 
   /* ── 레이어 패널 리사이즈 ── */
   const [layerPanelW, setLayerPanelW] = useState(224); // 기본 w-56 = 224px
@@ -402,9 +405,24 @@ export default function EditorShell() {
           )}
         </div>
 
+        {permissions.isDesigner && currentScheduleRow && !currentScheduleRow.completed && currentScheduleRow.assigned_to === permissions.userId && (
+          <button
+            onClick={async () => {
+              const id = currentScheduleRow.id as string;
+              if (!id) return;
+              if (!confirm('작업을 완료 처리하시겠습니까?')) return;
+              await supabase.from('plus_schedule').update({ completed: true }).eq('id', id);
+              useEditorStore.getState().setCurrentScheduleRow({ ...currentScheduleRow, completed: true });
+              toast('완료 처리되었습니다');
+            }}
+            className="ml-auto text-xs px-3 py-1.5 rounded-lg bg-green-500 hover:bg-green-400 text-white transition-colors whitespace-nowrap"
+          >
+            완료
+          </button>
+        )}
         <Link
           href="/home"
-          className="ml-auto text-xs px-3 py-1.5 rounded-lg border border-white/40 text-white hover:bg-white/10 transition-colors whitespace-nowrap"
+          className={`${permissions.isDesigner && currentScheduleRow && !currentScheduleRow.completed ? '' : 'ml-auto'} text-xs px-3 py-1.5 rounded-lg border border-white/40 text-white hover:bg-white/10 transition-colors whitespace-nowrap`}
         >
           홈으로 →
         </Link>

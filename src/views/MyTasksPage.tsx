@@ -51,12 +51,6 @@ export default function MyTasksPage() {
                         >
                           편집기 →
                         </button>
-                        <button
-                          onClick={() => markCompleted(row.id)}
-                          className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
-                        >
-                          완료
-                        </button>
                       </div>
                     </div>
                   ))}
