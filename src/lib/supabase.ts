@@ -117,6 +117,19 @@ export async function loadScheduleInnerImages(
   );
 }
 
+/** 특정 페이지에 스케줄 이미지가 이미 존재하는지 확인 */
+export async function checkScheduleImageExists(folderName: string, pageIndex: number): Promise<boolean> {
+  for (const ext of ['jpg', 'jpeg', 'png', 'webp']) {
+    const rawUrl = `${SCHEDULE_BASE}/${folderName}/${pageIndex}.${ext}`;
+    const proxyUrl = toProxyUrl(rawUrl) + `?_t=${Date.now()}`;
+    try {
+      const res = await fetch(proxyUrl, { method: 'HEAD', cache: 'no-store' });
+      if (res.ok) return true;
+    } catch { /* 없으면 다음 확장자 시도 */ }
+  }
+  return false;
+}
+
 /** count개의 랜덤 프레임 마스크 이미지 로드 (URL 포함 반환) */
 export async function loadRandomFrameImages(count: number): Promise<{ img: HTMLImageElement | null; url: string | null }[]> {
   const files = await listFilesFromDir(FRAME_BUCKET);

@@ -21,7 +21,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function AdminAssignView() {
-  const { rows, designers, loading, assign } = useAssignment();
+  const { rows, designers, loading, assign, updateDate } = useAssignment();
   const [filter, setFilter] = useState<StatusFilter>('전체');
   const [saving, setSaving] = useState<string | null>(null);
 
@@ -96,6 +96,13 @@ export default function AdminAssignView() {
                         )}
                       </div>
                     </div>
+                    <input
+                      type="date"
+                      className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:border-[#1450a0] transition"
+                      value={row.date ?? ''}
+                      onChange={e => updateDate(row.id, e.target.value)}
+                      disabled={saving === row.id}
+                    />
                     {!row.completed && (
                       <select
                         className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:border-[#1450a0] transition min-w-[100px]"

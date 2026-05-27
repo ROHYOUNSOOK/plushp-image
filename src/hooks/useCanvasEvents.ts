@@ -587,6 +587,9 @@ export function useCanvasEvents({
           const pageIdx = state.pages.findIndex(pg => pg.layers.some(l => l.id === hit.id));
           const pageIndex = (pageIdx >= 0 ? pageIdx : state.currentPage) + 1;
           const { toast: dropToast, hideToast: dropHideToast } = await import('@/components/editor/Toast');
+          const { checkScheduleImageExists } = await import('@/lib/supabase');
+          const alreadyExists = await checkScheduleImageExists(folderName, pageIndex);
+          if (alreadyExists && !confirm(`페이지 ${pageIndex}의 이미지가 이미 존재합니다.\n새 이미지로 교체하시겠습니까?`)) return;
           dropToast('이미지 업로드 중...', 0);
           try {
             const compressed = await compressForUpload(img);

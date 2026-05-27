@@ -9,6 +9,7 @@ import NumberInput from '@/components/ui/NumberInput';
 import SliderInput from '@/components/ui/SliderInput';
 import ImageUploadButton from '@/components/ui/ImageUploadButton';
 import { loadImageFromFile, applyFrameImage, compressForUpload } from '@/lib/imageUpload';
+import { checkScheduleImageExists } from '@/lib/supabase';
 import { setFilterFrozen } from '@/canvas/webglFilters';
 import { extractDominantColor, calcAutoFillColor, calcShadowColor, replaceTextboxImageColors, hasTransparentPixels } from '@/lib/colorHelpers';
 import { selectBgKeyColor } from '@/store/editorStore';
@@ -150,6 +151,8 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
               const pageIdx = state.pages.findIndex(pg => pg.layers.some(l => l.id === layer.id));
               const pageIndex = (pageIdx >= 0 ? pageIdx : state.currentPage ?? 0) + 1;
 
+              const alreadyExists = await checkScheduleImageExists(folderName, pageIndex);
+              if (alreadyExists && !confirm(`페이지 ${pageIndex}의 이미지가 이미 존재합니다.\n새 이미지로 교체하시겠습니까?`)) return;
               toast('이미지 업로드 중...', 0);
               try {
                 const compressed = await compressForUpload(img);
