@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import type { ScheduleRow } from '@/lib/supabase';
 import PlanList from '@/components/plan/PlanList';
 import PlanForm from '@/components/plan/PlanForm';
@@ -16,6 +17,15 @@ export default function PlanPage() {
   const permissions = useUserPermissions();
   const [selectedRow, setSelectedRow] = useState<ScheduleRow | null>(null);
   const [isNew, setIsNew] = useState(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (loading) return;
+    const id = searchParams.get('id');
+    if (!id) return;
+    const found = rows.find(r => r.id === id);
+    if (found) { setSelectedRow(found); setIsNew(false); }
+  }, [loading, searchParams]);
 
   const handleSelect = (row: ScheduleRow) => { setSelectedRow(row); setIsNew(false); };
   const handleNew = () => { setSelectedRow(null); setIsNew(true); };

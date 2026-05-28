@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAssignment, type Designer } from '@/hooks/useAssignment';
 import type { ScheduleRow } from '@/lib/supabase';
 
@@ -24,6 +25,7 @@ export default function AdminAssignView() {
   const { rows, designers, loading, assign } = useAssignment();
   const [filter, setFilter] = useState<StatusFilter>('전체');
   const [saving, setSaving] = useState<string | null>(null);
+  const router = useRouter();
 
   const designerMap = Object.fromEntries(designers.map((d: Designer) => [d.id, d.name]));
 
@@ -71,7 +73,7 @@ export default function AdminAssignView() {
         {sorted.map(row => {
           const status = getStatus(row);
           return (
-            <div key={row.id} className="px-4 py-3 flex items-center gap-3">
+            <div key={row.id} className="px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => router.push(`/plan?id=${row.id}`)}>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-gray-800 truncate">{row.keyword || '(키워드 없음)'}</span>
@@ -91,7 +93,7 @@ export default function AdminAssignView() {
                 </div>
               </div>
               {!row.completed && (
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
                   <span className="text-[11px] text-gray-400 whitespace-nowrap">담당자</span>
                   <select
                     className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:border-gray-400 transition min-w-[120px]"
