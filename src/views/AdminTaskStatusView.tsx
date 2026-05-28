@@ -20,7 +20,8 @@ function formatDateTime(iso: string | null | undefined): string {
 }
 
 export default function AdminTaskStatusView() {
-  const { rows, loading } = useAssignment();
+  const { rows, designers, loading } = useAssignment();
+  const designerMap = Object.fromEntries(designers.map(d => [d.id, d.name]));
   const router = useRouter();
 
   const [marketer, setMarketer] = useState<string>('');
@@ -113,6 +114,7 @@ export default function AdminTaskStatusView() {
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-24">상태</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-44">작성일시</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-32">작성자</th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-32">담당디자이너</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-48">블로그 아이디</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500">키워드</th>
               </tr>
@@ -133,6 +135,9 @@ export default function AdminTaskStatusView() {
                   </td>
                   <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{formatDateTime(row.created_at)}</td>
                   <td className="px-5 py-3.5 text-gray-700">{row.marketer || '-'}</td>
+                  <td className="px-5 py-3.5 text-gray-600">
+                    {row.assigned_to ? (designerMap[row.assigned_to] ?? '알 수 없음') : '-'}
+                  </td>
                   <td className="px-5 py-3.5 text-gray-600">{row.account_id || '-'}</td>
                   <td className="px-5 py-3.5 text-gray-800 font-medium">{row.keyword || '(키워드 없음)'}</td>
                 </tr>
