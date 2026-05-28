@@ -22,13 +22,13 @@ export default function PlanList({ rows, selectedId, onSelect, onNew, canCreate 
   return (
     <div className="flex flex-col h-full bg-white">
       {/* 헤더 */}
-      <div className="px-4 py-3.5 border-b border-gray-100">
+      <div className="px-4 py-5 border-b border-gray-100">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest">기획안</span>
           {canCreate && (
             <button
               onClick={onNew}
-              className="text-xs font-medium text-[#1450a0] hover:text-[#1045a0] transition-colors"
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] transition-colors"
             >
               + 새 기획안
             </button>

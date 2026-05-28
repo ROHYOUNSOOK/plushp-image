@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
 import { type ScheduleRow } from '@/lib/supabase';
 import { usePlanForm } from '@/hooks/usePlanForm';
 import { type UserPermissions } from '@/hooks/useUserPermissions';
@@ -32,6 +33,7 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
   const [saving, setSaving] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [activeDoctorIdx, setActiveDoctorIdx] = useState<number | null>(null);
+  const [myName, setMyName] = useState('');
 
   const { handleSave, navigateToEditor, handleDelete, handleRevision, navigating } = usePlanForm(row, allDoctors, onSaved);
   const { hasTemplate, checking } = useTemplateCheck(row);
@@ -40,6 +42,24 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
   const canDelete = permissions.canDeletePlans;
   const canGoToEditor = permissions.canAccessEditorWithoutTemplate || hasTemplate;
   const canComplete = permissions.isDesigner && !!row?.id && row.assigned_to === permissions.userId && !row.completed;
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    );
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) return;
+      supabase
+        .from('users')
+        .select('name')
+        .eq('id', data.user.id)
+        .single()
+        .then(({ data: userData }) => {
+          if (userData?.name) setMyName(userData.name);
+        });
+    });
+  }, []);
 
   useEffect(() => {
     if (row) {
@@ -54,11 +74,18 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
         doctor_specialty: row.doctor_specialty ?? '',
       });
     } else {
-      setForm(EMPTY_FORM);
+      setForm({ ...EMPTY_FORM, marketer: myName });
     }
     setSuggestions([]);
     setActiveDoctorIdx(null);
-  }, [row?.id]);
+  }, [row?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When user name loads after form init, fill marketer if still empty
+  useEffect(() => {
+    if (!row && myName) {
+      setForm(f => f.marketer ? f : { ...f, marketer: myName });
+    }
+  }, [myName, row]);
 
   const setField = <K extends keyof typeof EMPTY_FORM>(key: K, value: (typeof EMPTY_FORM)[K]) => {
     setForm(f => ({ ...f, [key]: value }));
@@ -128,7 +155,7 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
           <Section title="기본 정보">
             <div className="grid grid-cols-2 gap-3">
               <Field label="마케터">
-                <Input value={form.marketer} onChange={v => setField('marketer', v)} placeholder="홍길동" disabled={readOnly} />
+                <Input value={form.marketer} onChange={v => setField('marketer', v)} placeholder="홍길동" disabled={readOnly || !permissions.isAdmin} />
               </Field>
               <Field label="업로드 날짜">
                 <input
