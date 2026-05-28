@@ -43,7 +43,7 @@ export default function ImageNotePopup() {
 
   const note = isTextPage ? (imageNotes[textPageIndex] ?? '') : '';
 
-  if (!currentScheduleRow || !isTextPage || !note) return null;
+  if (!currentScheduleRow || !isTextPage) return null;
 
   return (
     <div
@@ -68,7 +68,10 @@ export default function ImageNotePopup() {
       </div>
       {!collapsed && (
         <div className="px-3 py-2.5">
-          <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">{note}</p>
+          {note
+            ? <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">{note}</p>
+            : <p className="text-xs text-gray-400 italic">이미지 요청 없음</p>
+          }
         </div>
       )}
     </div>
