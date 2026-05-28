@@ -1,12 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useMyTasks } from '@/hooks/useMyTasks';
 
 export default function MyTasksPage() {
-  const { rows, loading, markCompleted } = useMyTasks();
-  const router = useRouter();
+  const { rows, loading, markCompleted, navigateToEditor, navigating } = useMyTasks();
 
   const pending = rows.filter(r => !r.completed);
   const done = rows.filter(r => r.completed);
@@ -46,10 +44,11 @@ export default function MyTasksPage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <button
-                          onClick={() => router.push('/editor')}
-                          className="text-xs px-3 py-1.5 rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] transition-colors"
+                          onClick={() => navigateToEditor(row)}
+                          disabled={navigating}
+                          className="text-xs px-3 py-1.5 rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] disabled:opacity-50 transition-colors"
                         >
-                          편집기 →
+                          {navigating ? '이동 중...' : '편집기 →'}
                         </button>
                       </div>
                     </div>
