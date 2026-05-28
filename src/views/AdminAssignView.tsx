@@ -32,13 +32,7 @@ export default function AdminAssignView() {
     return filter === '전체' || s === filter;
   });
 
-  const grouped: Record<string, ScheduleRow[]> = {};
-  for (const r of filtered) {
-    const key = r.date || '날짜 없음';
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(r);
-  }
-  const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+  const sorted = [...filtered].sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
 
   const handleAssign = async (id: string, designerId: string) => {
     setSaving(id);
@@ -66,68 +60,55 @@ export default function AdminAssignView() {
             {s}
           </button>
         ))}
-        <span className="ml-auto text-xs text-gray-400">{filtered.length}건</span>
+        <span className="ml-auto text-xs text-gray-400">{sorted.length}건</span>
       </div>
 
-      {sortedDates.length === 0 && (
+      {sorted.length === 0 && (
         <div className="text-sm text-gray-300 text-center py-16">기획안이 없습니다.</div>
       )}
 
-      <div className="space-y-4">
-        {sortedDates.map(date => (
-          <div key={date} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
-              <span className="text-[11px] font-semibold text-gray-500">{date}</span>
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden divide-y divide-gray-50">
+        {sorted.map(row => {
+          const status = getStatus(row);
+          return (
+            <div key={row.id} className="px-4 py-3 flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-800 truncate">{row.keyword || '(키워드 없음)'}</span>
+                  <StatusBadge status={status} />
+                </div>
+                <div className="flex items-center gap-3 mt-0.5">
+                  {row.marketer && <span className="text-[11px] text-gray-400">{row.marketer}</span>}
+                  {row.assigned_to && (
+                    <span className="text-[11px] text-blue-500">→ {designerMap[row.assigned_to] ?? '알 수 없음'}</span>
+                  )}
+                  {row.created_at && (
+                    <span className="text-[11px] text-gray-400">작성 {row.created_at.slice(0, 10)}</span>
+                  )}
+                  {row.date && (
+                    <span className="text-[11px] text-gray-400">업로드 {row.date}</span>
+                  )}
+                </div>
+              </div>
+              {!row.completed && (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-[11px] text-gray-400 whitespace-nowrap">담당자</span>
+                  <select
+                    className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:border-gray-400 transition min-w-[120px]"
+                    value={row.assigned_to ?? ''}
+                    onChange={e => handleAssign(row.id, e.target.value)}
+                    disabled={saving === row.id}
+                  >
+                    <option value="">미배분</option>
+                    {designers.map(d => (
+                      <option key={d.id} value={d.id}>{d.name} ({d.team || '-'})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
-            <div className="divide-y divide-gray-50">
-              {grouped[date].map(row => {
-                const status = getStatus(row);
-                return (
-                  <div key={row.id} className="px-4 py-3 flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-800 truncate">{row.keyword || '(키워드 없음)'}</span>
-                        <StatusBadge status={status} />
-                      </div>
-                      <div className="flex items-center gap-3 mt-0.5">
-                        {row.marketer && <span className="text-[11px] text-gray-400">{row.marketer}</span>}
-                        {row.assigned_to && (
-                          <span className="text-[11px] text-blue-500">→ {designerMap[row.assigned_to] ?? '알 수 없음'}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <div className="flex flex-col items-end gap-0.5">
-                        {row.created_at && (
-                          <span className="text-[10px] text-gray-400">작성일 {row.created_at.slice(0, 10)}</span>
-                        )}
-                        {row.date && (
-                          <span className="text-[10px] text-gray-400">업로드 {row.date}</span>
-                        )}
-                      </div>
-                      {!row.completed && (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[11px] text-gray-400 whitespace-nowrap">담당자</span>
-                          <select
-                            className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:border-[#1450a0] transition min-w-[120px]"
-                            value={row.assigned_to ?? ''}
-                            onChange={e => handleAssign(row.id, e.target.value)}
-                            disabled={saving === row.id}
-                          >
-                            <option value="">미배분</option>
-                            {designers.map(d => (
-                              <option key={d.id} value={d.id}>{d.name} ({d.team || '-'})</option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
