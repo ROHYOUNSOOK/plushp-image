@@ -10,7 +10,7 @@ export default function ImageNotePopup() {
   const currentScheduleRow = useEditorStore(s => s.currentScheduleRow);
 
   const [imageNotes, setImageNotes] = useState<string[]>([]);
-  const [pos, setPos] = useState({ x: 180, y: 240 });
+  const [pos, setPos] = useState({ x: 240, y: 240 });
   const [collapsed, setCollapsed] = useState(false);
   const dragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
