@@ -80,7 +80,7 @@ export default function AdminAssignView() {
         {sorted.map(row => {
           const status = getStatus(row);
           return (
-            <div key={row.id} className="px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => router.push(`/plan?id=${row.id}`)}>
+            <div key={row.id} className="px-5 py-3.5 flex items-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => router.push(`/plan?id=${row.id}`)}>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-gray-800 truncate">{row.keyword || '(키워드 없음)'}</span>

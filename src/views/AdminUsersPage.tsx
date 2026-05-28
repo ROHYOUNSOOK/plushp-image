@@ -4,8 +4,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useAdminUsers, type UserRow } from '@/hooks/useAdminUsers';
 import AdminAssignView from '@/views/AdminAssignView';
+import AdminTaskStatusView from '@/views/AdminTaskStatusView';
 
-type Tab = '직원관리' | '업무배분';
+type Tab = '직원관리' | '업무배분' | '업무현황';
 
 const DEPT_TEAMS: Record<string, string[]> = {
   '마케팅부': ['블로그팀', '플친팀', '콘텐츠팀', '마케팅기획실', '영상팀'],
@@ -74,9 +75,9 @@ export default function AdminUsersPage() {
         </div>
       </header>
 
-      <div className="px-6 pt-5 pb-4">
+      <div className="max-w-[1280px] mx-auto w-full px-6 pt-5 pb-4">
         <div className="flex gap-2">
-          {(['직원관리', '업무배분'] as Tab[]).map(t => (
+          {(['직원관리', '업무배분', '업무현황'] as Tab[]).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -92,9 +93,11 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      <div className="px-6 pb-6">
+      <div className="max-w-[1280px] mx-auto w-full px-6 pb-6">
         {tab === '업무배분' ? (
           <AdminAssignView />
+        ) : tab === '업무현황' ? (
+          <AdminTaskStatusView />
         ) : loading ? (
           <div className="text-sm text-gray-400 text-center py-20">로딩 중...</div>
         ) : (
@@ -102,12 +105,12 @@ export default function AdminUsersPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">이름</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">이메일</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">부서</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">팀</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">권한</th>
-                  <th className="px-4 py-3" />
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500">이름</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500">이메일</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500">부서</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500">팀</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500">권한</th>
+                  <th className="px-5 py-3.5" />
                 </tr>
               </thead>
               <tbody>
@@ -118,7 +121,7 @@ export default function AdminUsersPage() {
 
                   return (
                     <tr key={user.id} className={`border-b border-gray-100 last:border-0 ${isEditing ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3.5">
                         {isEditing ? (
                           <input
                             className="w-32 text-sm border border-gray-200 rounded-lg px-2 py-1 outline-none focus:border-blue-400"
@@ -129,8 +132,8 @@ export default function AdminUsersPage() {
                           <span className="text-gray-800">{user.name || '-'}</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-gray-500">{user.email}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3.5 text-gray-500">{user.email}</td>
+                      <td className="px-5 py-3.5">
                         {isEditing ? (
                           <select
                             className="text-sm border border-gray-200 rounded-lg px-2 py-1 outline-none focus:border-blue-400 bg-white"
@@ -146,7 +149,7 @@ export default function AdminUsersPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3.5">
                         {isEditing ? (
                           <select
                             className="text-sm border border-gray-200 rounded-lg px-2 py-1 outline-none focus:border-blue-400 bg-white"
@@ -161,7 +164,7 @@ export default function AdminUsersPage() {
                           <span className="text-gray-600">{user.team || '-'}</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3.5">
                         {isEditing ? (
                           <select
                             className="text-sm border border-gray-200 rounded-lg px-2 py-1 outline-none focus:border-blue-400 bg-white"
@@ -176,7 +179,7 @@ export default function AdminUsersPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3.5">
                         <div className="flex gap-2 justify-end">
                           {isEditing ? (
                             <>
