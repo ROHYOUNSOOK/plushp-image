@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import type { ScheduleRow } from '@/lib/supabase';
@@ -11,7 +11,7 @@ import { usePlanData } from '@/hooks/usePlanData';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
 import Toast from '@/components/editor/Toast';
 
-export default function PlanPage() {
+function PlanPageInner() {
   const [filterUserId, setFilterUserId] = useState<string | undefined>();
   const { rows, loading, allDoctors, blogAccounts, isAdmin, upsertRow, deleteRow, markCompleted } = usePlanData(filterUserId);
   const permissions = useUserPermissions();
@@ -98,5 +98,13 @@ export default function PlanPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PlanPage() {
+  return (
+    <Suspense>
+      <PlanPageInner />
+    </Suspense>
   );
 }
