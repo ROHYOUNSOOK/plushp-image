@@ -69,28 +69,26 @@ export default function AdminAssignView() {
           return (
             <div
               key={row.id}
-              className="px-5 py-3.5 flex items-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors"
+              className="px-5 py-3.5 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
               onClick={() => router.push(`/plan?id=${row.id}`)}
             >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-800 truncate">{row.keyword || '(키워드 없음)'}</span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_BADGE_CLASSES[status]}`}>
-                    {STATUS_LABELS[status]}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 mt-0.5">
-                  {row.marketer && <span className="text-[11px] text-gray-400">{row.marketer}</span>}
-                  {row.assigned_to && (
-                    <span className="text-[11px] text-blue-500">→ {designerMap[row.assigned_to] ?? '알 수 없음'}</span>
-                  )}
-                  {row.created_at && (
-                    <span className="text-[11px] text-gray-400">작성 {row.created_at.slice(0, 10)}</span>
-                  )}
-                  {row.date && (
-                    <span className="text-[11px] text-gray-400">업로드 {row.date}</span>
-                  )}
-                </div>
+              <span className="text-sm font-semibold text-gray-800 truncate shrink-0 max-w-[180px]">
+                {row.keyword || '(키워드 없음)'}
+              </span>
+              <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium shrink-0 ${STATUS_BADGE_CLASSES[status]}`}>
+                {STATUS_LABELS[status]}
+              </span>
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                {row.marketer && <span className="text-xs text-gray-500 whitespace-nowrap">{row.marketer}</span>}
+                {row.assigned_to && (
+                  <span className="text-xs text-blue-500 whitespace-nowrap">→ {designerMap[row.assigned_to] ?? '알 수 없음'}</span>
+                )}
+                {row.created_at && (
+                  <span className="text-xs text-gray-400 whitespace-nowrap">작성 {row.created_at.slice(0, 10)}</span>
+                )}
+                {row.date && (
+                  <span className="text-xs text-gray-400 whitespace-nowrap">업로드 {row.date}</span>
+                )}
               </div>
               {status !== 'confirmed' && (
                 <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
