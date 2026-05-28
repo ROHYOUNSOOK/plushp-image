@@ -5,17 +5,12 @@
    PlanForm.tsx에서 분리
 =========================== */
 
-import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { type ScheduleRow } from '@/lib/supabase';
-import {
-  buildScheduleFolderName,
-  checkTemplateExists,
-  applyCloudTemplate,
-  applyRandomFlow,
-} from '@/hooks/useScheduleApplication';
+import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
+import { useScheduleApplication } from '@/hooks/useScheduleApplication';
 import { useEditorStore } from '@/store/editorStore';
-import { toast, hideToast } from '@/components/editor/Toast';
+import { toast } from '@/components/editor/Toast';
 
 interface Doctor {
   id: string;
@@ -40,12 +35,12 @@ export function usePlanForm(
   allDoctors: Doctor[],
   onSaved: (row: ScheduleRow) => void,
 ) {
-  const router = useRouter();
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   );
   const pushHistory = useEditorStore(s => s.pushHistory);
+  const { navigateToEditor: doNavigate, navigating } = useScheduleApplication();
 
   const buildPayload = async (form: FormValues) => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -105,28 +100,7 @@ export function usePlanForm(
 
   const navigateToEditor = async (): Promise<void> => {
     if (!row?.id) return;
-    toast('템플릿 확인 중...', 0);
-    try {
-      pushHistory();
-      const folderName = buildScheduleFolderName(row);
-      const hasTemplate = await checkTemplateExists(folderName);
-
-      if (hasTemplate) {
-        await applyCloudTemplate(row, folderName);
-        hideToast();
-        toast('저장된 템플릿 적용 완료');
-      } else {
-        await applyRandomFlow(row, allDoctors, folderName);
-        hideToast();
-        toast(`총 ${row.texts.length + (row.doctors.length > 0 ? 1 : 0) + 1}페이지 적용됨`);
-      }
-
-      onSaved(row);
-      router.push('/editor');
-    } catch (e: unknown) {
-      hideToast();
-      toast('이동 실패: ' + (e instanceof Error ? e.message : String(e)));
-    }
+    await doNavigate(row, allDoctors);
   };
 
   const handleRevision = async (): Promise<void> => {
@@ -138,5 +112,5 @@ export function usePlanForm(
     toast('수정요청이 전송되었습니다');
   };
 
-  return { handleSave, navigateToEditor, handleDelete, handleRevision };
+  return { handleSave, navigateToEditor, handleDelete, handleRevision, navigating };
 }

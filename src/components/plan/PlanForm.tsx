@@ -33,7 +33,7 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [activeDoctorIdx, setActiveDoctorIdx] = useState<number | null>(null);
 
-  const { handleSave, navigateToEditor, handleDelete, handleRevision } = usePlanForm(row, allDoctors, onSaved);
+  const { handleSave, navigateToEditor, handleDelete, handleRevision, navigating } = usePlanForm(row, allDoctors, onSaved);
   const { hasTemplate, checking } = useTemplateCheck(row);
 
   const readOnly = !permissions.canEditPlans;
@@ -269,12 +269,12 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
           </button>
         )}
         <button
-          onClick={async () => { setSaving(true); await navigateToEditor(); setSaving(false); }}
-          disabled={saving || checking || !row?.id || !canGoToEditor}
+          onClick={() => navigateToEditor()}
+          disabled={navigating || checking || !row?.id || !canGoToEditor}
           title={!row?.id ? '먼저 기획안을 저장하세요' : !canGoToEditor ? '디자이너가 아직 템플릿을 저장하지 않았습니다' : ''}
           className="flex-1 py-2.5 text-sm font-medium rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          {saving ? '이동 중...' : checking ? '확인 중...' : '편집기로 →'}
+          {navigating ? '이동 중...' : checking ? '확인 중...' : '편집기로 →'}
         </button>
       </div>
     </div>

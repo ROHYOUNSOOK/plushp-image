@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { type ScheduleRow, loadDoctorImages, loadRandomFrameImages, loadScheduleInnerImages } from '@/lib/supabase';
 import { useEditorStore } from '@/store/editorStore';
 import { toast, hideToast } from '@/components/editor/Toast';
@@ -47,7 +48,7 @@ export async function applyCloudTemplate(selectedRow: ScheduleRow, folderName: s
   const store = useEditorStore.getState();
   store.setCurrentScheduleRow(selectedRow as unknown as Record<string, unknown>);
 
-  const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folderName);
+  const { pages: tplPages } = await loadCloudTemplate(folderName);
   const pagesWithImages = applyScheduleTextsToTemplatePages(
     await applyScheduleImagesToTemplatePages(tplPages, folderName),
     selectedRow.texts,
@@ -66,7 +67,7 @@ export async function applyCloudTemplate(selectedRow: ScheduleRow, folderName: s
     }
   });
   state.setPages(newPages);
-  if (savedScheduleRow) state.setCurrentScheduleRow(savedScheduleRow);
+  // selectedRow는 이미 위에서 설정했으므로 덮어쓰지 않음
   await autoLoadLogos();
 }
 
@@ -108,7 +109,9 @@ export async function applyRandomFlow(selectedRow: ScheduleRow, allDoctors: Doct
 
 export function useScheduleApplication() {
   const [isApplying, setIsApplying] = useState(false);
+  const [navigating, setNavigating] = useState(false);
   const pushHistory = useEditorStore(s => s.pushHistory);
+  const router = useRouter();
 
   const applySelectedSchedule = async (selectedRow: ScheduleRow, allDoctors: DoctorInfo[]) => {
     setIsApplying(true);
@@ -133,6 +136,33 @@ export function useScheduleApplication() {
       toast('스케줄 적용 실패');
     } finally {
       setIsApplying(false);
+    }
+  };
+
+  const navigateToEditor = async (row: ScheduleRow, allDoctors: DoctorInfo[]) => {
+    setNavigating(true);
+    pushHistory();
+    toast('템플릿 확인 중...', 0);
+    try {
+      const folderName = buildScheduleFolderName(row);
+      const hasTemplate = await checkTemplateExists(folderName);
+
+      if (hasTemplate) {
+        await applyCloudTemplate(row, folderName);
+        hideToast();
+        toast('저장된 템플릿 적용 완료');
+      } else {
+        await applyRandomFlow(row, allDoctors, folderName);
+        hideToast();
+        toast(`총 ${row.texts.length + (row.doctors.length > 0 ? 1 : 0) + 1}페이지 적용됨`);
+      }
+
+      router.push('/editor');
+    } catch (e: unknown) {
+      hideToast();
+      toast('이동 실패: ' + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setNavigating(false);
     }
   };
 
@@ -175,5 +205,5 @@ export function useScheduleApplication() {
     }
   };
 
-  return { isApplying, applySelectedSchedule, applyRandomBackgroundAndFrames };
+  return { isApplying, applySelectedSchedule, applyRandomBackgroundAndFrames, navigateToEditor, navigating };
 }
