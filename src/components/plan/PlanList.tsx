@@ -18,7 +18,7 @@ interface Props {
 export default function PlanList({ rows, selectedId, onSelect, onNew, canCreate }: Props) {
   const grouped: Record<string, ScheduleRow[]> = {};
   for (const row of rows) {
-    const key = row.date || '날짜 없음';
+    const key = row.created_at ? row.created_at.slice(0, 10) : '날짜 없음';
     if (!grouped[key]) grouped[key] = [];
     grouped[key].push(row);
   }

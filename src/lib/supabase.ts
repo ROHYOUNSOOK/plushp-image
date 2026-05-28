@@ -19,6 +19,7 @@ export interface ScheduleRow {
   assigned_to?: string | null;
   created_by?: string | null;
   deadline?: string | null;
+  created_at?: string | null;
 }
 
 export interface DoctorRow {
