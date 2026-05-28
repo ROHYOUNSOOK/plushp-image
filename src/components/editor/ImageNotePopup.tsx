@@ -2,17 +2,28 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { useEditorStore } from '@/store/editorStore';
+import { supabase } from '@/lib/supabase';
 
 export default function ImageNotePopup() {
   const currentPage = useEditorStore(s => s.currentPage);
   const pages = useEditorStore(s => s.pages);
   const currentScheduleRow = useEditorStore(s => s.currentScheduleRow);
 
+  const [imageNotes, setImageNotes] = useState<string[]>([]);
   const [pos, setPos] = useState({ x: 16, y: 120 });
   const [collapsed, setCollapsed] = useState(false);
   const dragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const ref = useRef<HTMLDivElement>(null);
+
+  const scheduleId = (currentScheduleRow as Record<string, unknown>)?.id as string | undefined;
+
+  // 스케줄 ID가 바뀔 때마다 DB에서 최신 image_notes 가져오기
+  useEffect(() => {
+    if (!scheduleId) { setImageNotes([]); return; }
+    supabase.from('plus_schedule').select('image_notes').eq('id', scheduleId).single()
+      .then(({ data }) => setImageNotes(data?.image_notes ?? []));
+  }, [scheduleId]);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -32,11 +43,9 @@ export default function ImageNotePopup() {
     e.preventDefault();
   };
 
-  const imageNotes: string[] = (currentScheduleRow as Record<string, unknown>)?.image_notes as string[] ?? [];
   const page = pages[currentPage];
   const isTextPage = page && !page.isMedicalLaw && !page.layers.some(l => l.type === 'doctor-card');
 
-  // 텍스트 페이지만 표시 (문구 페이지 인덱스 계산)
   const textPageIndex = pages.slice(0, currentPage + 1).filter(
     p => !p.isMedicalLaw && !p.layers.some(l => l.type === 'doctor-card')
   ).length - 1;
