@@ -29,6 +29,13 @@ export default function AdminAssignView() {
 
   const designerMap = Object.fromEntries(designers.map((d: Designer) => [d.id, d.name]));
 
+  const inProgressCount = rows.reduce<Record<string, number>>((acc, r) => {
+    if (!r.completed && r.assigned_to) {
+      acc[r.assigned_to] = (acc[r.assigned_to] ?? 0) + 1;
+    }
+    return acc;
+  }, {});
+
   const filtered = rows.filter(r => {
     const s = getStatus(r);
     return filter === '전체' || s === filter;
@@ -103,7 +110,7 @@ export default function AdminAssignView() {
                   >
                     <option value="">미배분</option>
                     {designers.map(d => (
-                      <option key={d.id} value={d.id}>{d.name} ({d.team || '-'})</option>
+                      <option key={d.id} value={d.id}>{d.name} ({d.team || '-'}) · 진행중 {inProgressCount[d.id] ?? 0}건</option>
                     ))}
                   </select>
                 </div>
