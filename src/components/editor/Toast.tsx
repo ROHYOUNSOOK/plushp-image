@@ -45,14 +45,14 @@ export default function Toast() {
 
   if (type === 'yellow') {
     return (
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-yellow-400 text-yellow-900 font-semibold text-sm px-5 py-2.5 rounded-full shadow-lg pointer-events-none select-none whitespace-pre-line text-center">
+      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-yellow-400 text-yellow-900 font-semibold text-sm px-5 py-2.5 rounded-full shadow-lg pointer-events-none select-none whitespace-pre-line text-center">
         {message}
       </div>
     );
   }
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 bg-gray-800 text-white text-sm rounded-lg shadow-lg transition-opacity">
+    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 bg-gray-800 text-white text-sm rounded-lg shadow-lg transition-opacity">
       {message}
     </div>
   );
