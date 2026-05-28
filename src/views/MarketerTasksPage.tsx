@@ -51,25 +51,25 @@ export default function MarketerTasksPage() {
                 </p>
                 <div className="space-y-2">
                   {items.map(row => (
-                    <div key={row.id} className="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3">
-                      <div
-                        className="flex-1 min-w-0 cursor-pointer"
-                        onClick={() => router.push(`/plan?id=${row.id}`)}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-800 truncate">{row.keyword || '(키워드 없음)'}</span>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_BADGE_CLASSES[stage]}`}>
-                            {STATUS_LABELS[stage]}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 mt-0.5">
-                          {row.date && <span className="text-[11px] text-gray-400">업로드 {row.date}</span>}
-                          {row.created_at && <span className="text-[11px] text-gray-300">작성 {row.created_at.slice(0, 10)}</span>}
-                        </div>
+                    <div
+                      key={row.id}
+                      onClick={() => router.push(`/plan?id=${row.id}`)}
+                      className="bg-white rounded-xl border border-gray-200 px-5 py-3.5 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                    >
+                      <span className="text-sm font-semibold text-gray-800 truncate min-w-0 flex-shrink-0 max-w-[180px]">
+                        {row.keyword || '(키워드 없음)'}
+                      </span>
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium shrink-0 ${STATUS_BADGE_CLASSES[stage]}`}>
+                        {STATUS_LABELS[stage]}
+                      </span>
+                      <div className="flex items-center gap-4 ml-2 flex-1 min-w-0">
+                        {row.created_at && <span className="text-xs text-gray-400 whitespace-nowrap">작성 {row.created_at.slice(0, 10)}</span>}
+                        {row.date && <span className="text-xs text-gray-400 whitespace-nowrap">업로드 {row.date}</span>}
                       </div>
                       {stage === 'design_done' && (
                         <button
-                          onClick={async () => {
+                          onClick={async e => {
+                            e.stopPropagation();
                             if (!confirm('컨펌 완료 처리하시겠습니까?')) return;
                             await confirmRow(row.id);
                           }}
