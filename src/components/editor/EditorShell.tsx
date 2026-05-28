@@ -26,6 +26,7 @@ import { getDefaultLogoImage, LOGO_URL, autoLoadLogos } from '@/lib/logoLoader';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
 import { applyBackgroundImage } from '@/lib/imageUpload';
 import { calcAutoFillColor, calcShadowColor } from '@/lib/colorHelpers';
+import ImageNotePopup from './ImageNotePopup';
 
 const LAYER_TYPES: { type: LayerType; icon: string; label: string }[] = [
   { type: 'background', icon: '🌄', label: '배경' },
@@ -165,6 +166,7 @@ export default function EditorShell() {
 
   return (
     <div className="flex flex-col h-screen" onClick={handleGlobalClick}>
+      <ImageNotePopup />
       {/* 상단 툴바 */}
       <div className="flex items-center gap-2 p-2 bg-[#0d8fa8] text-white text-sm">
         <Link

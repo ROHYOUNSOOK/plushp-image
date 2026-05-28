@@ -30,6 +30,7 @@ interface FormValues {
   account_id: string;
   keyword: string;
   texts: string[];
+  image_notes: string[];
   doctors: string[];
   doctor_specialty: string;
 }
@@ -54,6 +55,7 @@ export function usePlanForm(
       account_id: form.account_id,
       keyword: form.keyword,
       texts: form.texts.filter(t => t.trim()),
+      image_notes: form.image_notes,
       doctors: form.doctors.filter(d => d.trim()),
       doctor_specialty: form.doctor_specialty,
       completed: row?.completed ?? false,

@@ -20,6 +20,7 @@ export interface ScheduleRow {
   created_by?: string | null;
   deadline?: string | null;
   created_at?: string | null;
+  image_notes?: string[] | null;
 }
 
 export interface DoctorRow {

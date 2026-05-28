@@ -22,6 +22,7 @@ const EMPTY_FORM = {
   account_id: '',
   keyword: '',
   texts: ['', '', '', ''],
+  image_notes: ['', '', '', ''],
   doctors: [''],
   doctor_specialty: '',
 };
@@ -48,6 +49,7 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
         account_id: row.account_id ?? '',
         keyword: row.keyword ?? '',
         texts: row.texts?.length ? [...row.texts] : ['', '', '', ''],
+        image_notes: row.image_notes?.length ? [...row.image_notes] : Array(row.texts?.length || 4).fill(''),
         doctors: row.doctors?.length ? row.doctors : [''],
         doctor_specialty: row.doctor_specialty ?? '',
       });
@@ -65,8 +67,15 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
   const setTextAt = (i: number, v: string) => {
     setForm(f => { const texts = [...f.texts]; texts[i] = v; return { ...f, texts }; });
   };
-  const addText = () => setForm(f => ({ ...f, texts: [...f.texts, ''] }));
-  const removeText = (i: number) => setForm(f => ({ ...f, texts: f.texts.filter((_, idx) => idx !== i) }));
+  const setNoteAt = (i: number, v: string) => {
+    setForm(f => { const image_notes = [...f.image_notes]; image_notes[i] = v; return { ...f, image_notes }; });
+  };
+  const addText = () => setForm(f => ({ ...f, texts: [...f.texts, ''], image_notes: [...f.image_notes, ''] }));
+  const removeText = (i: number) => setForm(f => ({
+    ...f,
+    texts: f.texts.filter((_, idx) => idx !== i),
+    image_notes: f.image_notes.filter((_, idx) => idx !== i),
+  }));
 
   const setDoctorAt = (i: number, v: string) => {
     setForm(f => { const doctors = [...f.doctors]; doctors[i] = v; return { ...f, doctors }; });
@@ -149,20 +158,31 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
             </div>
           </Section>
 
-          <Section title="문구">
+          <Section title="문구 / 이미지 요청">
+            <div className="grid grid-cols-2 gap-2 mb-1.5">
+              <span className="text-[10px] font-medium text-gray-400 text-center">문구</span>
+              <span className="text-[10px] font-medium text-orange-400 text-center">이미지 요청</span>
+            </div>
             <div className="space-y-2">
               {form.texts.map((t, i) => (
-                <div key={i} className="flex items-center gap-2.5">
-                  <span className="text-[11px] font-medium text-gray-300 w-4 text-right">{i + 1}</span>
+                <div key={i} className="flex items-center gap-2">
+                  <span className="text-[11px] font-medium text-gray-300 w-4 shrink-0 text-right">{i + 1}</span>
                   <input
-                    className="flex-1 text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] focus:ring-2 focus:ring-[#1450a0/10] transition placeholder:text-gray-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="flex-1 text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] transition placeholder:text-gray-500 disabled:bg-gray-50 disabled:text-gray-500"
                     value={t}
                     onChange={e => setTextAt(i, e.target.value)}
                     placeholder={`문구 ${i + 1}`}
                     disabled={readOnly}
                   />
+                  <input
+                    className="flex-1 text-sm text-gray-900 border border-orange-200 rounded-lg px-3 py-2 bg-orange-50 outline-none focus:border-orange-400 transition placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500"
+                    value={form.image_notes[i] ?? ''}
+                    onChange={e => setNoteAt(i, e.target.value)}
+                    placeholder="이미지 요청사항"
+                    disabled={readOnly}
+                  />
                   {!readOnly && form.texts.length > 1 && (
-                    <button onClick={() => removeText(i)} className="text-gray-300 hover:text-red-400 transition-colors text-base leading-none w-5">×</button>
+                    <button onClick={() => removeText(i)} className="text-gray-300 hover:text-red-400 transition-colors text-base leading-none w-5 shrink-0">×</button>
                   )}
                 </div>
               ))}
