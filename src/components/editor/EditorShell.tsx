@@ -407,24 +407,42 @@ export default function EditorShell() {
           )}
         </div>
 
+        {/* 디자이너 — 디자인완료 버튼 */}
         {permissions.isDesigner && currentScheduleRow && !currentScheduleRow.completed && currentScheduleRow.assigned_to === permissions.userId && (
           <button
             onClick={async () => {
               const id = currentScheduleRow.id as string;
               if (!id) return;
-              if (!confirm('작업을 완료 처리하시겠습니까?')) return;
+              if (!confirm('디자인 완료 처리하시겠습니까?')) return;
               await supabase.from('plus_schedule').update({ completed: true }).eq('id', id);
               useEditorStore.getState().setCurrentScheduleRow({ ...currentScheduleRow, completed: true });
-              toast('완료 처리되었습니다');
+              toast('디자인 완료 처리되었습니다');
+            }}
+            className="ml-auto text-xs px-3 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-400 text-white transition-colors whitespace-nowrap"
+          >
+            디자인완료
+          </button>
+        )}
+        {/* 마케터/관리자 — 컨펌완료 버튼 (디자인완료 후 활성화) */}
+        {currentScheduleRow && !!currentScheduleRow.completed && !currentScheduleRow.confirmed &&
+          (permissions.isAdmin || (!permissions.isDesigner && currentScheduleRow.created_by === permissions.userId)) && (
+          <button
+            onClick={async () => {
+              const id = currentScheduleRow.id as string;
+              if (!id) return;
+              if (!confirm('최종 컨펌 처리하시겠습니까?')) return;
+              await supabase.from('plus_schedule').update({ confirmed: true }).eq('id', id);
+              useEditorStore.getState().setCurrentScheduleRow({ ...currentScheduleRow, confirmed: true });
+              toast('컨펌 완료 처리되었습니다');
             }}
             className="ml-auto text-xs px-3 py-1.5 rounded-lg bg-green-500 hover:bg-green-400 text-white transition-colors whitespace-nowrap"
           >
-            완료
+            컨펌완료
           </button>
         )}
         <Link
           href="/home"
-          className={`${permissions.isDesigner && currentScheduleRow && !currentScheduleRow.completed ? '' : 'ml-auto'} text-xs px-3 py-1.5 rounded-lg border border-white/40 text-white hover:bg-white/10 transition-colors whitespace-nowrap`}
+          className="ml-auto text-xs px-3 py-1.5 rounded-lg border border-white/40 text-white hover:bg-white/10 transition-colors whitespace-nowrap"
         >
           홈으로 →
         </Link>

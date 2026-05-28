@@ -3,23 +3,9 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAssignment } from '@/hooks/useAssignment';
-import type { ScheduleRow } from '@/lib/supabase';
+import { getScheduleStatus, STATUS_LABELS, STATUS_BADGE_CLASSES, type ScheduleStatus } from '@/lib/scheduleStatus';
 
-type StatusFilter = '전체' | '미배분' | '진행중' | '완료';
-
-function getStatus(row: ScheduleRow): Exclude<StatusFilter, '전체'> {
-  if (row.completed) return '완료';
-  if (row.assigned_to) return '진행중';
-  return '미배분';
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const cls =
-    status === '완료' ? 'bg-green-100 text-green-700' :
-    status === '진행중' ? 'bg-blue-100 text-blue-700' :
-    'bg-gray-100 text-gray-500';
-  return <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${cls}`}>{status}</span>;
-}
+type StatusFilter = '전체' | ScheduleStatus;
 
 function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return '-';
@@ -43,6 +29,7 @@ export default function AdminTaskStatusView() {
   const [status, setStatus] = useState<StatusFilter>('전체');
 
   const marketers = useMemo(
+
     () => [...new Set(rows.map(r => r.marketer).filter(Boolean))].sort(),
     [rows],
   );
@@ -60,7 +47,7 @@ export default function AdminTaskStatusView() {
       if (marketer && r.marketer !== marketer) return false;
       if (accountId && r.account_id !== accountId) return false;
       if (date && r.date !== date) return false;
-      if (status !== '전체' && getStatus(r) !== status) return false;
+      if (status !== '전체' && getScheduleStatus(r) !== status) return false;
       return true;
     });
   }, [rows, marketer, accountId, date, status]);
@@ -107,9 +94,11 @@ export default function AdminTaskStatusView() {
           className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white outline-none focus:border-gray-400 transition"
         >
           <option value="전체">상태</option>
-          <option value="미배분">미배분</option>
-          <option value="진행중">진행중</option>
-          <option value="완료">완료</option>
+          <option value="unassigned">미배분</option>
+          <option value="assigned">배분완료</option>
+          <option value="in_progress">진행중</option>
+          <option value="design_done">디자인완료</option>
+          <option value="confirmed">컨펌완료</option>
         </select>
         <span className="ml-auto text-xs text-gray-400">{sorted.length}건</span>
       </div>
@@ -129,19 +118,26 @@ export default function AdminTaskStatusView() {
               </tr>
             </thead>
             <tbody>
-              {sorted.map(row => (
+              {sorted.map(row => {
+                const s = getScheduleStatus(row);
+                return (
                 <tr
                   key={row.id}
                   onClick={() => router.push(`/plan?id=${row.id}`)}
                   className="border-b border-gray-100 last:border-0 hover:bg-gray-50 cursor-pointer transition-colors"
                 >
-                  <td className="px-5 py-3.5"><StatusBadge status={getStatus(row)} /></td>
+                  <td className="px-5 py-3.5">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE_CLASSES[s]}`}>
+                      {STATUS_LABELS[s]}
+                    </span>
+                  </td>
                   <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{formatDateTime(row.created_at)}</td>
                   <td className="px-5 py-3.5 text-gray-700">{row.marketer || '-'}</td>
                   <td className="px-5 py-3.5 text-gray-600">{row.account_id || '-'}</td>
                   <td className="px-5 py-3.5 text-gray-800 font-medium">{row.keyword || '(키워드 없음)'}</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

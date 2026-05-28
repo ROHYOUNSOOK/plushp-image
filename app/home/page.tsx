@@ -38,6 +38,7 @@ export default function HomePage() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDesigner, setIsDesigner] = useState(false);
+  const [isMarketer, setIsMarketer] = useState(false);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -55,6 +56,7 @@ export default function HomePage() {
         .then(({ data: userData }) => {
           if (userData?.role === '관리자') setIsAdmin(true);
           if (userData?.department === '디자인부') setIsDesigner(true);
+          if (userData?.department === '마케팅부') setIsMarketer(true);
         });
     });
   }, []);
@@ -107,6 +109,20 @@ export default function HomePage() {
                 >
                   <span className="text-3xl">✅</span>
                   <span className="text-sm font-semibold text-purple-700">내 업무</span>
+                </button>
+              </div>
+            </div>
+          )}
+          {isMarketer && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">마케터</p>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => router.push('/my-tasks-marketer')}
+                  className="flex flex-col items-center justify-center gap-2 rounded-xl border py-8 transition-colors bg-teal-50 hover:bg-teal-100 border-teal-200"
+                >
+                  <span className="text-3xl">📊</span>
+                  <span className="text-sm font-semibold text-teal-700">내 업무</span>
                 </button>
               </div>
             </div>

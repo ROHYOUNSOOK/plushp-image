@@ -106,9 +106,9 @@ export function usePlanForm(
   const handleRevision = async (): Promise<void> => {
     if (!row?.id) return;
     if (!confirm('수정요청을 보내시겠습니까? 디자이너에게 업무가 재활성화됩니다.')) return;
-    const { error } = await supabase.from('plus_schedule').update({ completed: false }).eq('id', row.id);
+    const { error } = await supabase.from('plus_schedule').update({ completed: false, confirmed: false }).eq('id', row.id);
     if (error) { toast('수정요청 실패: ' + error.message); return; }
-    onSaved({ ...row, completed: false });
+    onSaved({ ...row, completed: false, confirmed: false });
     toast('수정요청이 전송되었습니다');
   };
 

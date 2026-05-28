@@ -21,6 +21,8 @@ export interface ScheduleRow {
   deadline?: string | null;
   created_at?: string | null;
   image_notes?: string[] | null;
+  started?: boolean;
+  confirmed?: boolean;
 }
 
 export interface DoctorRow {

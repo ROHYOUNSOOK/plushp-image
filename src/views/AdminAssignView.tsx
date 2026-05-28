@@ -3,23 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAssignment, type Designer } from '@/hooks/useAssignment';
-import type { ScheduleRow } from '@/lib/supabase';
+import { getScheduleStatus, STATUS_LABELS, STATUS_BADGE_CLASSES, type ScheduleStatus } from '@/lib/scheduleStatus';
 
-type StatusFilter = '전체' | '미배분' | '진행중' | '완료';
+type StatusFilter = '전체' | ScheduleStatus;
 
-function getStatus(row: ScheduleRow) {
-  if (row.completed) return '완료';
-  if (row.assigned_to) return '진행중';
-  return '미배분';
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const cls =
-    status === '완료' ? 'bg-green-100 text-green-700' :
-    status === '진행중' ? 'bg-blue-100 text-blue-700' :
-    'bg-gray-100 text-gray-500';
-  return <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${cls}`}>{status}</span>;
-}
+const FILTER_OPTIONS: StatusFilter[] = ['전체', 'unassigned', 'assigned', 'in_progress', 'design_done', 'confirmed'];
 
 export default function AdminAssignView() {
   const { rows, designers, loading, assign } = useAssignment();
@@ -30,17 +18,16 @@ export default function AdminAssignView() {
   const designerMap = Object.fromEntries(designers.map((d: Designer) => [d.id, d.name]));
 
   const inProgressCount = rows.reduce<Record<string, number>>((acc, r) => {
-    if (!r.completed && r.assigned_to) {
+    const s = getScheduleStatus(r);
+    if ((s === 'assigned' || s === 'in_progress') && r.assigned_to) {
       acc[r.assigned_to] = (acc[r.assigned_to] ?? 0) + 1;
     }
     return acc;
   }, {});
 
-  const filtered = rows.filter(r => {
-    const s = getStatus(r);
-    return filter === '전체' || s === filter;
-  });
-
+  const filtered = rows.filter(r =>
+    filter === '전체' || getScheduleStatus(r) === filter,
+  );
   const sorted = [...filtered].sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
 
   const handleAssign = async (id: string, designerId: string) => {
@@ -55,8 +42,8 @@ export default function AdminAssignView() {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-4">
-        {(['전체', '미배분', '진행중', '완료'] as StatusFilter[]).map(s => (
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        {FILTER_OPTIONS.map(s => (
           <button
             key={s}
             onClick={() => setFilter(s)}
@@ -66,7 +53,7 @@ export default function AdminAssignView() {
                 : 'border-gray-200 text-gray-500 hover:bg-gray-50'
             }`}
           >
-            {s}
+            {s === '전체' ? '전체' : STATUS_LABELS[s]}
           </button>
         ))}
         <span className="ml-auto text-xs text-gray-400">{sorted.length}건</span>
@@ -78,13 +65,19 @@ export default function AdminAssignView() {
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden divide-y divide-gray-50">
         {sorted.map(row => {
-          const status = getStatus(row);
+          const status = getScheduleStatus(row);
           return (
-            <div key={row.id} className="px-5 py-3.5 flex items-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => router.push(`/plan?id=${row.id}`)}>
+            <div
+              key={row.id}
+              className="px-5 py-3.5 flex items-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={() => router.push(`/plan?id=${row.id}`)}
+            >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-gray-800 truncate">{row.keyword || '(키워드 없음)'}</span>
-                  <StatusBadge status={status} />
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_BADGE_CLASSES[status]}`}>
+                    {STATUS_LABELS[status]}
+                  </span>
                 </div>
                 <div className="flex items-center gap-3 mt-0.5">
                   {row.marketer && <span className="text-[11px] text-gray-400">{row.marketer}</span>}
@@ -99,7 +92,7 @@ export default function AdminAssignView() {
                   )}
                 </div>
               </div>
-              {!row.completed && (
+              {status !== 'confirmed' && (
                 <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
                   <span className="text-[11px] text-gray-400 whitespace-nowrap">담당자</span>
                   <select
@@ -110,7 +103,9 @@ export default function AdminAssignView() {
                   >
                     <option value="">미배분</option>
                     {designers.map(d => (
-                      <option key={d.id} value={d.id}>{d.name} ({d.team || '-'}) · 진행중 {inProgressCount[d.id] ?? 0}건</option>
+                      <option key={d.id} value={d.id}>
+                        {d.name} ({d.team || '-'}) · 진행중 {inProgressCount[d.id] ?? 0}건
+                      </option>
                     ))}
                   </select>
                 </div>

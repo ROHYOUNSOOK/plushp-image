@@ -11,6 +11,7 @@ export interface UserPermissions {
   department: string;
   isAdmin: boolean;
   isDesigner: boolean;
+  isMarketer: boolean;
   canEditPlans: boolean;
   canDeletePlans: boolean;
   canAccessEditorWithoutTemplate: boolean;
@@ -24,6 +25,7 @@ const DEFAULT: UserPermissions = {
   department: '',
   isAdmin: false,
   isDesigner: false,
+  isMarketer: false,
   canEditPlans: false,
   canDeletePlans: false,
   canAccessEditorWithoutTemplate: false,
@@ -52,11 +54,12 @@ export function useUserPermissions(): UserPermissions {
           const department = u?.department ?? '';
           const isAdmin = role === '관리자';
           const isDesigner = department === '디자인부';
+          const isMarketer = department === '마케팅부';
           setPerms({
             loaded: true,
             userId,
             role, team, department,
-            isAdmin, isDesigner,
+            isAdmin, isDesigner, isMarketer,
             canEditPlans: isAdmin || !isDesigner,
             canDeletePlans: isAdmin,
             canAccessEditorWithoutTemplate: isAdmin || isDesigner,

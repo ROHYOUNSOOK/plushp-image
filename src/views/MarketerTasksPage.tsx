@@ -1,16 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useMyTasks } from '@/hooks/useMyTasks';
+import { useRouter } from 'next/navigation';
+import { useMarketerTasks } from '@/hooks/useMarketerTasks';
 import { getScheduleStatus, STATUS_LABELS, STATUS_BADGE_CLASSES, STATUS_ORDER, type ScheduleStatus } from '@/lib/scheduleStatus';
 import type { ScheduleRow } from '@/lib/supabase';
 
-const DESIGNER_STAGES: ScheduleStatus[] = ['assigned', 'in_progress', 'design_done', 'confirmed'];
+const ALL_STAGES: ScheduleStatus[] = [...STATUS_ORDER];
 
-export default function MyTasksPage() {
-  const { rows, loading, navigateToEditor, navigating } = useMyTasks();
+export default function MarketerTasksPage() {
+  const { rows, loading, confirmRow } = useMarketerTasks();
+  const router = useRouter();
 
-  const grouped = DESIGNER_STAGES.reduce<Record<ScheduleStatus, ScheduleRow[]>>(
+  const grouped = ALL_STAGES.reduce<Record<ScheduleStatus, ScheduleRow[]>>(
     (acc, s) => { acc[s] = []; return acc; },
     {} as Record<ScheduleStatus, ScheduleRow[]>,
   );
@@ -37,9 +39,9 @@ export default function MyTasksPage() {
         {loading ? (
           <div className="text-sm text-gray-400 text-center py-20">로딩 중...</div>
         ) : rows.length === 0 ? (
-          <div className="text-sm text-gray-300 text-center py-20">배분된 업무가 없습니다.</div>
+          <div className="text-sm text-gray-300 text-center py-20">작성한 기획안이 없습니다.</div>
         ) : (
-          DESIGNER_STAGES.map(stage => {
+          ALL_STAGES.map(stage => {
             const items = grouped[stage];
             if (items.length === 0) return null;
             return (
@@ -50,28 +52,31 @@ export default function MyTasksPage() {
                 <div className="space-y-2">
                   {items.map(row => (
                     <div key={row.id} className="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3">
-                      <div className="flex-1 min-w-0">
+                      <div
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => router.push(`/plan?id=${row.id}`)}
+                      >
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-800 truncate block">{row.keyword || '(키워드 없음)'}</span>
+                          <span className="text-sm font-medium text-gray-800 truncate">{row.keyword || '(키워드 없음)'}</span>
                           <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_BADGE_CLASSES[stage]}`}>
                             {STATUS_LABELS[stage]}
                           </span>
                         </div>
                         <div className="flex items-center gap-3 mt-0.5">
                           {row.date && <span className="text-[11px] text-gray-400">업로드 {row.date}</span>}
-                          {row.marketer && <span className="text-[11px] text-gray-300">{row.marketer}</span>}
+                          {row.created_at && <span className="text-[11px] text-gray-300">작성 {row.created_at.slice(0, 10)}</span>}
                         </div>
                       </div>
-                      {stage !== 'confirmed' && (
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            onClick={() => navigateToEditor(row)}
-                            disabled={navigating}
-                            className="text-xs px-3 py-1.5 rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] disabled:opacity-50 transition-colors"
-                          >
-                            {navigating ? '이동 중...' : '편집기 →'}
-                          </button>
-                        </div>
+                      {stage === 'design_done' && (
+                        <button
+                          onClick={async () => {
+                            if (!confirm('컨펌 완료 처리하시겠습니까?')) return;
+                            await confirmRow(row.id);
+                          }}
+                          className="shrink-0 text-xs px-3 py-1.5 rounded-lg bg-green-500 text-white hover:bg-green-400 transition-colors whitespace-nowrap"
+                        >
+                          컨펌완료
+                        </button>
                       )}
                     </div>
                   ))}
