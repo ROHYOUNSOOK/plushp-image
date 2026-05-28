@@ -4,6 +4,15 @@ import { useRef, useState, useEffect } from 'react';
 import { useEditorStore } from '@/store/editorStore';
 import { supabase } from '@/lib/supabase';
 
+function renderWithLinks(text: string) {
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+  return parts.map((part, i) =>
+    i % 2 === 1
+      ? <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline break-all">{part}</a>
+      : part
+  );
+}
+
 export default function ImageNotePopup() {
   const currentPage = useEditorStore(s => s.currentPage);
   const pages = useEditorStore(s => s.pages);
@@ -58,10 +67,10 @@ export default function ImageNotePopup() {
     <div
       ref={ref}
       style={{ position: 'fixed', left: pos.x, top: pos.y, zIndex: 9999, width: 260 }}
-      className="bg-white border border-orange-200 rounded-xl shadow-lg overflow-hidden select-none"
+      className="bg-white border border-orange-200 rounded-xl shadow-lg overflow-hidden"
     >
       <div
-        className="flex items-center justify-between px-3 py-2 bg-orange-50 border-b border-orange-100 cursor-move"
+        className="flex items-center justify-between px-3 py-2 bg-orange-50 border-b border-orange-100 cursor-move select-none"
         onMouseDown={onHeaderMouseDown}
       >
         <span className="text-[11px] font-semibold text-orange-500">
@@ -76,9 +85,9 @@ export default function ImageNotePopup() {
         </button>
       </div>
       {!collapsed && (
-        <div className="px-3 py-2.5">
+        <div className="px-3 py-2.5 select-text">
           {note
-            ? <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">{note}</p>
+            ? <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">{renderWithLinks(note)}</p>
             : <p className="text-xs text-gray-400 italic">이미지 요청 없음</p>
           }
         </div>

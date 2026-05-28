@@ -15,7 +15,7 @@ import ContextMenu from './ContextMenu';
 import { useEditorStore, selectCurrentPage, selectBgKeyColor } from '@/store/editorStore';
 import { makeLayer } from '@/lib/layerFactory';
 import { downloadCurrentPage, downloadAllAsZip } from '@/canvas/export';
-import { saveTemplate, openTemplatePicker, mergeTemplateIntoPage, saveCloudTemplate, loadCloudTemplate, listCloudTemplates, type TemplatePage } from '@/lib/templateIO';
+import { mergeTemplateIntoPage, saveCloudTemplate, loadCloudTemplate, listCloudTemplates, type TemplatePage } from '@/lib/templateIO';
 import { loadScheduleInnerImages, supabase } from '@/lib/supabase';
 import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
@@ -77,7 +77,6 @@ export default function EditorShell() {
 
   const [editingTab, setEditingTab] = React.useState<{ index: number; value: string } | null>(null);
   const [dlOpen, setDlOpen] = React.useState(false);
-  const [tplOpen, setTplOpen] = React.useState(false);
   const [showShortcuts, setShowShortcuts] = React.useState(false);
   const permissions = useUserPermissions();
   const currentScheduleRow = useEditorStore(s => s.currentScheduleRow);
@@ -256,156 +255,88 @@ export default function EditorShell() {
         {/* 구분선 */}
         <div className="w-px h-5 bg-[#1a5cba] mx-1" />
 
-        {/* 템플릿 드롭다운 */}
-        <div className="relative">
-          <button
-            onClick={() => setTplOpen(v => !v)}
-            className="px-2 py-1 rounded hover:bg-[#1a5cba] flex items-center gap-1"
-          >
-            📋 템플릿 ▾
-          </button>
-          {tplOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setTplOpen(false)} />
-              <div className="absolute left-0 top-full mt-1 z-50 bg-[#0d8fa8] rounded shadow-lg overflow-hidden min-w-[140px]">
-                <button
-                  onClick={async () => {
-                    setTplOpen(false);
-                    try {
-                      toast('템플릿 저장 중...');
-                      const state = useEditorStore.getState();
-                      await saveTemplate(state.pages, state.currentScheduleRow);
-                      toast('템플릿 저장 완료');
-                    } catch {
-                      toast('저장 실패');
-                    }
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-[#1a5cba]"
-                >
-                  내 PC에 저장
-                </button>
-                <button
-                  onClick={() => {
-                    setTplOpen(false);
-                    openTemplatePicker(
-                      async (tplPages, savedScheduleRow) => {
-                        const state = useEditorStore.getState();
-                        pushHistory();
-                        toast('템플릿 불러오는 중...', 0);
-                        const pagesWithImages = await applyScheduleImagesToPages(tplPages, savedScheduleRow);
-                        const newPages = [...state.pages];
-                        pagesWithImages.forEach((tpl, i) => {
-                          if (i < newPages.length) {
-                            newPages[i] = mergeTemplateIntoPage(newPages[i], tpl);
-                          } else {
-                            newPages.push(mergeTemplateIntoPage(
-                              { id: newPages.length + 1, name: tpl.name || '', layers: [] },
-                              tpl
-                            ));
-                          }
-                        });
-                        setPages(newPages);
-                        if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow);
-                        const curBg = newPages[0]?.layers.find(l => l.type === 'background') as { solidColor?: string } | undefined;
-                        const curBgColor = curBg?.solidColor ?? '#ffffff';
-                        useEditorStore.getState().applySyncColors(calcAutoFillColor(curBgColor), calcShadowColor(curBgColor));
-                        hideToast();
-                        toast('템플릿 불러오기 완료');
-                        autoLoadLogos();
-                      },
-                      (msg) => toast(msg)
-                    );
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-[#1a5cba]"
-                >
-                  내 PC에서 열기
-                </button>
-                <div className="border-t border-[#1a5cba]" />
-                <button
-                  onClick={async () => {
-                    setTplOpen(false);
-                    try {
-                      const state = useEditorStore.getState();
-                      const row = state.currentScheduleRow;
-                      if (row) {
-                        const date = (row.date as string) ?? '';
-                        const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
-                        const folderName = [yy + mm + dd, row.account_id, row.keyword].filter(Boolean).join('_');
-                        const checkRes = await fetch('/api/check-template', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ folderName }),
-                        }).catch(() => null);
-                        const exists = checkRes?.ok ? (await checkRes.json()).exists : false;
-                        if (exists && !confirm(`"${folderName}" 템플릿이 이미 존재합니다.\n덮어쓰시겠습니까?`)) return;
-                      }
-                      toast('클라우드 저장 중...');
-                      await saveCloudTemplate(state.pages, row);
-                      toast('클라우드 저장 완료');
-                    } catch {
-                      toast('클라우드 저장 실패');
-                    }
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-[#1a5cba]"
-                >
-                  ☁ 클라우드 저장
-                </button>
-                <button
-                  onClick={async () => {
-                    setTplOpen(false);
-                    try {
-                      const { currentScheduleRow: sr } = useEditorStore.getState();
-                      if (!sr) { toast('스케줄을 먼저 적용해주세요'); return; }
-                      const date = (sr.date as string) ?? '';
-                      const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
-                      const currentFolder = [yy + mm + dd, sr.account_id, sr.keyword].filter(Boolean).join('_');
-                      toast('템플릿 목록 불러오는 중...');
-                      const allFolders = await listCloudTemplates();
-                      const matched = allFolders.filter(f => f === currentFolder);
-                      if (!matched.length) { toast('저장된 템플릿 없음'); return; }
-                      const folder = matched.length === 1
-                        ? matched[0]
-                        : window.prompt(
-                            `불러올 템플릿 선택:\n${matched.map((f, i) => `${i + 1}. ${f}`).join('\n')}`,
-                            matched[0]
-                          );
-                      if (!folder) return;
-                      toast('클라우드에서 불러오는 중...', 0);
-                      const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folder);
-                      const state = useEditorStore.getState();
-                      const curBg = state.pages[0]?.layers.find(l => l.type === 'background') as { solidColor?: string } | undefined;
-                      const curBgColor = curBg?.solidColor ?? '#ffffff';
-                      const pagesWithImages = await applyScheduleImagesToPages(tplPages, savedScheduleRow);
-                      pushHistory();
-                      const newPages = [...state.pages];
-                      pagesWithImages.forEach((tpl, i) => {
-                        if (i < newPages.length) {
-                          newPages[i] = mergeTemplateIntoPage(newPages[i], tpl);
-                        } else {
-                          newPages.push(mergeTemplateIntoPage(
-                            { id: newPages.length + 1, name: tpl.name || '', layers: [] },
-                            tpl
-                          ));
-                        }
-                      });
-                      setPages(newPages);
-                      if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow);
-                      useEditorStore.getState().applySyncColors(calcAutoFillColor(curBgColor), calcShadowColor(curBgColor));
-                      hideToast();
-                      toast('클라우드 템플릿 불러오기 완료');
-                      autoLoadLogos();
-                    } catch {
-                      toast('클라우드 불러오기 실패');
-                    }
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-[#1a5cba]"
-                >
-                  ☁ 클라우드 열기
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+        {/* 템플릿 저장 */}
+        <button
+          onClick={async () => {
+            try {
+              const state = useEditorStore.getState();
+              const row = state.currentScheduleRow;
+              if (row) {
+                const date = (row.date as string) ?? '';
+                const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
+                const folderName = [yy + mm + dd, row.account_id, row.keyword].filter(Boolean).join('_');
+                const checkRes = await fetch('/api/check-template', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ folderName }),
+                }).catch(() => null);
+                const exists = checkRes?.ok ? (await checkRes.json()).exists : false;
+                if (exists && !confirm(`"${folderName}" 템플릿이 이미 존재합니다.\n덮어쓰시겠습니까?`)) return;
+              }
+              toast('템플릿 저장 중...');
+              await saveCloudTemplate(state.pages, row);
+              toast('템플릿 저장 완료');
+            } catch {
+              toast('템플릿 저장 실패');
+            }
+          }}
+          className="px-2 py-1 rounded hover:bg-[#1a5cba] transition-colors"
+        >
+          📋 템플릿 저장
+        </button>
+
+        {/* 템플릿 열기 */}
+        <button
+          onClick={async () => {
+            try {
+              const { currentScheduleRow: sr } = useEditorStore.getState();
+              if (!sr) { toast('스케줄을 먼저 적용해주세요'); return; }
+              const date = (sr.date as string) ?? '';
+              const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
+              const currentFolder = [yy + mm + dd, sr.account_id, sr.keyword].filter(Boolean).join('_');
+              toast('템플릿 목록 불러오는 중...');
+              const allFolders = await listCloudTemplates();
+              const matched = allFolders.filter(f => f === currentFolder);
+              if (!matched.length) { toast('저장된 템플릿 없음'); return; }
+              const folder = matched.length === 1
+                ? matched[0]
+                : window.prompt(
+                    `불러올 템플릿 선택:\n${matched.map((f, i) => `${i + 1}. ${f}`).join('\n')}`,
+                    matched[0]
+                  );
+              if (!folder) return;
+              toast('템플릿 불러오는 중...', 0);
+              const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folder);
+              const state = useEditorStore.getState();
+              const curBg = state.pages[0]?.layers.find(l => l.type === 'background') as { solidColor?: string } | undefined;
+              const curBgColor = curBg?.solidColor ?? '#ffffff';
+              const pagesWithImages = await applyScheduleImagesToPages(tplPages, savedScheduleRow);
+              pushHistory();
+              const newPages = [...state.pages];
+              pagesWithImages.forEach((tpl, i) => {
+                if (i < newPages.length) {
+                  newPages[i] = mergeTemplateIntoPage(newPages[i], tpl);
+                } else {
+                  newPages.push(mergeTemplateIntoPage(
+                    { id: newPages.length + 1, name: tpl.name || '', layers: [] },
+                    tpl
+                  ));
+                }
+              });
+              setPages(newPages);
+              if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow);
+              useEditorStore.getState().applySyncColors(calcAutoFillColor(curBgColor), calcShadowColor(curBgColor));
+              hideToast();
+              toast('템플릿 불러오기 완료');
+              autoLoadLogos();
+            } catch {
+              toast('템플릿 열기 실패');
+            }
+          }}
+          className="px-2 py-1 rounded hover:bg-[#1a5cba] transition-colors"
+        >
+          📂 템플릿 열기
+        </button>
 
         {/* 디자이너 — 디자인완료 버튼 */}
         {permissions.isDesigner && currentScheduleRow && !currentScheduleRow.completed && currentScheduleRow.assigned_to === permissions.userId && (
