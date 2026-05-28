@@ -25,12 +25,12 @@ export default function AdminTaskStatusView() {
   const router = useRouter();
 
   const [marketer, setMarketer] = useState<string>('');
+  const [designerId, setDesignerId] = useState<string>('');
   const [accountId, setAccountId] = useState<string>('');
   const [date, setDate] = useState<string>('');
   const [status, setStatus] = useState<StatusFilter>('전체');
 
   const marketers = useMemo(
-
     () => [...new Set(rows.map(r => r.marketer).filter(Boolean))].sort(),
     [rows],
   );
@@ -46,12 +46,13 @@ export default function AdminTaskStatusView() {
   const filtered = useMemo(() => {
     return rows.filter(r => {
       if (marketer && r.marketer !== marketer) return false;
+      if (designerId && r.assigned_to !== designerId) return false;
       if (accountId && r.account_id !== accountId) return false;
       if (date && r.date !== date) return false;
       if (status !== '전체' && getScheduleStatus(r) !== status) return false;
       return true;
     });
-  }, [rows, marketer, accountId, date, status]);
+  }, [rows, marketer, designerId, accountId, date, status]);
 
   const sorted = useMemo(
     () => [...filtered].sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? '')),
@@ -72,6 +73,14 @@ export default function AdminTaskStatusView() {
         >
           <option value="">작성자</option>
           {marketers.map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
+        <select
+          value={designerId}
+          onChange={e => setDesignerId(e.target.value)}
+          className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white outline-none focus:border-gray-400 transition"
+        >
+          <option value="">담당디자이너</option>
+          {designers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
         <select
           value={accountId}
