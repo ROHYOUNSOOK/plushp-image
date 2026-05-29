@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMyTasks } from '@/hooks/useMyTasks';
-import { getScheduleStatus, STATUS_LABELS, STATUS_BADGE_CLASSES, STATUS_ORDER, type ScheduleStatus } from '@/lib/scheduleStatus';
+import { getScheduleStatus, STATUS_LABELS, STATUS_BADGE_CLASSES, type ScheduleStatus } from '@/lib/scheduleStatus';
 import type { ScheduleRow } from '@/lib/supabase';
 
 const DESIGNER_STAGES: ScheduleStatus[] = ['assigned', 'in_progress', 'design_done', 'confirmed'];
@@ -11,6 +12,7 @@ const HEADER_STAGES: ScheduleStatus[] = ['assigned', 'in_progress', 'design_done
 
 export default function MyTasksPage() {
   const { rows, loading, navigateToEditor, navigating } = useMyTasks();
+  const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<ScheduleStatus | null>(null);
 
   const grouped = DESIGNER_STAGES.reduce<Record<ScheduleStatus, ScheduleRow[]>>(
@@ -83,33 +85,39 @@ export default function MyTasksPage() {
                   {STATUS_LABELS[stage]}
                 </p>
                 <div className="space-y-2">
-                  {items.map(row => (
-                    <div key={row.id} className="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-800 truncate block">{row.keyword || '(키워드 없음)'}</span>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_BADGE_CLASSES[stage]}`}>
-                            {STATUS_LABELS[stage]}
+                  {items.map(row => {
+                    const isDone = stage === 'design_done' || stage === 'confirmed';
+                    return (
+                    <div
+                      key={row.id}
+                      onClick={() => router.push(`/plan?id=${row.id}`)}
+                      className="bg-white rounded-xl border border-gray-200 px-5 py-3.5 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                    >
+                      <span className="text-sm font-semibold text-gray-800 truncate min-w-0 flex-shrink-0 max-w-[180px]">
+                        {row.keyword || '(키워드 없음)'}
+                      </span>
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium shrink-0 ${STATUS_BADGE_CLASSES[stage]}`}>
+                        {STATUS_LABELS[stage]}
+                      </span>
+                      <div className="flex items-center gap-4 ml-2 flex-1 min-w-0">
+                        {row.date && <span className="text-xs text-gray-400 whitespace-nowrap">업로드 {row.date}</span>}
+                        {row.marketer && (
+                          <span className="text-xs whitespace-nowrap">
+                            <span className="text-gray-400">담당마케터 </span>
+                            <span className="text-gray-700 font-medium">{row.marketer}</span>
                           </span>
-                        </div>
-                        <div className="flex items-center gap-3 mt-0.5">
-                          {row.date && <span className="text-[11px] text-gray-400">업로드 {row.date}</span>}
-                          {row.marketer && <span className="text-[11px] text-gray-300">{row.marketer}</span>}
-                        </div>
+                        )}
                       </div>
-                      {stage !== 'confirmed' && (
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            onClick={() => navigateToEditor(row)}
-                            disabled={navigating}
-                            className="text-xs px-3 py-1.5 rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] disabled:opacity-50 transition-colors"
-                          >
-                            {navigating ? '이동 중...' : '편집기 →'}
-                          </button>
-                        </div>
-                      )}
+                      <button
+                        onClick={e => { e.stopPropagation(); navigateToEditor(row); }}
+                        disabled={navigating}
+                        className="shrink-0 text-xs px-3 py-1.5 rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] disabled:opacity-50 transition-colors whitespace-nowrap"
+                      >
+                        {navigating ? '이동 중...' : isDone ? '디자인 확인' : '편집기 →'}
+                      </button>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             );

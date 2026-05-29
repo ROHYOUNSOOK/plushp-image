@@ -11,7 +11,7 @@ const ALL_STAGES: ScheduleStatus[] = [...STATUS_ORDER];
 const HEADER_STAGES: ScheduleStatus[] = ['assigned', 'in_progress', 'design_done', 'confirmed'];
 
 export default function MarketerTasksPage() {
-  const { rows, loading, confirmRow } = useMarketerTasks();
+  const { rows, loading, designerMap, navigateToEditor, navigating } = useMarketerTasks();
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<ScheduleStatus | null>(null);
 
@@ -85,7 +85,9 @@ export default function MarketerTasksPage() {
                   {STATUS_LABELS[stage]}
                 </p>
                 <div className="space-y-2">
-                  {items.map(row => (
+                  {items.map(row => {
+                    const isDone = stage === 'design_done' || stage === 'confirmed';
+                    return (
                     <div
                       key={row.id}
                       onClick={() => router.push(`/plan?id=${row.id}`)}
@@ -100,21 +102,25 @@ export default function MarketerTasksPage() {
                       <div className="flex items-center gap-4 ml-2 flex-1 min-w-0">
                         {row.created_at && <span className="text-xs text-gray-400 whitespace-nowrap">작성 {row.created_at.slice(0, 10)}</span>}
                         {row.date && <span className="text-xs text-gray-400 whitespace-nowrap">업로드 {row.date}</span>}
+                        {row.assigned_to && (
+                          <span className="text-xs whitespace-nowrap">
+                            <span className="text-gray-400">담당디자이너 </span>
+                            <span className="text-blue-600 font-medium">{designerMap[row.assigned_to] ?? '알 수 없음'}</span>
+                          </span>
+                        )}
                       </div>
-                      {stage === 'design_done' && (
+                      {isDone && (
                         <button
-                          onClick={async e => {
-                            e.stopPropagation();
-                            if (!confirm('컨펌 완료 처리하시겠습니까?')) return;
-                            await confirmRow(row.id);
-                          }}
-                          className="shrink-0 text-xs px-3 py-1.5 rounded-lg bg-green-500 text-white hover:bg-green-400 transition-colors whitespace-nowrap"
+                          onClick={e => { e.stopPropagation(); navigateToEditor(row); }}
+                          disabled={navigating}
+                          className="shrink-0 text-xs px-3 py-1.5 rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] disabled:opacity-50 transition-colors whitespace-nowrap"
                         >
-                          컨펌완료
+                          {navigating ? '이동 중...' : '디자인 확인'}
                         </button>
                       )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             );
