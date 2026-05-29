@@ -58,20 +58,12 @@ export async function checkTemplateExists(folderName: string): Promise<boolean> 
 }
 
 export async function applyCloudTemplate(selectedRow: ScheduleRow, folderName: string, allDoctors: DoctorInfo[] = []): Promise<void> {
+  void allDoctors;
   toast('템플릿 불러오는 중...', 0);
   const store = useEditorStore.getState();
   store.setCurrentScheduleRow(selectedRow as unknown as Record<string, unknown>);
 
-  const { pages: tplPages, scheduleRow: savedRow } = await loadCloudTemplate(folderName);
-
-  // 원장님이 바뀐 기획안이면 저장된 템플릿을 무효화하고 새로 구성
-  const savedDoctors = JSON.stringify(((savedRow?.doctors as string[]) ?? []));
-  const curDoctors = JSON.stringify(selectedRow.doctors ?? []);
-  if (savedDoctors !== curDoctors) {
-    await applyRandomFlow(selectedRow, allDoctors, folderName);
-    return;
-  }
-
+  const { pages: tplPages } = await loadCloudTemplate(folderName);
   const pagesWithImages = applyScheduleTextsToTemplatePages(
     await applyScheduleImagesToTemplatePages(tplPages, folderName),
     selectedRow.texts,
@@ -195,6 +187,8 @@ export function useScheduleApplication() {
         toast(`총 ${row.texts.length + (row.doctors.length > 0 ? 1 : 0) + 1}페이지 적용됨`);
       }
 
+      // 편집기 마운트 시 중복 재적용 방지 플래그 (방금 적용했으므로)
+      try { sessionStorage.setItem('plusEditorApplied', '1'); } catch { /* noop */ }
       router.push('/editor');
     } catch (e: unknown) {
       hideToast();

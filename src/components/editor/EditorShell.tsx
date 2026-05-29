@@ -17,7 +17,8 @@ import { makeLayer } from '@/lib/layerFactory';
 import { downloadCurrentPage, downloadAllAsZip } from '@/canvas/export';
 import { mergeTemplateIntoPage, saveCloudTemplate, loadCloudTemplate, listCloudTemplates, type TemplatePage } from '@/lib/templateIO';
 import { loadScheduleInnerImages, supabase } from '@/lib/supabase';
-import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
+import { buildScheduleFolderName, useScheduleApplication } from '@/hooks/useScheduleApplication';
+import { createBrowserClient } from '@supabase/ssr';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
 import type { FrameLayer } from '@/types/layer';
 import { applyFrameImage } from '@/lib/imageUpload';
@@ -72,8 +73,47 @@ async function applyScheduleImagesToPages(
 
 export default function EditorShell() {
   const { pages, currentPage, addPage, deletePage, switchPage, pushHistory, addLayer, setPages, renamePage, toggleMedicalLaw, setCurrentScheduleRow } = useEditorStore();
+  const resetEditor = useEditorStore(s => s.resetEditor);
+  const { applySelectedSchedule } = useScheduleApplication();
+  const didInitRef = useRef(false);
   // 앱 초기 마운트 시 로고 자동 로드
   useEffect(() => { autoLoadLogos(); }, []);
+
+  // 편집기 진입 처리:
+  // - navigateToEditor 경유(플래그 O): 방금 적용했으므로 그대로 둠
+  // - 직접/홈 경유 진입(플래그 X): 남은 스케줄을 DB 최신값으로 재적용, 없으면 초기화
+  useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+
+    let applied = false;
+    try { applied = sessionStorage.getItem('plusEditorApplied') === '1'; } catch { /* noop */ }
+    if (applied) {
+      try { sessionStorage.removeItem('plusEditorApplied'); } catch { /* noop */ }
+      return;
+    }
+
+    const cur = useEditorStore.getState().currentScheduleRow;
+    if (!cur?.id) { resetEditor(); return; }
+
+    (async () => {
+      try {
+        const supabase = createBrowserClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        );
+        const [freshRes, docRes] = await Promise.all([
+          supabase.from('plus_schedule').select('*').eq('id', cur.id as string).single(),
+          supabase.from('plus_doctors').select('id, doctor_name, specialty, department'),
+        ]);
+        if (freshRes.data) {
+          await applySelectedSchedule(freshRes.data, docRes.data ?? []);
+        } else {
+          resetEditor();
+        }
+      } catch { /* noop */ }
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [editingTab, setEditingTab] = React.useState<{ index: number; value: string } | null>(null);
   const [dlOpen, setDlOpen] = React.useState(false);
