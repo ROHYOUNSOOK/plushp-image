@@ -49,6 +49,9 @@ export interface EditorState extends HistoryState {
   // 스케줄
   currentScheduleRow: Record<string, unknown> | null;
 
+  // 읽기 전용 (완료 건을 디자이너/마케터가 열람할 때)
+  editorReadOnly: boolean;
+
   // ── 액션: 페이지 ──
   addPage: () => void;
   deletePage: (index: number) => void;
@@ -89,6 +92,7 @@ export interface EditorState extends HistoryState {
   toggleMedicalLaw: (index: number) => void;
   applySchedule: (texts: string[], doctors: string[], doctorSpecialty: string, doctorSpecialties?: string[], doctorDepartments?: string[], doctorImageUrls?: (string | null)[], doctorImages?: (HTMLImageElement | null)[], frameImages?: { img: HTMLImageElement | null; url: string | null }[], frameInnerImages?: { img: HTMLImageElement | null; url: string | null }[]) => void;
   setCurrentScheduleRow: (row: Record<string, unknown> | null) => void;
+  setEditorReadOnly: (v: boolean) => void;
   resetEditor: () => void;
 }
 
@@ -114,6 +118,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   isDragOver: false,
   dropTargetId: null,
   currentScheduleRow: null,
+  editorReadOnly: false,
   ...initialHistoryState,
 
   // ── 페이지 ──
@@ -426,6 +431,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   setCurrentScheduleRow: (row) => set({ currentScheduleRow: row }),
 
+  setEditorReadOnly: (v) => set({ editorReadOnly: v }),
+
   resetEditor: () => set({
     pages: [{ id: 1, name: '', layers: [] }],
     currentPage: 0,
@@ -439,6 +446,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     isDragOver: false,
     dropTargetId: null,
     currentScheduleRow: null,
+    editorReadOnly: false,
     ...initialHistoryState,
   }),
 }));

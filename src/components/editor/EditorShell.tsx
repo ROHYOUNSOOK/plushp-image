@@ -80,6 +80,19 @@ export default function EditorShell() {
   const [showShortcuts, setShowShortcuts] = React.useState(false);
   const permissions = useUserPermissions();
   const currentScheduleRow = useEditorStore(s => s.currentScheduleRow);
+  const editorReadOnly = useEditorStore(s => s.editorReadOnly);
+  const setEditorReadOnly = useEditorStore(s => s.setEditorReadOnly);
+
+  // 읽기 전용 판정: 관리자=항상 편집 / 디자이너=완료 시 읽기전용 / 마케터=항상 읽기전용
+  useEffect(() => {
+    if (!permissions.loaded) return;
+    const completed = !!currentScheduleRow?.completed;
+    let ro = false;
+    if (permissions.isAdmin) ro = false;
+    else if (permissions.isDesigner) ro = completed;
+    else if (permissions.isMarketer) ro = true;
+    setEditorReadOnly(ro);
+  }, [permissions.loaded, permissions.isAdmin, permissions.isDesigner, permissions.isMarketer, currentScheduleRow?.id, currentScheduleRow?.completed, setEditorReadOnly]);
 
   /* ── 레이어 패널 리사이즈 ── */
   const [layerPanelW, setLayerPanelW] = useState(224); // 기본 w-56 = 224px
@@ -244,7 +257,8 @@ export default function EditorShell() {
         {/* 구분선 */}
         <div className="w-px h-5 bg-[#1a5cba] mx-1" />
 
-        {/* 템플릿 저장 */}
+        {/* 템플릿 저장 (읽기 전용 시 숨김) */}
+        {!editorReadOnly && (
         <button
           onClick={async () => {
             try {
@@ -271,6 +285,7 @@ export default function EditorShell() {
         >
           📋 템플릿 저장
         </button>
+        )}
 
         {/* 템플릿 열기 */}
         <button
@@ -405,7 +420,7 @@ export default function EditorShell() {
             ) : (
               <button
                 onClick={() => switchPage(i)}
-                onDoubleClick={e => { e.stopPropagation(); setEditingTab({ index: i, value: page.name || `페이지 ${i + 1}` }); }}
+                onDoubleClick={e => { if (editorReadOnly) return; e.stopPropagation(); setEditingTab({ index: i, value: page.name || `페이지 ${i + 1}` }); }}
                 className={`px-3 py-1 rounded-t text-sm flex items-center gap-1.5 ${
                   i === currentPage ? 'bg-[#1045a0] font-bold' : 'bg-[#1a5cba] hover:bg-[#1045a0]'
                 }`}
@@ -414,7 +429,7 @@ export default function EditorShell() {
                 {page.name || `페이지 ${i + 1}`}
               </button>
             )}
-            {pages.length > 1 && (
+            {pages.length > 1 && !editorReadOnly && (
               <button
                 onClick={() => { if (window.confirm('이 페이지를 삭제하시겠습니까?')) { deletePage(i); toast('페이지 삭제됨'); } }}
                 className="ml-0.5 px-1 text-gray-400 hover:text-red-400 text-xs"
@@ -425,6 +440,7 @@ export default function EditorShell() {
             )}
           </div>
         ))}
+        {!editorReadOnly && (
         <button
           onClick={async () => { addPage(); toast('페이지 추가됨'); await autoLoadLogos(); }}
           className="px-2 py-1 bg-[#1a5cba] hover:bg-[#1a5cba] rounded-t text-sm"
@@ -432,6 +448,8 @@ export default function EditorShell() {
         >
           +
         </button>
+        )}
+        {!editorReadOnly && (
         <button
           onClick={async () => {
             addPage();
@@ -451,12 +469,21 @@ export default function EditorShell() {
         >
           의료법+
         </button>
+        )}
         </div>
       </div>
 
+      {/* 읽기 전용 안내 배너 */}
+      {editorReadOnly && (
+        <div className="bg-amber-50 border-b border-amber-200 text-amber-700 text-xs px-4 py-1.5 text-center">
+          🔒 읽기 전용 — 완료된 디자인입니다. 페이지 탭으로 열람만 가능하며 수정은 불가합니다.
+        </div>
+      )}
+
       {/* 메인 영역: 아이콘사이드바 + 레이어패널 + 캔버스 + 속성패널 */}
       <div className="flex flex-1 min-h-0">
-        {/* 레이어 추가 아이콘 사이드바 */}
+        {/* 레이어 추가 아이콘 사이드바 (읽기 전용 시 숨김) */}
+        {!editorReadOnly && (
         <div className="w-12 flex-shrink-0 bg-[#1450a0] flex flex-col items-center border-r border-[#1045a0]">
           {LAYER_TYPES.map(({ type, icon, label }) => (
             <div key={type} className="relative group">
@@ -475,6 +502,7 @@ export default function EditorShell() {
             </div>
           ))}
         </div>
+        )}
 
         {/* 왼쪽: 레이어 목록 */}
         <div style={{ width: layerPanelW, minWidth: layerPanelW }} className="bg-gray-50 overflow-y-auto text-sm flex-shrink-0">

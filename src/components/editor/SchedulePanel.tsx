@@ -2,6 +2,7 @@
 
 import { useScheduleData } from '@/hooks/useScheduleData';
 import { useScheduleApplication } from '@/hooks/useScheduleApplication';
+import { useEditorStore } from '@/store/editorStore';
 import { getScheduleStatus, STATUS_LABELS } from '@/lib/scheduleStatus';
 
 export default function SchedulePanel() {
@@ -13,17 +14,20 @@ export default function SchedulePanel() {
   } = useScheduleData();
 
   const { isApplying, applySelectedSchedule, applyRandomBackgroundAndFrames } = useScheduleApplication();
+  const editorReadOnly = useEditorStore(s => s.editorReadOnly);
 
   return (
     <div className="p-2 border-b border-gray-200 bg-gray-50">
       <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">📅 스케줄 적용</div>
       <div className="flex flex-col gap-1">
-        <button
-          onClick={applyRandomBackgroundAndFrames}
-          className="w-full py-1 text-xs rounded border transition-colors px-2 border-gray-300 bg-white hover:bg-gray-100 text-gray-600"
-        >
-          🎲 배경 및 프레임 변경
-        </button>
+        {!editorReadOnly && (
+          <button
+            onClick={applyRandomBackgroundAndFrames}
+            className="w-full py-1 text-xs rounded border transition-colors px-2 border-gray-300 bg-white hover:bg-gray-100 text-gray-600"
+          >
+            🎲 배경 및 프레임 변경
+          </button>
+        )}
 
         <select
           className="w-full text-xs text-gray-900 border border-gray-300 rounded px-1.5 py-1 bg-white"

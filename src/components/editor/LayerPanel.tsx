@@ -12,6 +12,7 @@ type EditingState = { id: string; value: string } | null;
 
 export default function LayerPanel() {
   const selectedLayerIds = useEditorStore(s => s.selectedLayerIds);
+  const editorReadOnly = useEditorStore(s => s.editorReadOnly);
   const page = useEditorStore(selectCurrentPage);
   const layers = page?.layers ?? [];
 
@@ -149,6 +150,17 @@ export default function LayerPanel() {
 
   // 역순 (최상단 레이어가 목록 맨 위)
   const reversed = [...layers].map((l, i) => ({ layer: l, idx: i })).reverse();
+
+  if (editorReadOnly) {
+    return (
+      <div className="select-none">
+        <SchedulePanel />
+        <div className="p-3 text-[11px] text-gray-400 leading-relaxed">
+          🔒 읽기 전용 모드입니다.<br />레이어 편집은 비활성화됩니다.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="select-none">

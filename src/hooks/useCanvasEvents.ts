@@ -130,6 +130,9 @@ export function useCanvasEvents({
       return;
     }
 
+    // 읽기 전용: 패닝(스페이스+드래그)만 허용, 레이어 선택/이동/편집 차단
+    if (useEditorStore.getState().editorReadOnly) return;
+
     const { x, y } = getPointer(e);
     const state = useEditorStore.getState();
     const page = state.pages[state.currentPage];
@@ -499,6 +502,7 @@ export function useCanvasEvents({
 
   /* ── Double Click ── */
   const onDoubleClick = useCallback((e: React.MouseEvent) => {
+    if (useEditorStore.getState().editorReadOnly) return;
     const { x, y } = getPointer(e as unknown as React.PointerEvent);
     const state = useEditorStore.getState();
     const page = state.pages[state.currentPage];
@@ -557,6 +561,7 @@ export function useCanvasEvents({
     const state = useEditorStore.getState();
     state.setIsDragOver(false);
     state.setDropTargetId(null);
+    if (state.editorReadOnly) return;
     const page = state.pages[state.currentPage];
     if (!page || page.isMedicalLaw) return;
     const files = [...(e.dataTransfer.files || [])].filter(f => f.type.startsWith('image/'));
@@ -776,6 +781,8 @@ export function useCanvasEvents({
         }
         return;
       }
+      // 읽기 전용: 뷰 조작(Ctrl+0)·Escape 외 모든 편집 단축키 차단
+      if (state.editorReadOnly) return;
       if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ' && !e.shiftKey) {
         e.preventDefault(); state.undo(); return;
       }
