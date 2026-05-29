@@ -8,22 +8,6 @@ import type { Page } from '@/types/page';
 import { makeLayer } from './layerFactory';
 import { loadImage } from './utils';
 
-/* ── 이미지를 data URL로 변환 ── */
-
-/** 이미지를 항상 canvas로 인코딩 (배경 랜덤 색조 등 픽셀 보존용) */
-function canvasEncode(img: HTMLImageElement | null, format: 'jpeg' | 'png' = 'jpeg'): string | null {
-  if (!img) return null;
-  try {
-    const ofc = document.createElement('canvas');
-    ofc.width = img.naturalWidth;
-    ofc.height = img.naturalHeight;
-    ofc.getContext('2d')!.drawImage(img, 0, 0);
-    return format === 'png' ? ofc.toDataURL('image/png') : ofc.toDataURL('image/jpeg', 0.85);
-  } catch {
-    return null;
-  }
-}
-
 /* ── 레이어 직렬화 ── */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -239,13 +223,14 @@ export async function saveCloudTemplate(
   const data = await Promise.all(
     pages.map(async pg => {
       const bgLayer = pg.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-      // 배경 이미지의 실제 픽셀(랜덤 색조 포함)을 data URL로 저장 → 복원 시 색조 손실 방지
-      const bgDataUrl = canvasEncode(bgLayer?.img ?? null, 'jpeg');
+      const bgUrl = bgLayer?.url ?? null;
+      const isBgRemote = bgUrl && !bgUrl.startsWith('blob:') &&
+        (bgUrl.startsWith('http') || bgUrl.startsWith('/api/proxy-image') || bgUrl.startsWith('/plus/'));
       return {
         id: pg.id,
         name: pg.name,
         bgColor: bgLayer?.solidColor ?? '#ffffff',
-        bgDataUrl,
+        bgUrl: isBgRemote ? bgUrl : null,
         isMedicalLaw: pg.isMedicalLaw ?? false,
         layers: await Promise.all(
           pg.layers
@@ -282,9 +267,7 @@ export async function loadCloudTemplate(
       const layers = await Promise.all(
         ((pg.layers ?? []) as Record<string, unknown>[]).map(l => deserializeLayer(l))
       );
-      // bgDataUrl(신규, 색조 포함) 우선, 없으면 bgUrl(구버전) fallback
-      const bgDataUrl = (pg.bgDataUrl as string | null) ?? null;
-      const bgUrl = bgDataUrl ?? ((pg.bgUrl as string | null) ?? null);
+      const bgUrl = (pg.bgUrl as string | null) ?? null;
       let bgImg: HTMLImageElement | null = null;
       if (bgUrl) {
         try {
