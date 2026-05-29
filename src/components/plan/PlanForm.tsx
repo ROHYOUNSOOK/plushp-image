@@ -316,8 +316,8 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="px-4 py-2.5 border-b border-gray-100 bg-gray-50">
+    <div className="bg-white rounded-xl border border-gray-200">
+      <div className="px-4 py-2.5 border-b border-gray-100 bg-gray-50 rounded-t-xl">
         <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{title}</span>
       </div>
       <div className="px-4 py-3">{children}</div>
