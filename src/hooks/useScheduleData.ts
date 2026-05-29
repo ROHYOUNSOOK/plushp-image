@@ -77,21 +77,30 @@ export function useScheduleData() {
     });
   }, []);
 
+  // 현재 적용된 스케줄은 완료/미배분 등으로 목록에서 빠져도 항상 포함
+  // (디자인 확인·관리자 진입 시 적용 스케줄이 드롭다운에 보이도록)
+  const mergedRows: ScheduleRow[] = (() => {
+    const cur = currentScheduleRow as unknown as ScheduleRow | null;
+    if (!cur?.id) return rows;
+    if (rows.some(r => r.id === cur.id)) return rows;
+    return [...rows, cur];
+  })();
+
   // currentScheduleRow 바뀔 때마다 드롭다운 자동 선택
   useEffect(() => {
-    if (!currentScheduleRow?.id || !rows.length) return;
-    const matched = rows.find((r: { id: string }) => r.id === currentScheduleRow.id);
+    if (!currentScheduleRow?.id || !mergedRows.length) return;
+    const matched = mergedRows.find((r: { id: string }) => r.id === currentScheduleRow.id);
     if (matched) {
       setSelectedDate((matched as { date?: string }).date ?? '');
       setSelectedRow(matched as ScheduleRow);
     }
-  }, [currentScheduleRow?.id, rows]);
+  }, [currentScheduleRow?.id, mergedRows.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const dates = [...new Set(rows.map(r => r.date).filter(Boolean))];
-  const keywords = rows.filter(r => r.date === selectedDate);
+  const dates = [...new Set(mergedRows.map(r => r.date).filter(Boolean))];
+  const keywords = mergedRows.filter(r => r.date === selectedDate);
 
   return {
-    rows, loading, allDoctors,
+    rows: mergedRows, loading, allDoctors,
     selectedDate, setSelectedDate,
     selectedRow, setSelectedRow,
     dates, keywords,
