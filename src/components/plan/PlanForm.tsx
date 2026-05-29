@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { type ScheduleRow } from '@/lib/supabase';
 import { usePlanForm } from '@/hooks/usePlanForm';
 import { type UserPermissions } from '@/hooks/useUserPermissions';
-import { useTemplateCheck } from '@/hooks/useTemplateCheck';
 
 interface Props {
   row: ScheduleRow | null;
@@ -28,20 +28,25 @@ const EMPTY_FORM = {
   doctor_specialty: '',
 };
 
-export default function PlanForm({ row, allDoctors, blogAccounts, permissions, onSaved, onDeleted, onCompleted }: Props) {
+export default function PlanForm({ row, allDoctors, blogAccounts, permissions, onSaved, onDeleted }: Props) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [activeDoctorIdx, setActiveDoctorIdx] = useState<number | null>(null);
   const [myName, setMyName] = useState('');
+  const router = useRouter();
 
-  const { handleSave, navigateToEditor, handleDelete, handleRevision, navigating } = usePlanForm(row, allDoctors, onSaved);
-  const { hasTemplate, checking } = useTemplateCheck(row);
+  const { handleSave, handleDelete, handleRevision } = usePlanForm(row, allDoctors, onSaved);
 
   const readOnly = !permissions.canEditPlans;
   const canDelete = permissions.canDeletePlans;
-  const canGoToEditor = permissions.canAccessEditorWithoutTemplate || hasTemplate;
-  const canComplete = permissions.isDesigner && !!row?.id && row.assigned_to === permissions.userId && !row.completed;
+
+  // 역할별 이동 버튼: 마케터 → 내 업무 / 관리자 → 업무 배분 / 디자이너 → 비활성(뷰어)
+  const navTarget = permissions.isAdmin
+    ? { label: '업무 배분으로 →', href: '/admin/users?tab=업무배분' }
+    : permissions.isMarketer
+      ? { label: '내 업무로 →', href: '/my-tasks-marketer' }
+      : null;
 
   useEffect(() => {
     const supabase = createBrowserClient(
@@ -306,14 +311,14 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
             {saving ? '저장 중...' : '저장'}
           </button>
         )}
-        <button
-          onClick={() => navigateToEditor()}
-          disabled={navigating || checking || !row?.id || !canGoToEditor}
-          title={!row?.id ? '먼저 기획안을 저장하세요' : !canGoToEditor ? '디자이너가 아직 템플릿을 저장하지 않았습니다' : ''}
-          className="flex-1 py-2.5 text-sm font-medium rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          {navigating ? '이동 중...' : checking ? '확인 중...' : '편집기로 →'}
-        </button>
+        {navTarget && (
+          <button
+            onClick={() => router.push(navTarget.href)}
+            className="flex-1 py-2.5 text-sm font-medium rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] transition-colors"
+          >
+            {navTarget.label}
+          </button>
+        )}
       </div>
     </div>
   );

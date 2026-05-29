@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useAdminUsers, type UserRow } from '@/hooks/useAdminUsers';
 import AdminAssignView from '@/views/AdminAssignView';
 import AdminTaskStatusView from '@/views/AdminTaskStatusView';
 
 type Tab = '직원관리' | '업무배분' | '업무현황';
+const TABS: Tab[] = ['직원관리', '업무배분', '업무현황'];
 
 const DEPT_TEAMS: Record<string, string[]> = {
   '마케팅부': ['블로그팀', '플친팀', '콘텐츠팀', '마케팅기획실', '영상팀'],
@@ -24,10 +26,14 @@ interface EditState {
   role: string;
 }
 
-export default function AdminUsersPage() {
+function AdminUsersPageInner() {
   const { users, loading, updateUser } = useAdminUsers();
   const [editing, setEditing] = useState<Record<string, EditState>>({});
-  const [tab, setTab] = useState<Tab>('직원관리');
+  const searchParams = useSearchParams();
+  const initialTab = (TABS as string[]).includes(searchParams.get('tab') ?? '')
+    ? (searchParams.get('tab') as Tab)
+    : '직원관리';
+  const [tab, setTab] = useState<Tab>(initialTab);
 
   const startEdit = (user: UserRow) => {
     setEditing(prev => ({
@@ -79,7 +85,7 @@ export default function AdminUsersPage() {
 
       <div className="max-w-[1280px] mx-auto w-full px-6 pt-5 pb-4">
         <div className="flex gap-2">
-          {(['직원관리', '업무배분', '업무현황'] as Tab[]).map(t => (
+          {TABS.map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -217,5 +223,13 @@ export default function AdminUsersPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <Suspense>
+      <AdminUsersPageInner />
+    </Suspense>
   );
 }
