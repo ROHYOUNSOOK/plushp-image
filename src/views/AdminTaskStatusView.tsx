@@ -120,7 +120,7 @@ export default function AdminTaskStatusView() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-24">상태</th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-32">상태</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-44">작성일시</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-32">작성자</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-32">담당디자이너</th>
@@ -138,7 +138,7 @@ export default function AdminTaskStatusView() {
                   className="border-b border-gray-100 last:border-0 hover:bg-gray-50 cursor-pointer transition-colors"
                 >
                   <td className="px-5 py-3.5">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE_CLASSES[s]}`}>
+                    <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${STATUS_BADGE_CLASSES[s]}`}>
                       {STATUS_LABELS[s]}
                     </span>
                   </td>

@@ -49,8 +49,14 @@ export function useScheduleData() {
             .eq('completed', false)
             .order('date', { ascending: true });
 
-          // 마케터는 본인이 작성한 기획안만 표시
-          if (isMarketer && !isAdmin && !isDesigner) {
+          if (isAdmin) {
+            // 관리자: 배분된 미완료 건만 (미배분 제외)
+            scheduleQuery = scheduleQuery.not('assigned_to', 'is', null);
+          } else if (isDesigner) {
+            // 디자이너: 본인에게 배분된 미완료 건만
+            scheduleQuery = scheduleQuery.eq('assigned_to', userId);
+          } else if (isMarketer) {
+            // 마케터: 본인이 작성한 기획안만
             scheduleQuery = scheduleQuery.eq('created_by', userId);
           }
 

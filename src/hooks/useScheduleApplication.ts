@@ -30,6 +30,19 @@ export function resolveDoctorInfo(doctors: string[], allDoctors: DoctorInfo[]) {
   };
 }
 
+/** 본인에게 배분된 미시작 건이면 started=true로 전환 (배분완료 → 진행중) */
+export async function maybeMarkStarted(row: ScheduleRow): Promise<void> {
+  if (row.started || !row.assigned_to) return;
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user && row.assigned_to === user.id) {
+    await supabase.from('plus_schedule').update({ started: true }).eq('id', row.id);
+  }
+}
+
 export async function checkTemplateExists(folderName: string): Promise<boolean> {
   try {
     const res = await fetch('/api/check-template', {
@@ -119,6 +132,7 @@ export function useScheduleApplication() {
     pushHistory();
 
     try {
+      await maybeMarkStarted(selectedRow);
       const folderName = buildScheduleFolderName(selectedRow);
       toast('템플릿 확인 중...', 0);
       const hasTemplate = await checkTemplateExists(folderName);
@@ -146,16 +160,7 @@ export function useScheduleApplication() {
     toast('템플릿 확인 중...', 0);
     try {
       // 배분완료 → 진행중 자동 전환 (본인에게 배분된 경우)
-      if (!row.started && row.assigned_to) {
-        const supabase = createBrowserClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        );
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user && row.assigned_to === user.id) {
-          await supabase.from('plus_schedule').update({ started: true }).eq('id', row.id);
-        }
-      }
+      await maybeMarkStarted(row);
 
       const folderName = buildScheduleFolderName(row);
       const hasTemplate = await checkTemplateExists(folderName);
