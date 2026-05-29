@@ -52,16 +52,6 @@ export function hslToHex(h: number, s: number, l: number): string {
   return '#' + [r, g, b].map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join('');
 }
 
-export function darkenHex(hex: string, amount = 30): string {
-  const { h, s, l } = hexToHsl(hex);
-  return hslToHex(h, s, Math.max(0, l - amount));
-}
-
-export function lightenHex(hex: string, amount = 30): string {
-  const { h, s, l } = hexToHsl(hex);
-  return hslToHex(h, s, Math.min(100, l + amount));
-}
-
 /** 배경 밝기에 따라 텍스트박스 배경색 계산 */
 export function calcAutoFillColor(bgHex: string): string {
   const { h, s, l } = hexToHsl(bgHex);

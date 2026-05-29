@@ -37,7 +37,7 @@ const DOCTOR_BUCKET = `${VULTR_BASE}/plus_doctors`;
 const EXTENSIONS = ['jpg', 'png', 'webp', 'jpeg'];
 
 /** HTTP URL을 프록시 URL로 변환 (HTTPS 환경에서 Mixed Content 방지) */
-function toProxyUrl(url: string): string {
+export function toProxyUrl(url: string): string {
   if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http://')) {
     return `/api/proxy-image?url=${encodeURIComponent(url)}`;
   }
@@ -110,11 +110,17 @@ export async function loadScheduleInnerImages(
         const proxyUrl = toProxyUrl(rawUrl);
         const bustUrl = proxyUrl + (proxyUrl.includes('?') ? `&_t=${Date.now()}` : `?_t=${Date.now()}`);
         try {
-          const res = await fetch(bustUrl, { method: 'HEAD', cache: 'no-store' });
-          if (res.ok) {
-            const img = await loadImageFromUrl(rawUrl);
-            return { img, url: proxyUrl };
-          }
+          const res = await fetch(bustUrl, { cache: 'no-store' });
+          if (!res.ok) continue;
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const img = await new Promise<HTMLImageElement | null>(resolve => {
+            const im = new Image();
+            im.onload = () => resolve(im);
+            im.onerror = () => resolve(null);
+            im.src = blobUrl;
+          });
+          return { img, url: proxyUrl };
         } catch { /* 없으면 다음 확장자 시도 */ }
       }
       return { img: null, url: null };

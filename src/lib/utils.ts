@@ -38,12 +38,3 @@ export function loadImage(url: string): Promise<HTMLImageElement> {
     i.src = url;
   });
 }
-
-/** HTML 이스케이프 */
-export function escHtml(s: string): string {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}

@@ -262,9 +262,7 @@ export default function EditorShell() {
               const state = useEditorStore.getState();
               const row = state.currentScheduleRow;
               if (row) {
-                const date = (row.date as string) ?? '';
-                const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
-                const folderName = [yy + mm + dd, row.account_id, row.keyword].filter(Boolean).join('_');
+                const folderName = buildScheduleFolderName(row as unknown as Parameters<typeof buildScheduleFolderName>[0]);
                 const checkRes = await fetch('/api/check-template', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -291,9 +289,7 @@ export default function EditorShell() {
             try {
               const { currentScheduleRow: sr } = useEditorStore.getState();
               if (!sr) { toast('스케줄을 먼저 적용해주세요'); return; }
-              const date = (sr.date as string) ?? '';
-              const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
-              const currentFolder = [yy + mm + dd, sr.account_id, sr.keyword].filter(Boolean).join('_');
+              const currentFolder = buildScheduleFolderName(sr as unknown as Parameters<typeof buildScheduleFolderName>[0]);
               toast('템플릿 목록 불러오는 중...');
               const allFolders = await listCloudTemplates();
               const matched = allFolders.filter(f => f === currentFolder);

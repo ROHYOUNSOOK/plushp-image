@@ -81,39 +81,6 @@ function buildTemplateFilename(scheduleRow: Record<string, unknown> | null): str
   return [dateStr, accountId, keyword].filter(Boolean).join('_') || 'template';
 }
 
-/* ── 저장 ── */
-
-export async function saveTemplate(
-  pages: Page[],
-  scheduleRow: Record<string, unknown> | null = null,
-): Promise<void> {
-  const data = await Promise.all(
-    pages.map(async pg => {
-      const bgLayer = pg.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-      return {
-        id: pg.id,
-        name: pg.name,
-        bgColor: bgLayer?.solidColor ?? '#ffffff',
-        isMedicalLaw: pg.isMedicalLaw ?? false,
-        layers: await Promise.all(
-          pg.layers
-            .filter(l => l.type !== 'background')
-            .map(l => serializeLayer(l))
-        ),
-      };
-    })
-  );
-
-  const filename = buildTemplateFilename(scheduleRow);
-  const json = JSON.stringify({ version: 2, scheduleRow, pages: data }, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `${filename}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
 /* ── 레이어 역직렬화 ── */
 
 async function deserializeLayer(raw: Record<string, unknown>): Promise<Layer> {
@@ -240,52 +207,6 @@ export interface TemplatePage {
   isMedicalLaw?: boolean;
   layers: Layer[];
   _rawMedConfig?: Record<string, unknown>; // 구버전 템플릿 마이그레이션 전용
-}
-
-export function openTemplatePicker(
-  onLoad: (pages: TemplatePage[], scheduleRow: Record<string, unknown> | null) => void,
-  onError: (msg: string) => void,
-): void {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  input.onchange = async (e) => {
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-      const rawPages: Record<string, unknown>[] = data.pages ?? data;
-      const savedScheduleRow = (data.scheduleRow as Record<string, unknown> | null) ?? null;
-
-      if (!Array.isArray(rawPages) || !rawPages.length) {
-        onError('올바른 템플릿 파일이 아닙니다');
-        return;
-      }
-
-      const restoredPages = await Promise.all(
-        rawPages.map(async (pg, i) => {
-          const layers = await Promise.all(
-            ((pg.layers ?? []) as Record<string, unknown>[]).map(l => deserializeLayer(l))
-          );
-          return {
-            id: (pg.id as number) ?? i + 1,
-            name: (pg.name as string) ?? '',
-            bgColor: (pg.bgColor as string) ?? '#ffffff',
-            isMedicalLaw: (pg.isMedicalLaw as boolean) ?? false,
-            _rawMedConfig: pg.medConfig as Record<string, unknown> | undefined,
-            layers,
-          } as TemplatePage;
-        })
-      );
-
-      const migratedLogo = await migrateMedLogoToLayer(restoredPages);
-      onLoad(await migrateMedTextToLayers(migratedLogo), savedScheduleRow);
-    } catch {
-      onError('파일을 불러오지 못했습니다');
-    }
-  };
-  input.click();
 }
 
 /* ── 클라우드용 경량 레이어 직렬화 (blob URL 이미지 제외) ── */

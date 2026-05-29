@@ -10,6 +10,7 @@ import SliderInput from '@/components/ui/SliderInput';
 import ImageUploadButton from '@/components/ui/ImageUploadButton';
 import { loadImageFromFile, applyFrameImage, compressForUpload } from '@/lib/imageUpload';
 import { checkScheduleImageExists } from '@/lib/supabase';
+import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
 import { setFilterFrozen } from '@/canvas/webglFilters';
 import { extractDominantColor, calcAutoFillColor, calcShadowColor, replaceTextboxImageColors, hasTransparentPixels } from '@/lib/colorHelpers';
 import { selectBgKeyColor } from '@/store/editorStore';
@@ -144,9 +145,7 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
                 return;
               }
 
-              const date = (scheduleRow.date as string) ?? '';
-              const yy = date.slice(2, 4), mm = date.slice(5, 7), dd = date.slice(8, 10);
-              const folderName = [yy + mm + dd, scheduleRow.account_id, scheduleRow.keyword].filter(Boolean).join('_');
+              const folderName = buildScheduleFolderName(scheduleRow as unknown as Parameters<typeof buildScheduleFolderName>[0]);
               const state = useEditorStore.getState();
               const pageIdx = state.pages.findIndex(pg => pg.layers.some(l => l.id === layer.id));
               const pageIndex = (pageIdx >= 0 ? pageIdx : state.currentPage ?? 0) + 1;

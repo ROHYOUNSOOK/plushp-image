@@ -1,11 +1,6 @@
-const BG_BUCKET = `http://158.247.227.8/image/original-images/Cardnews_image/background_image`;
+import { toProxyUrl } from './supabase';
 
-function toProxyUrl(url: string): string {
-  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http://')) {
-    return `/api/proxy-image?url=${encodeURIComponent(url)}`;
-  }
-  return url;
-}
+const BG_BUCKET = `http://158.247.227.8/image/original-images/Cardnews_image/background_image`;
 
 async function listFilesFromDir(dirUrl: string): Promise<string[]> {
   try {
