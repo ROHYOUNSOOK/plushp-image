@@ -367,7 +367,7 @@ export default function EditorShell() {
 
       {/* 페이지 탭 */}
       <div className="bg-[#1450a0] text-white text-sm">
-        <div className="max-w-[1280px] mx-auto flex items-center gap-1 p-1">
+        <div className="max-w-[1280px] mx-auto flex items-center gap-1 px-2" style={{height: '48px'}}>
         {pages.map((page, i) => (
           <div key={i} className="flex items-center">
             {editingTab?.index === i ? (
@@ -447,12 +447,12 @@ export default function EditorShell() {
       {/* 메인 영역: 아이콘사이드바 + 레이어패널 + 캔버스 + 속성패널 */}
       <div className="flex flex-1 min-h-0">
         {/* 레이어 추가 아이콘 사이드바 */}
-        <div className="w-12 flex-shrink-0 bg-[#1450a0] flex flex-col items-center py-2 gap-1 border-r border-[#1045a0]">
+        <div className="w-12 flex-shrink-0 bg-[#1450a0] flex flex-col items-center border-r border-[#1045a0]">
           {LAYER_TYPES.map(({ type, icon, label }) => (
             <div key={type} className="relative group">
               <button
                 onClick={() => handleAddLayer(type)}
-                className="w-10 h-12 flex items-center justify-center rounded-lg text-lg hover:bg-[#1a5cba] transition-colors text-white"
+                className="w-12 h-12 flex items-center justify-center text-lg hover:bg-[#1a5cba] transition-colors text-white"
                 title={label}
               >
                 {icon}
