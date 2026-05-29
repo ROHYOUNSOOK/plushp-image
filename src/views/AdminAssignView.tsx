@@ -79,9 +79,17 @@ export default function AdminAssignView() {
                 {STATUS_LABELS[status]}
               </span>
               <div className="flex items-center gap-4 flex-1 min-w-0">
-                {row.marketer && <span className="text-xs text-gray-500 whitespace-nowrap">{row.marketer}</span>}
+                {row.marketer && (
+                  <span className="text-xs whitespace-nowrap">
+                    <span className="text-gray-400">작성자 </span>
+                    <span className="text-gray-700 font-medium">{row.marketer}</span>
+                  </span>
+                )}
                 {row.assigned_to && (
-                  <span className="text-xs text-blue-500 whitespace-nowrap">→ {designerMap[row.assigned_to] ?? '알 수 없음'}</span>
+                  <span className="text-xs whitespace-nowrap">
+                    <span className="text-gray-400">담당디자이너 </span>
+                    <span className="text-blue-600 font-medium">{designerMap[row.assigned_to] ?? '알 수 없음'}</span>
+                  </span>
                 )}
                 {row.created_at && (
                   <span className="text-xs text-gray-400 whitespace-nowrap">작성 {row.created_at.slice(0, 10)}</span>
