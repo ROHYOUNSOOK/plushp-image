@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMarketerTasks } from '@/hooks/useMarketerTasks';
@@ -12,6 +13,7 @@ const HEADER_STAGES: ScheduleStatus[] = ['assigned', 'in_progress', 'design_done
 export default function MarketerTasksPage() {
   const { rows, loading, confirmRow } = useMarketerTasks();
   const router = useRouter();
+  const [activeFilter, setActiveFilter] = useState<ScheduleStatus | null>(null);
 
   const grouped = ALL_STAGES.reduce<Record<ScheduleStatus, ScheduleRow[]>>(
     (acc, s) => { acc[s] = []; return acc; },
@@ -26,7 +28,7 @@ export default function MarketerTasksPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white">
-        <div className="max-w-[1280px] mx-auto flex items-center justify-between px-6 py-3">
+        <div className="max-w-[1280px] mx-auto relative flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3">
             <Link
               href="/home"
@@ -37,21 +39,33 @@ export default function MarketerTasksPage() {
             <span className="text-sm font-semibold text-gray-800">마케터 내 업무</span>
           </div>
           {!loading && (
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5">
               {HEADER_STAGES.map(s => {
                 const count = grouped[s]?.length ?? 0;
                 if (count === 0) return null;
+                const isActive = activeFilter === s;
                 return (
-                  <span
+                  <button
                     key={s}
-                    className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${STATUS_BADGE_CLASSES[s]}`}
+                    onClick={() => setActiveFilter(isActive ? null : s)}
+                    className={`text-xs px-2.5 py-0.5 rounded-full font-medium transition-all ${
+                      isActive
+                        ? 'ring-2 ring-offset-1 ring-current opacity-100 scale-105'
+                        : 'opacity-80 hover:opacity-100'
+                    } ${STATUS_BADGE_CLASSES[s]}`}
                   >
                     {STATUS_LABELS[s]} {count}
-                  </span>
+                  </button>
                 );
               })}
             </div>
           )}
+          <Link
+            href="/plan"
+            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+          >
+            기획안 →
+          </Link>
         </div>
       </header>
 
@@ -62,6 +76,7 @@ export default function MarketerTasksPage() {
           <div className="text-sm text-gray-300 text-center py-20">작성한 기획안이 없습니다.</div>
         ) : (
           ALL_STAGES.map(stage => {
+            if (activeFilter && activeFilter !== stage) return null;
             const items = grouped[stage];
             if (items.length === 0) return null;
             return (
