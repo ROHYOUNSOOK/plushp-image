@@ -368,8 +368,6 @@ export default function EditorShell() {
       {/* 페이지 탭 */}
       <div className="bg-[#1450a0] text-white text-sm">
         <div className="max-w-[1280px] mx-auto flex items-center gap-1 p-1">
-        {/* 아이콘 사이드바 폭 맞춤 공간 */}
-        <div className="w-12 flex-shrink-0" />
         {pages.map((page, i) => (
           <div key={i} className="flex items-center">
             {editingTab?.index === i ? (
