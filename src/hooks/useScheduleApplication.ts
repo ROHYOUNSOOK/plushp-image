@@ -142,7 +142,7 @@ export function useScheduleApplication() {
 
   const navigateToEditor = async (row: ScheduleRow, allDoctors: DoctorInfo[]) => {
     setNavigating(true);
-    pushHistory();
+    useEditorStore.getState().resetEditor();
     toast('템플릿 확인 중...', 0);
     try {
       // 배분완료 → 진행중 자동 전환 (본인에게 배분된 경우)

@@ -106,17 +106,22 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
 
   const setDoctorAt = (i: number, v: string) => {
     setForm(f => { const doctors = [...f.doctors]; doctors[i] = v; return { ...f, doctors }; });
-    if (v.trim()) {
-      setSuggestions(allDoctors.filter(d => d.doctor_name.includes(v.trim())).map(d => d.doctor_name).slice(0, 5));
-      setActiveDoctorIdx(i);
-    } else {
-      setSuggestions([]);
-      setActiveDoctorIdx(null);
-    }
+    const filtered = v.trim()
+      ? allDoctors.filter(d => d.doctor_name.includes(v.trim())).map(d => d.doctor_name)
+      : allDoctors.map(d => d.doctor_name);
+    setSuggestions(filtered);
+    setActiveDoctorIdx(i);
+  };
+
+  const openDoctorDropdown = (i: number) => {
+    setSuggestions(allDoctors.map(d => d.doctor_name));
+    setActiveDoctorIdx(i);
   };
 
   const pickSuggestion = (name: string) => {
-    if (activeDoctorIdx !== null) setDoctorAt(activeDoctorIdx, name);
+    if (activeDoctorIdx !== null) {
+      setForm(f => { const doctors = [...f.doctors]; doctors[activeDoctorIdx] = name; return { ...f, doctors }; });
+    }
     setSuggestions([]);
     setActiveDoctorIdx(null);
   };
@@ -142,7 +147,7 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
               if (deleted) onDeleted(row.id);
             }}
             disabled={saving}
-            className="text-xs text-red-400 hover:text-red-600 disabled:opacity-40 transition-colors"
+            className="text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-400 hover:bg-red-50 disabled:opacity-40 transition-colors"
           >
             삭제
           </button>
@@ -231,12 +236,13 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
                       className="w-full text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] focus:ring-2 focus:ring-[#1450a0/10] transition placeholder:text-gray-500 disabled:bg-gray-50 disabled:text-gray-500"
                       value={d}
                       onChange={e => setDoctorAt(i, e.target.value)}
-                      placeholder="이름 입력"
-                      onBlur={() => setTimeout(() => setSuggestions([]), 150)}
+                      onFocus={() => !readOnly && openDoctorDropdown(i)}
+                      onBlur={() => setTimeout(() => { setSuggestions([]); setActiveDoctorIdx(null); }, 150)}
+                      placeholder="이름 입력 또는 선택"
                       disabled={readOnly}
                     />
                     {!readOnly && activeDoctorIdx === i && suggestions.length > 0 && (
-                      <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                      <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-y-auto max-h-48">
                         {suggestions.map(s => (
                           <button
                             key={s}

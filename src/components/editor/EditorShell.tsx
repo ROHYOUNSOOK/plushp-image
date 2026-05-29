@@ -71,9 +71,9 @@ async function applyScheduleImagesToPages(
 }
 
 export default function EditorShell() {
-  const { pages, currentPage, addPage, deletePage, switchPage, pushHistory, addLayer, setPages, renamePage, toggleMedicalLaw, setCurrentScheduleRow, resetEditor } = useEditorStore();
-  // 편집기 진입 시 항상 초기화
-  useEffect(() => { resetEditor(); autoLoadLogos(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const { pages, currentPage, addPage, deletePage, switchPage, pushHistory, addLayer, setPages, renamePage, toggleMedicalLaw, setCurrentScheduleRow } = useEditorStore();
+  // 앱 초기 마운트 시 로고 자동 로드
+  useEffect(() => { autoLoadLogos(); }, []);
 
   const [editingTab, setEditingTab] = React.useState<{ index: number; value: string } | null>(null);
   const [dlOpen, setDlOpen] = React.useState(false);
