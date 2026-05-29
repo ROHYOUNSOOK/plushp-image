@@ -7,6 +7,7 @@ import { getScheduleStatus, STATUS_LABELS, STATUS_BADGE_CLASSES, STATUS_ORDER, t
 import type { ScheduleRow } from '@/lib/supabase';
 
 const ALL_STAGES: ScheduleStatus[] = [...STATUS_ORDER];
+const HEADER_STAGES: ScheduleStatus[] = ['assigned', 'in_progress', 'design_done', 'confirmed'];
 
 export default function MarketerTasksPage() {
   const { rows, loading, confirmRow } = useMarketerTasks();
@@ -21,7 +22,6 @@ export default function MarketerTasksPage() {
     if (grouped[s]) grouped[s].push(r);
   });
 
-  const activeCount = rows.filter(r => !r.confirmed).length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -32,7 +32,20 @@ export default function MarketerTasksPage() {
             <span className="text-sm font-semibold text-gray-800">내 업무</span>
           </div>
           {!loading && (
-            <span className="text-xs text-gray-400">진행중 {activeCount}건</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {HEADER_STAGES.map(s => {
+                const count = grouped[s]?.length ?? 0;
+                if (count === 0) return null;
+                return (
+                  <span
+                    key={s}
+                    className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${STATUS_BADGE_CLASSES[s]}`}
+                  >
+                    {STATUS_LABELS[s]} {count}
+                  </span>
+                );
+              })}
+            </div>
           )}
         </div>
       </header>
