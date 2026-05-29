@@ -2,6 +2,7 @@
 
 import { useScheduleData } from '@/hooks/useScheduleData';
 import { useScheduleApplication } from '@/hooks/useScheduleApplication';
+import { getScheduleStatus, STATUS_LABELS } from '@/lib/scheduleStatus';
 
 export default function SchedulePanel() {
   const {
@@ -47,9 +48,11 @@ export default function SchedulePanel() {
           disabled={!selectedDate || isApplying}
         >
           <option value="">{isApplying ? '적용 중...' : '키워드 선택'}</option>
-          {keywords.map(r => (
-            <option key={r.id} value={r.id}>{r.keyword}</option>
-          ))}
+          {keywords.map(r => {
+            const status = getScheduleStatus(r);
+            const label = status === 'unassigned' ? r.keyword : `${r.keyword} · ${STATUS_LABELS[status]}`;
+            return <option key={r.id} value={r.id}>{label}</option>;
+          })}
         </select>
 
         {selectedRow && (
