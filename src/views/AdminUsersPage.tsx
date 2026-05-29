@@ -70,7 +70,7 @@ export default function AdminUsersPage() {
               href="/home"
               className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
             >
-              ← 홈
+              ← 홈으로
             </Link>
             <span className="text-sm font-semibold text-gray-800">관리자 페이지</span>
           </div>

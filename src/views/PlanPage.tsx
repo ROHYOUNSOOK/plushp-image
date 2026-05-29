@@ -49,10 +49,8 @@ function PlanPageInner() {
     <div className="flex flex-col h-screen bg-gray-50">
       <Toast />
       <header className="border-b border-[#0b7a8f] bg-[#0d8fa8]">
-        <div className="max-w-[1280px] mx-auto flex items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-white">Plus 기획안</span>
-          </div>
+        <div className="max-w-[1280px] mx-auto relative flex items-center justify-end px-6 py-3">
+          <span className="absolute left-1/2 -translate-x-1/2 text-lg font-bold text-white">Plus 기획안</span>
           <Link
             href="/home"
             className="text-xs px-3 py-1.5 rounded-lg border border-white text-white hover:bg-[#0b7a8f] transition-colors"
