@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useMyTasks } from '@/hooks/useMyTasks';
 import { getScheduleStatus, STATUS_LABELS, STATUS_BADGE_CLASSES, type ScheduleStatus } from '@/lib/scheduleStatus';
 import type { ScheduleRow } from '@/lib/supabase';
@@ -12,7 +11,6 @@ const HEADER_STAGES: ScheduleStatus[] = ['assigned', 'in_progress', 'design_done
 
 export default function MyTasksPage() {
   const { rows, loading, navigateToEditor, navigating } = useMyTasks();
-  const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<ScheduleStatus | null>(null);
 
   const grouped = DESIGNER_STAGES.reduce<Record<ScheduleStatus, ScheduleRow[]>>(
@@ -90,8 +88,7 @@ export default function MyTasksPage() {
                     return (
                     <div
                       key={row.id}
-                      onClick={() => router.push(`/plan?id=${row.id}`)}
-                      className="bg-white rounded-xl border border-gray-200 px-5 py-3.5 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                      className="bg-white rounded-xl border border-gray-200 px-5 py-3.5 flex items-center gap-4"
                     >
                       <span className="text-sm font-semibold text-gray-800 truncate min-w-0 flex-shrink-0 w-[240px]">
                         {row.keyword || '(키워드 없음)'}
@@ -109,7 +106,7 @@ export default function MyTasksPage() {
                         )}
                       </div>
                       <button
-                        onClick={e => { e.stopPropagation(); navigateToEditor(row); }}
+                        onClick={() => navigateToEditor(row)}
                         disabled={navigating}
                         className="shrink-0 text-xs px-3 py-1.5 rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] disabled:opacity-50 transition-colors whitespace-nowrap"
                       >
