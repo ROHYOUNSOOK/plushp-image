@@ -89,6 +89,7 @@ export interface EditorState extends HistoryState {
   toggleMedicalLaw: (index: number) => void;
   applySchedule: (texts: string[], doctors: string[], doctorSpecialty: string, doctorSpecialties?: string[], doctorDepartments?: string[], doctorImageUrls?: (string | null)[], doctorImages?: (HTMLImageElement | null)[], frameImages?: { img: HTMLImageElement | null; url: string | null }[], frameInnerImages?: { img: HTMLImageElement | null; url: string | null }[]) => void;
   setCurrentScheduleRow: (row: Record<string, unknown> | null) => void;
+  resetEditor: () => void;
 }
 
 /* ── 헬퍼 ── */
@@ -424,6 +425,22 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   }),
 
   setCurrentScheduleRow: (row) => set({ currentScheduleRow: row }),
+
+  resetEditor: () => set({
+    pages: [{ id: 1, name: '', layers: [] }],
+    currentPage: 0,
+    selectedLayerId: null,
+    selectedLayerIds: [],
+    frameEditMode: false,
+    inlineEditingId: null,
+    hoverId: null,
+    isExporting: false,
+    showGuides: true,
+    isDragOver: false,
+    dropTargetId: null,
+    currentScheduleRow: null,
+    ...initialHistoryState,
+  }),
 }));
 
 /* ── 편의 셀렉터 ── */
