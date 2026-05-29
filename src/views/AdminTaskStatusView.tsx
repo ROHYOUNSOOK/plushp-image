@@ -149,8 +149,7 @@ export default function AdminTaskStatusView() {
                 return (
                 <tr
                   key={row.id}
-                  onClick={() => router.push(`/plan?id=${row.id}`)}
-                  className="border-b border-gray-100 last:border-0 hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors"
                 >
                   <td className="px-5 py-3.5">
                     <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${STATUS_BADGE_CLASSES[s]}`}>
