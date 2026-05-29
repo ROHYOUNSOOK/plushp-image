@@ -154,6 +154,11 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
         )}
       </div>
 
+      {readOnly && (
+        <div className="flex items-center gap-2 px-6 py-2 bg-gray-100 border-b border-gray-200">
+          <span className="text-xs text-gray-500">🔒 조회 모드 — 수정 권한이 없습니다</span>
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto px-6 py-5">
         <div className="max-w-2xl mx-auto space-y-5">
 

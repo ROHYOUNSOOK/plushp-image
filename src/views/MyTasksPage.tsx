@@ -32,7 +32,7 @@ export default function MyTasksPage() {
             >
               ← 홈으로
             </Link>
-            <span className="text-sm font-semibold text-gray-800">내 업무</span>
+            <span className="text-sm font-semibold text-gray-800">디자이너 내 업무</span>
           </div>
           {!loading && (
             <div className="flex items-center gap-1.5">

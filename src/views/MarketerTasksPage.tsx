@@ -34,7 +34,7 @@ export default function MarketerTasksPage() {
             >
               ← 홈으로
             </Link>
-            <span className="text-sm font-semibold text-gray-800">내 업무</span>
+            <span className="text-sm font-semibold text-gray-800">마케터 내 업무</span>
           </div>
           {!loading && (
             <div className="flex items-center gap-1.5 flex-wrap">

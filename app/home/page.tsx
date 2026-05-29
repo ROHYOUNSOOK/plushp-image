@@ -76,7 +76,7 @@ export default function HomePage() {
           </div>
           <button
             onClick={handleLogout}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors mt-1"
+            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-colors"
           >
             로그아웃
           </button>
