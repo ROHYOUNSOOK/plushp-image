@@ -167,7 +167,8 @@ export default function EditorShell() {
     <div className="flex flex-col h-screen" onClick={handleGlobalClick}>
       <ImageNotePopup />
       {/* 상단 툴바 */}
-      <div className="flex items-center gap-2 p-2 bg-[#0d8fa8] text-white text-sm">
+      <div className="bg-[#0d8fa8] text-white text-sm">
+        <div className="max-w-[1280px] mx-auto flex items-center gap-2 p-2">
         <Link
           href="/plan"
           className="text-xs px-3 py-1.5 rounded-lg border border-white/40 text-white hover:bg-white/10 transition-colors"
@@ -361,10 +362,14 @@ export default function EditorShell() {
         >
           홈으로 →
         </Link>
+        </div>
       </div>
 
       {/* 페이지 탭 */}
-      <div className="flex items-center gap-1 p-1 bg-[#1450a0] text-white text-sm">
+      <div className="bg-[#1450a0] text-white text-sm">
+        <div className="max-w-[1280px] mx-auto flex items-center gap-1 p-1">
+        {/* 아이콘 사이드바 폭 맞춤 공간 */}
+        <div className="w-12 flex-shrink-0" />
         {pages.map((page, i) => (
           <div key={i} className="flex items-center">
             {editingTab?.index === i ? (
@@ -438,6 +443,7 @@ export default function EditorShell() {
         >
           의료법+
         </button>
+        </div>
       </div>
 
       {/* 메인 영역: 아이콘사이드바 + 레이어패널 + 캔버스 + 속성패널 */}
