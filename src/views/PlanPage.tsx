@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import type { ScheduleRow } from '@/lib/supabase';
@@ -19,13 +19,18 @@ function PlanPageInner() {
   const [isNew, setIsNew] = useState(false);
   const searchParams = useSearchParams();
 
+  const handledIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (loading) return;
     const id = searchParams.get('id');
-    if (!id) return;
+    if (!id) { handledIdRef.current = null; return; }
+    if (handledIdRef.current === id) return;
     const found = rows.find(r => r.id === id);
-    if (found) { setSelectedRow(found); setIsNew(false); }
-  }, [loading, searchParams]);
+    if (found) {
+      handledIdRef.current = id;
+      setSelectedRow(found);
+      setIsNew(false);
+    }
+  }, [rows, searchParams]);
 
   const handleSelect = (row: ScheduleRow) => { setSelectedRow(row); setIsNew(false); };
   const handleNew = () => { setSelectedRow(null); setIsNew(true); };
