@@ -69,7 +69,7 @@ export default function MyTasksPage() {
         </div>
       </header>
 
-      <div className="p-6 max-w-2xl mx-auto space-y-6">
+      <div className="p-6 max-w-[1280px] mx-auto space-y-6">
         {loading ? (
           <div className="text-sm text-gray-400 text-center py-20">로딩 중...</div>
         ) : rows.length === 0 ? (
@@ -93,7 +93,7 @@ export default function MyTasksPage() {
                       onClick={() => router.push(`/plan?id=${row.id}`)}
                       className="bg-white rounded-xl border border-gray-200 px-5 py-3.5 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
                     >
-                      <span className="text-sm font-semibold text-gray-800 truncate min-w-0 flex-shrink-0 max-w-[180px]">
+                      <span className="text-sm font-semibold text-gray-800 truncate min-w-0 flex-shrink-0 w-[240px]">
                         {row.keyword || '(키워드 없음)'}
                       </span>
                       <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium shrink-0 ${STATUS_BADGE_CLASSES[stage]}`}>

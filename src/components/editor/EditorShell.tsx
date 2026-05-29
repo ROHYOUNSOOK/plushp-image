@@ -329,10 +329,20 @@ export default function EditorShell() {
             onClick={async () => {
               const id = currentScheduleRow.id as string;
               if (!id) return;
-              if (!confirm('디자인 완료 처리하시겠습니까?')) return;
-              await supabase.from('plus_schedule').update({ completed: true }).eq('id', id);
-              useEditorStore.getState().setCurrentScheduleRow({ ...currentScheduleRow, completed: true });
-              toast('디자인 완료 처리되었습니다');
+              if (!confirm('디자인 완료 처리하시겠습니까?\n현재 디자인이 저장됩니다.')) return;
+              try {
+                // 현재 디자인을 클라우드 템플릿으로 저장 (나중에 디자인 확인 시 그대로 복원)
+                toast('디자인 저장 중...', 0);
+                const state = useEditorStore.getState();
+                await saveCloudTemplate(state.pages, state.currentScheduleRow);
+                await supabase.from('plus_schedule').update({ completed: true }).eq('id', id);
+                useEditorStore.getState().setCurrentScheduleRow({ ...currentScheduleRow, completed: true });
+                hideToast();
+                toast('디자인 완료 처리되었습니다');
+              } catch {
+                hideToast();
+                toast('디자인 저장 실패 — 다시 시도해주세요');
+              }
             }}
             className="ml-auto text-xs px-3 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-400 text-white transition-colors whitespace-nowrap"
           >

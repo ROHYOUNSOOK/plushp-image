@@ -26,6 +26,7 @@ export function usePlanData(filterUserId?: string) {
   const [allDoctors, setAllDoctors] = useState<Doctor[]>([]);
   const [blogAccounts, setBlogAccounts] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isDesigner, setIsDesigner] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const supabase = createBrowserClient(
@@ -39,11 +40,12 @@ export function usePlanData(filterUserId?: string) {
       setCurrentUserId(data.user.id);
       supabase
         .from('users')
-        .select('role')
+        .select('role, department')
         .eq('id', data.user.id)
         .single()
         .then(({ data: userData }) => {
           setIsAdmin(userData?.role === '관리자');
+          setIsDesigner(userData?.department === '디자인부');
         });
     });
   }, []);
@@ -53,10 +55,17 @@ export function usePlanData(filterUserId?: string) {
 
     setLoading(true);
 
-    const targetId = isAdmin ? filterUserId : currentUserId;
-
     let query = supabase.from('plus_schedule').select('*').order('date', { ascending: false });
-    if (targetId) query = query.eq('created_by', targetId);
+    if (isAdmin) {
+      // 관리자: 필터 지정 시 해당 작성자, 아니면 전체
+      if (filterUserId) query = query.eq('created_by', filterUserId);
+    } else if (isDesigner) {
+      // 디자이너: 본인에게 배분된 기획안 (뷰어)
+      query = query.eq('assigned_to', currentUserId);
+    } else {
+      // 마케터/기타: 본인이 작성한 기획안
+      query = query.eq('created_by', currentUserId);
+    }
 
     Promise.all([
       query,
@@ -72,7 +81,7 @@ export function usePlanData(filterUserId?: string) {
       if (!doctorRes.error) setAllDoctors(doctorRes.data ?? []);
       if (!blogRes.error) setBlogAccounts((blogRes.data ?? []).map((r: { blog_id: string }) => r.blog_id));
     });
-  }, [currentUserId, isAdmin, filterUserId]);
+  }, [currentUserId, isAdmin, isDesigner, filterUserId]);
 
   const upsertRow = (saved: ScheduleRow) => {
     setRows(prev => {
