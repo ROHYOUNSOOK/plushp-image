@@ -334,8 +334,8 @@ export default function EditorShell() {
           📂 템플릿 열기
         </button>
 
-        {/* 디자이너 — 디자인완료 버튼 */}
-        {permissions.isDesigner && currentScheduleRow && !currentScheduleRow.completed && currentScheduleRow.assigned_to === permissions.userId && (
+        {/* 디자이너/관리자 — 디자인완료 버튼 */}
+        {(permissions.isDesigner || permissions.isAdmin) && currentScheduleRow && !currentScheduleRow.completed && (
           <button
             onClick={async () => {
               const id = currentScheduleRow.id as string;
