@@ -7,7 +7,7 @@ import { getScheduleStatus, STATUS_LABELS, STATUS_BADGE_CLASSES, STATUS_ORDER, t
 import type { ScheduleRow } from '@/lib/supabase';
 
 const DESIGNER_STAGES: ScheduleStatus[] = ['assigned', 'in_progress', 'design_done', 'confirmed'];
-const HEADER_STAGES: ScheduleStatus[] = ['assigned', 'in_progress', 'design_done'];
+const HEADER_STAGES: ScheduleStatus[] = ['assigned', 'in_progress', 'design_done', 'confirmed'];
 
 export default function MyTasksPage() {
   const { rows, loading, navigateToEditor, navigating } = useMyTasks();
