@@ -1,8 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
 import { useAssignment } from '@/hooks/useAssignment';
+import { useScheduleApplication } from '@/hooks/useScheduleApplication';
+import type { DoctorInfo } from '@/hooks/useScheduleData';
 import { getScheduleStatus, STATUS_LABELS, STATUS_BADGE_CLASSES, type ScheduleStatus } from '@/lib/scheduleStatus';
 
 type StatusFilter = '전체' | ScheduleStatus;
@@ -23,6 +26,17 @@ export default function AdminTaskStatusView() {
   const { rows, designers, loading } = useAssignment();
   const designerMap = Object.fromEntries(designers.map(d => [d.id, d.name]));
   const router = useRouter();
+  const { navigateToEditor, navigating } = useScheduleApplication();
+  const [allDoctors, setAllDoctors] = useState<DoctorInfo[]>([]);
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    );
+    supabase.from('plus_doctors').select('id, doctor_name, specialty, department')
+      .then(({ data }) => setAllDoctors(data ?? []));
+  }, []);
 
   const [marketer, setMarketer] = useState<string>('');
   const [designerId, setDesignerId] = useState<string>('');
@@ -126,6 +140,7 @@ export default function AdminTaskStatusView() {
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-32">담당디자이너</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-48">블로그 아이디</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500">키워드</th>
+                <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 w-44">바로가기</th>
               </tr>
             </thead>
             <tbody>
@@ -149,6 +164,23 @@ export default function AdminTaskStatusView() {
                   </td>
                   <td className="px-5 py-3.5 text-gray-600">{row.account_id || '-'}</td>
                   <td className="px-5 py-3.5 text-gray-800 font-medium">{row.keyword || '(키워드 없음)'}</td>
+                  <td className="px-5 py-3.5">
+                    <div className="flex items-center justify-end gap-1.5" onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={() => router.push(`/plan?id=${row.id}`)}
+                        className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors whitespace-nowrap"
+                      >
+                        기획안
+                      </button>
+                      <button
+                        onClick={() => navigateToEditor(row, allDoctors)}
+                        disabled={navigating}
+                        className="text-xs px-2.5 py-1 rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] disabled:opacity-50 transition-colors whitespace-nowrap"
+                      >
+                        {navigating ? '이동 중...' : '편집기'}
+                      </button>
+                    </div>
+                  </td>
                 </tr>
                 );
               })}
