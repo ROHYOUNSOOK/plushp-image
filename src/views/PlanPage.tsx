@@ -48,16 +48,18 @@ function PlanPageInner() {
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       <Toast />
-      <header className="flex items-center justify-between px-6 py-3 border-b border-[#0b7a8f] bg-[#0d8fa8]">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-white">Plus 기획안</span>
+      <header className="border-b border-[#0b7a8f] bg-[#0d8fa8]">
+        <div className="max-w-[1280px] mx-auto flex items-center justify-between px-6 py-3">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold text-white">Plus 기획안</span>
+          </div>
+          <Link
+            href="/home"
+            className="text-xs px-3 py-1.5 rounded-lg border border-white text-white hover:bg-[#0b7a8f] transition-colors"
+          >
+            홈으로 →
+          </Link>
         </div>
-        <Link
-          href="/home"
-          className="text-xs px-3 py-1.5 rounded-lg border border-white text-white hover:bg-[#0b7a8f] transition-colors"
-        >
-          홈으로 →
-        </Link>
       </header>
 
       {isAdmin && <PlanFilter onSelect={setFilterUserId} />}

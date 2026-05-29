@@ -63,15 +63,17 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/home"
-            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
-          >
-            ← 홈
-          </Link>
-          <span className="text-sm font-semibold text-gray-800">관리자 페이지</span>
+      <header className="border-b border-gray-200 bg-white">
+        <div className="max-w-[1280px] mx-auto flex items-center justify-between px-6 py-3">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/home"
+              className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+            >
+              ← 홈
+            </Link>
+            <span className="text-sm font-semibold text-gray-800">관리자 페이지</span>
+          </div>
         </div>
       </header>
 
