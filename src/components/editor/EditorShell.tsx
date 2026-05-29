@@ -452,7 +452,7 @@ export default function EditorShell() {
             <div key={type} className="relative group">
               <button
                 onClick={() => handleAddLayer(type)}
-                className="w-10 h-10 flex items-center justify-center rounded-lg text-lg hover:bg-[#1a5cba] transition-colors text-white"
+                className="w-10 h-12 flex items-center justify-center rounded-lg text-lg hover:bg-[#1a5cba] transition-colors text-white"
                 title={label}
               >
                 {icon}
