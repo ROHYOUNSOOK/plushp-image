@@ -57,12 +57,21 @@ export async function checkTemplateExists(folderName: string): Promise<boolean> 
   }
 }
 
-export async function applyCloudTemplate(selectedRow: ScheduleRow, folderName: string): Promise<void> {
+export async function applyCloudTemplate(selectedRow: ScheduleRow, folderName: string, allDoctors: DoctorInfo[] = []): Promise<void> {
   toast('템플릿 불러오는 중...', 0);
   const store = useEditorStore.getState();
   store.setCurrentScheduleRow(selectedRow as unknown as Record<string, unknown>);
 
-  const { pages: tplPages } = await loadCloudTemplate(folderName);
+  const { pages: tplPages, scheduleRow: savedRow } = await loadCloudTemplate(folderName);
+
+  // 원장님이 바뀐 기획안이면 저장된 템플릿을 무효화하고 새로 구성
+  const savedDoctors = JSON.stringify(((savedRow?.doctors as string[]) ?? []));
+  const curDoctors = JSON.stringify(selectedRow.doctors ?? []);
+  if (savedDoctors !== curDoctors) {
+    await applyRandomFlow(selectedRow, allDoctors, folderName);
+    return;
+  }
+
   const pagesWithImages = applyScheduleTextsToTemplatePages(
     await applyScheduleImagesToTemplatePages(tplPages, folderName),
     selectedRow.texts,
@@ -138,7 +147,7 @@ export function useScheduleApplication() {
       const hasTemplate = await checkTemplateExists(folderName);
 
       if (hasTemplate) {
-        await applyCloudTemplate(selectedRow, folderName);
+        await applyCloudTemplate(selectedRow, folderName, allDoctors);
         hideToast();
         toast('저장된 템플릿 적용 완료');
       } else {
@@ -154,11 +163,22 @@ export function useScheduleApplication() {
     }
   };
 
-  const navigateToEditor = async (row: ScheduleRow, allDoctors: DoctorInfo[]) => {
+  const navigateToEditor = async (rowArg: ScheduleRow, allDoctors: DoctorInfo[]) => {
     setNavigating(true);
     useEditorStore.getState().resetEditor();
     toast('템플릿 확인 중...', 0);
     try {
+      // DB에서 최신 row를 다시 읽어 사용 (기획안 수정분이 항상 반영되도록)
+      let row = rowArg;
+      try {
+        const supabase = createBrowserClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        );
+        const { data: fresh } = await supabase.from('plus_schedule').select('*').eq('id', rowArg.id).single();
+        if (fresh) row = fresh as ScheduleRow;
+      } catch { /* 실패 시 전달받은 row 사용 */ }
+
       // 배분완료 → 진행중 자동 전환 (본인에게 배분된 경우)
       await maybeMarkStarted(row);
 
@@ -166,7 +186,7 @@ export function useScheduleApplication() {
       const hasTemplate = await checkTemplateExists(folderName);
 
       if (hasTemplate) {
-        await applyCloudTemplate(row, folderName);
+        await applyCloudTemplate(row, folderName, allDoctors);
         hideToast();
         toast('저장된 템플릿 적용 완료');
       } else {
