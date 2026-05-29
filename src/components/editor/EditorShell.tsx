@@ -287,7 +287,8 @@ export default function EditorShell() {
         </button>
         )}
 
-        {/* 템플릿 열기 */}
+        {/* 템플릿 열기 (읽기 전용 시 숨김) */}
+        {!editorReadOnly && (
         <button
           onClick={async () => {
             try {
@@ -337,6 +338,7 @@ export default function EditorShell() {
         >
           📂 템플릿 열기
         </button>
+        )}
 
         {/* 디자이너/관리자 — 디자인완료 버튼 */}
         {(permissions.isDesigner || permissions.isAdmin) && currentScheduleRow && !currentScheduleRow.completed && (
