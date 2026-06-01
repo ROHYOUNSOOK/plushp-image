@@ -6,6 +6,7 @@ import { useEditorStore } from '@/store/editorStore';
 import ColorPickerField from '@/components/ui/ColorPickerField';
 import NumberInput from '@/components/ui/NumberInput';
 import SliderInput from '@/components/ui/SliderInput';
+import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import ImageUploadButton from '@/components/ui/ImageUploadButton';
 import { loadImageFromFile, applyLogoImage } from '@/lib/imageUpload';
 import { toast } from '@/components/editor/Toast';
@@ -57,10 +58,9 @@ export default function LogoProps({ layer }: { layer: LogoLayer }) {
 
       {/* 외곽선 (획) */}
       <div className="flex items-center gap-2 mt-2">
-        <input
-          type="checkbox"
+        <CustomCheckbox
           checked={layer.stroke.enabled}
-          onChange={e => update({ stroke: { ...layer.stroke, enabled: e.target.checked } })}
+          onChange={v => update({ stroke: { ...layer.stroke, enabled: v } })}
         />
         <span className="text-xs">외곽선</span>
       </div>
@@ -73,10 +73,9 @@ export default function LogoProps({ layer }: { layer: LogoLayer }) {
 
       {/* 그림자 */}
       <div className="flex items-center gap-2 mt-2">
-        <input
-          type="checkbox"
+        <CustomCheckbox
           checked={layer.shadow.enabled}
-          onChange={e => update({ shadow: { ...layer.shadow, enabled: e.target.checked } })}
+          onChange={v => update({ shadow: { ...layer.shadow, enabled: v } })}
         />
         <span className="text-xs">그림자</span>
       </div>

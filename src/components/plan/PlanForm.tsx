@@ -176,7 +176,7 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
               <Field label="업로드 날짜">
                 <input
                   type="date"
-                  className="w-full text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] focus:ring-2 focus:ring-[#1450a0/10] transition disabled:bg-gray-50 disabled:text-gray-500"
+                  className="w-full text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] transition disabled:bg-gray-50 disabled:text-gray-500 [color-scheme:light]"
                   value={form.date}
                   onChange={e => setField('date', e.target.value)}
                   disabled={readOnly}

@@ -6,6 +6,7 @@ import { useEditorStore } from '@/store/editorStore';
 import { FRAME_SHAPES } from '@/types/constants';
 import ColorPickerField from '@/components/ui/ColorPickerField';
 import NumberInput from '@/components/ui/NumberInput';
+import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import SliderInput from '@/components/ui/SliderInput';
 import ImageUploadButton from '@/components/ui/ImageUploadButton';
 import { loadImageFromFile, compressForUpload } from '@/lib/imageUpload';
@@ -64,10 +65,9 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
 
       {/* 외곽선 */}
       <div className="flex items-center gap-2 mt-2">
-        <input
-          type="checkbox"
+        <CustomCheckbox
           checked={layer.stroke.enabled}
-          onChange={e => update({ stroke: { ...layer.stroke, enabled: e.target.checked } })}
+          onChange={v => update({ stroke: { ...layer.stroke, enabled: v } })}
         />
         <span className="text-xs">외곽선</span>
       </div>
@@ -80,10 +80,9 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
 
       {/* 그림자 */}
       <div className="flex items-center gap-2 mt-2">
-        <input
-          type="checkbox"
+        <CustomCheckbox
           checked={layer.shadow.enabled}
-          onChange={e => update({ shadow: { ...layer.shadow, enabled: e.target.checked } })}
+          onChange={v => update({ shadow: { ...layer.shadow, enabled: v } })}
         />
         <span className="text-xs">그림자</span>
       </div>

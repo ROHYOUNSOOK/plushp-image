@@ -4,6 +4,7 @@ import type { MedBoxLayer } from '@/types/layer';
 import { useEditorStore } from '@/store/editorStore';
 import ColorPickerField from '@/components/ui/ColorPickerField';
 import NumberInput from '@/components/ui/NumberInput';
+import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import SliderInput from '@/components/ui/SliderInput';
 
 export default function MedBoxProps({ layer }: { layer: MedBoxLayer }) {
@@ -37,8 +38,8 @@ export default function MedBoxProps({ layer }: { layer: MedBoxLayer }) {
 
       {/* 외곽선 */}
       <div className="flex items-center gap-2 mt-2">
-        <input type="checkbox" checked={layer.boxStrokeEnabled}
-          onChange={e => update({ boxStrokeEnabled: e.target.checked })} />
+        <CustomCheckbox checked={layer.boxStrokeEnabled}
+          onChange={v => update({ boxStrokeEnabled: v })} />
         <span className="text-xs">외곽선</span>
       </div>
       {layer.boxStrokeEnabled && (

@@ -21,7 +21,7 @@ export default function SliderInput({ label, value, onChange, onChangeEnd, min =
         min={min}
         max={max}
         step={step}
-        className="flex-1"
+        className="flex-1 accent-blue-500"
       />
       <span className="text-xs text-gray-500 w-8 text-right">{Math.round(value)}</span>
     </div>

@@ -7,6 +7,7 @@ import { useEditorStore } from '@/store/editorStore';
 import ColorPickerField from '@/components/ui/ColorPickerField';
 import NumberInput from '@/components/ui/NumberInput';
 import CustomSelect from '@/components/ui/CustomSelect';
+import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import SliderInput from '@/components/ui/SliderInput';
 
 const FONTS = ['GmarketSans', 'Pretendard', 'SCoreDream', 'Jalnan'];
@@ -119,10 +120,9 @@ export default function TextboxProps({ layer }: { layer: TextboxLayer }) {
 
       {/* 자동 크기 */}
       <div className="flex items-center gap-2 mt-2">
-        <input
-          type="checkbox"
+        <CustomCheckbox
           checked={layer.autoSize}
-          onChange={e => update({ autoSize: e.target.checked })}
+          onChange={v => update({ autoSize: v })}
         />
         <span className="text-xs">자동 크기</span>
       </div>
@@ -138,10 +138,9 @@ export default function TextboxProps({ layer }: { layer: TextboxLayer }) {
 
       {/* 테두리 */}
       <div className="flex items-center gap-2 mt-2">
-        <input
-          type="checkbox"
+        <CustomCheckbox
           checked={layer.border.enabled}
-          onChange={e => update({ border: { ...layer.border, enabled: e.target.checked } })}
+          onChange={v => update({ border: { ...layer.border, enabled: v } })}
         />
         <span className="text-xs">테두리</span>
       </div>
@@ -154,10 +153,9 @@ export default function TextboxProps({ layer }: { layer: TextboxLayer }) {
 
       {/* 그림자 */}
       <div className="flex items-center gap-2 mt-2">
-        <input
-          type="checkbox"
+        <CustomCheckbox
           checked={layer.shadow.enabled}
-          onChange={e => update({ shadow: { ...layer.shadow, enabled: e.target.checked } })}
+          onChange={v => update({ shadow: { ...layer.shadow, enabled: v } })}
         />
         <span className="text-xs">그림자</span>
       </div>
