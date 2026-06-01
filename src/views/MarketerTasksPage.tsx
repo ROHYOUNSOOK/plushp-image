@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMarketerTasks } from '@/hooks/useMarketerTasks';
 import { getScheduleStatus, STATUS_LABELS, STATUS_BADGE_CLASSES, STATUS_ORDER, type ScheduleStatus } from '@/lib/scheduleStatus';
 import type { ScheduleRow } from '@/lib/supabase';
+import CustomSelect from '@/components/ui/CustomSelect';
 
 const ALL_STAGES: ScheduleStatus[] = [...STATUS_ORDER];
 const HEADER_STAGES: ScheduleStatus[] = ['assigned', 'in_progress', 'design_done', 'confirmed'];
@@ -14,12 +15,16 @@ export default function MarketerTasksPage() {
   const { rows, loading, designerMap, navigateToEditor, navigating } = useMarketerTasks();
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<ScheduleStatus | null>(null);
+  const [dateFilter, setDateFilter] = useState<string>('');
+
+  const dates = useMemo(() => [...new Set(rows.map(r => r.date).filter(Boolean))].sort().reverse(), [rows]);
+  const filteredRows = useMemo(() => dateFilter ? rows.filter(r => r.date === dateFilter) : rows, [rows, dateFilter]);
 
   const grouped = ALL_STAGES.reduce<Record<ScheduleStatus, ScheduleRow[]>>(
     (acc, s) => { acc[s] = []; return acc; },
     {} as Record<ScheduleStatus, ScheduleRow[]>,
   );
-  rows.forEach(r => {
+  filteredRows.forEach(r => {
     const s = getScheduleStatus(r);
     if (grouped[s]) grouped[s].push(r);
   });
@@ -60,12 +65,21 @@ export default function MarketerTasksPage() {
               })}
             </div>
           )}
-          <Link
-            href="/plan"
-            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
-          >
-            기획안 →
-          </Link>
+          <div className="flex items-center gap-2">
+            <CustomSelect
+              value={dateFilter}
+              onChange={setDateFilter}
+              className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white"
+              placeholder="업로드날짜"
+              options={[{ value: '', label: '전체' }, ...dates.map(d => ({ value: d, label: d }))]}
+            />
+            <Link
+              href="/plan"
+              className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+            >
+              기획안 →
+            </Link>
+          </div>
         </div>
       </header>
 

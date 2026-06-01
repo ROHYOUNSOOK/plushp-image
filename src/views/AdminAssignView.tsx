@@ -13,8 +13,11 @@ const FILTER_OPTIONS: StatusFilter[] = ['전체', 'unassigned', 'assigned', 'in_
 export default function AdminAssignView() {
   const { rows, designers, loading, assign } = useAssignment();
   const [filter, setFilter] = useState<StatusFilter>('전체');
+  const [dateFilter, setDateFilter] = useState<string>('');
   const [saving, setSaving] = useState<string | null>(null);
   const router = useRouter();
+
+  const dates = [...new Set(rows.map(r => r.date).filter(Boolean))].sort().reverse();
 
   const designerMap = Object.fromEntries(designers.map((d: Designer) => [d.id, d.name]));
 
@@ -26,9 +29,11 @@ export default function AdminAssignView() {
     return acc;
   }, {});
 
-  const filtered = rows.filter(r =>
-    filter === '전체' || getScheduleStatus(r) === filter,
-  );
+  const filtered = rows.filter(r => {
+    if (filter !== '전체' && getScheduleStatus(r) !== filter) return false;
+    if (dateFilter && r.date !== dateFilter) return false;
+    return true;
+  });
   const sorted = [...filtered].sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
 
   const handleAssign = async (id: string, designerId: string) => {
@@ -57,6 +62,13 @@ export default function AdminAssignView() {
             {s === '전체' ? '전체' : STATUS_LABELS[s]}
           </button>
         ))}
+        <CustomSelect
+          value={dateFilter}
+          onChange={setDateFilter}
+          className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white"
+          placeholder="업로드날짜"
+          options={[{ value: '', label: '업로드날짜' }, ...dates.map(d => ({ value: d, label: d }))]}
+        />
         <span className="ml-auto text-xs text-gray-400">{sorted.length}건</span>
       </div>
 

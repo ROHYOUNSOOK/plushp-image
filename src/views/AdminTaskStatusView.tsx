@@ -133,7 +133,7 @@ export default function AdminTaskStatusView() {
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-32">상태</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-44">작성일시</th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-52">작성일시 / 업로드날짜</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-32">작성자</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-32">담당디자이너</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-48">블로그 아이디</th>
@@ -154,7 +154,10 @@ export default function AdminTaskStatusView() {
                       {STATUS_LABELS[s]}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">{formatDateTime(row.created_at)}</td>
+                  <td className="px-5 py-3.5 whitespace-nowrap">
+                    <div className="text-gray-600 text-xs">{formatDateTime(row.created_at)}</div>
+                    {row.date && <div className="text-gray-400 text-[11px] mt-0.5">업로드 {row.date}</div>}
+                  </td>
                   <td className="px-5 py-3.5 text-gray-700">{row.marketer || '-'}</td>
                   <td className="px-5 py-3.5 text-gray-600">
                     {row.assigned_to ? (designerMap[row.assigned_to] ?? '알 수 없음') : '-'}
