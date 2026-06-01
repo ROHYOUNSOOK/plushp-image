@@ -43,7 +43,7 @@ export default function CustomSelect({
       position: 'fixed',
       zIndex: 9999,
       left: r.left,
-      width: Math.max(r.width, 120),
+      minWidth: Math.max(r.width, 160),
       ...(openUp ? { bottom: window.innerHeight - r.top + 4 } : { top: r.bottom + 4 }),
     });
   }, [options.length]);
