@@ -129,17 +129,17 @@ export default function AdminTaskStatusView() {
         <div className="text-sm text-gray-300 text-center py-16">데이터가 없습니다.</div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full text-xs">
+          <table className="w-full text-xs table-fixed">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-24">상태</th>
-                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-36">작성일시</th>
-                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-28">업로드날짜</th>
-                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-28">작성자</th>
-                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-28">담당디자이너</th>
-                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-36">블로그 아이디</th>
+                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-20">상태</th>
+                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-32">작성일시</th>
+                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-24">업로드날짜</th>
+                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-24">작성자</th>
+                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-24">담당디자이너</th>
+                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-28">블로그 아이디</th>
                 <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500">키워드</th>
-                <th className="text-right px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-36">바로가기</th>
+                <th className="text-right px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-32">바로가기</th>
               </tr>
             </thead>
             <tbody>
@@ -161,12 +161,12 @@ export default function AdminTaskStatusView() {
                       ? <span className="text-[11px] font-medium text-gray-700">{row.date}</span>
                       : <span className="text-[11px] text-gray-300">-</span>}
                   </td>
-                  <td className="px-3 py-2.5 text-gray-700 text-[11px]">{row.marketer || '-'}</td>
-                  <td className="px-3 py-2.5 text-gray-600 text-[11px]">
+                  <td className="px-3 py-2.5 text-gray-700 text-[11px] truncate">{row.marketer || '-'}</td>
+                  <td className="px-3 py-2.5 text-gray-600 text-[11px] truncate">
                     {row.assigned_to ? (designerMap[row.assigned_to] ?? '알 수 없음') : '-'}
                   </td>
-                  <td className="px-3 py-2.5 text-gray-600 text-[11px]">{row.account_id || '-'}</td>
-                  <td className="px-3 py-2.5 text-gray-800 font-medium text-xs">{row.keyword || '(키워드 없음)'}</td>
+                  <td className="px-3 py-2.5 text-gray-600 text-[11px] truncate">{row.account_id || '-'}</td>
+                  <td className="px-3 py-2.5 text-gray-800 font-medium text-[11px] break-keep">{row.keyword || '(키워드 없음)'}</td>
                   <td className="px-3 py-2.5">
                     <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
                       <button
