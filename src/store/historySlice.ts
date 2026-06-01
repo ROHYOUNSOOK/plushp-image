@@ -21,7 +21,7 @@ type SerializedPage = {
 
 function serializeLayers(layers: Layer[]): SerializedLayer[] {
   return layers.map(l => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const copy = { ...l } as any;
     if ('img' in l && l.img) {
       imageCache.set(l.id + '_img', l.img as HTMLImageElement);

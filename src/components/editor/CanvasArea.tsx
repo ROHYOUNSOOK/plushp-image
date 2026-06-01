@@ -15,7 +15,7 @@ import {
   selectBgKeyColor,
 } from '@/store/editorStore';
 import type { BackgroundLayer } from '@/types/layer';
-import { toast } from './Toast';
+
 import InlineTextEditor from './InlineTextEditor';
 import AlignToolbar from './AlignToolbar';
 import ShortcutPanel from './ShortcutPanel';

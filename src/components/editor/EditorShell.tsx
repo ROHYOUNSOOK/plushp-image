@@ -21,7 +21,7 @@ import { buildScheduleFolderName, useScheduleApplication } from '@/hooks/useSche
 import { createBrowserClient } from '@supabase/ssr';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
 import type { FrameLayer } from '@/types/layer';
-import { applyFrameImage } from '@/lib/imageUpload';
+
 import type { LayerType, LogoLayer, BackgroundLayer } from '@/types/layer';
 import { getDefaultLogoImage, LOGO_URL, autoLoadLogos } from '@/lib/logoLoader';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
@@ -187,8 +187,6 @@ export default function EditorShell() {
         const img = await getDefaultLogoImage();
         const aspect = img.naturalWidth / img.naturalHeight;
         const state = useEditorStore.getState();
-        const curPage = state.pages[state.currentPage];
-
         state.updateLayer(layer.id, {
           img,
           url: LOGO_URL,

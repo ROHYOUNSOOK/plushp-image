@@ -9,12 +9,9 @@
 
 import { create } from 'zustand';
 import type { Layer } from '@/types/layer';
-import type { TextboxLayer } from '@/types/layer';
 import type { Page } from '@/types/page';
 import { syncColorsAcrossPages, getBgKeyColor } from '@/lib/colorSync';
 import { makeLayer } from '@/lib/layerFactory';
-import { calcTextboxPos } from '@/lib/utils';
-import { W, H } from '@/types/constants';
 import { buildSchedulePages } from '@/lib/applySchedule';
 import {
   type HistoryState,
@@ -104,7 +101,7 @@ function getCurrentPageLayers(state: EditorState): Layer[] {
 
 /* ── 스토어 생성 ── */
 
-export const useEditorStore = create<EditorState>((set, get) => ({
+export const useEditorStore = create<EditorState>((set) => ({
   // 초기 상태
   pages: [{ id: 1, name: '', layers: [] }],
   currentPage: 0,

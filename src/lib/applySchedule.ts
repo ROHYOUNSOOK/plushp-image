@@ -9,7 +9,7 @@ import { makeLayer } from '@/lib/layerFactory';
 import { calcTextboxPos } from '@/lib/utils';
 import { applyDoctorCardTemplate, IMG_H_PRESETS, Y_OFFSETS } from '@/lib/doctorCardTemplate';
 import { calcAutoFillColor, calcShadowColor } from '@/lib/colorHelpers';
-import { W, H, ML_H } from '@/types/constants';
+import { W, H } from '@/types/constants';
 
 const TB_CORNERS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const;
 type TbCorner = typeof TB_CORNERS[number];

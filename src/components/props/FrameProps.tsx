@@ -8,7 +8,7 @@ import ColorPickerField from '@/components/ui/ColorPickerField';
 import NumberInput from '@/components/ui/NumberInput';
 import SliderInput from '@/components/ui/SliderInput';
 import ImageUploadButton from '@/components/ui/ImageUploadButton';
-import { loadImageFromFile, applyFrameImage, compressForUpload } from '@/lib/imageUpload';
+import { loadImageFromFile, compressForUpload } from '@/lib/imageUpload';
 import { checkScheduleImageExists } from '@/lib/supabase';
 import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
 import { setFilterFrozen } from '@/canvas/webglFilters';

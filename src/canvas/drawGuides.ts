@@ -61,7 +61,7 @@ export function drawHandles(
   frameEditMode: boolean,
 ): void {
   if (frameEditMode && layer.type === 'frame') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const fl = layer as any;
     const hasImg = fl.img != null;
     const bx = hasImg ? layer.x + (fl.imgOffsetX ?? 0) : layer.x;

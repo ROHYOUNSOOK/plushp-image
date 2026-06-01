@@ -8,7 +8,6 @@ import { hexToRgb, calcAutoFillColor, calcShadowColor } from '@/lib/colorHelpers
 import { calcTextboxPos } from '@/lib/utils';
 import { rrPath } from './pathHelpers';
 import { wrapText } from './drawText';
-import { W } from '@/types/constants';
 
 export function drawTextbox(
   ctx: CanvasRenderingContext2D,
@@ -27,7 +26,7 @@ export function drawTextbox(
   ctx.save();
   ctx.font = fontStr;
   let lines: string[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const isDoctorCardBg = !!(layer as any)._isDoctorCardBg;
   if (layer.autoSize !== false && !isDoctorCardBg) {
     lines = (layer.content || ' ').split('\n').map(l => l || ' ');

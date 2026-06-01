@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useEditorStore, selectSelectedLayer } from '@/store/editorStore';
-import { makeLayer } from '@/lib/layerFactory';
+
 import type { Layer } from '@/types/layer';
 import { toast } from './Toast';
 

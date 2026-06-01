@@ -8,36 +8,6 @@ import type { Page } from '@/types/page';
 import { makeLayer } from './layerFactory';
 import { loadImage } from './utils';
 
-/* ── 레이어 직렬화 ── */
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function serializeLayer(l: Layer): Promise<Record<string, unknown>> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { img, frameMaskImg, frameMaskProcessed, _imgFilterCache, _holeCanvas, ...rest } = l as any;
-  const out: Record<string, unknown> = { ...rest };
-
-  if ('img' in l) {
-    out.dataUrl = null;
-    out.imageUrl = null;
-    // image 레이어(원장님 사진 등): remote URL이면 보존 — frame 레이어는 스케줄 폴더에서 재로드하므로 null
-    if (l.type === 'image') {
-      const u = (rest.url ?? null) as string | null;
-      const isRemote = u && !u.startsWith('blob:') && (u.startsWith('http') || u.startsWith('/api/proxy-image') || u.startsWith('/plus/'));
-      out.url = isRemote ? u : null;
-    } else {
-      out.url = null;
-    }
-  }
-  if ('frameMaskImg' in l) {
-    // 프레임 마스크(프레임 이미지): remote URL이면 저장, blob이면 저장 안 함
-    const maskUrl = (rest.frameMaskUrl ?? null) as string | null;
-    const isMaskRemote = maskUrl && !maskUrl.startsWith('blob:') && (maskUrl.startsWith('http') || maskUrl.startsWith('/api/proxy-image') || maskUrl.startsWith('/plus/'));
-    out.frameMaskUrl = isMaskRemote ? maskUrl : null;
-    out.frameMaskDataUrl = null;
-  }
-  return out;
-}
-
 /* ── 파일명 생성 ── */
 
 function buildTemplateFilename(scheduleRow: Record<string, unknown> | null): string {
@@ -119,7 +89,7 @@ async function migrateMedLogoToLayer(pages: TemplatePage[]): Promise<TemplatePag
   return pages.map(pg => {
     if (!pg.isMedicalLaw) return pg;
     if (pg.layers.some(l => l.type === 'logo')) return pg;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const oldLogo = (pg as any)._rawMedConfig?.logo;
     if (!oldLogo?.img) return pg;
     const imgW = oldLogo.img.naturalWidth, imgH = oldLogo.img.naturalHeight;
@@ -127,7 +97,7 @@ async function migrateMedLogoToLayer(pages: TemplatePage[]): Promise<TemplatePag
     const drawH = imgW > 0 ? drawW * (imgH / imgW) : drawW;
     const x = Math.round((oldLogo.xPct / 100) * W - drawW / 2);
     const y = Math.round((oldLogo.yPct / 100) * ML_H - drawH / 2);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const logoLayer = {
       ...(makeLayer('logo') as import('@/types/layer').LogoLayer),
       img: oldLogo.img, url: oldLogo.url ?? null,
@@ -144,10 +114,10 @@ async function migrateMedTextToLayers(pages: TemplatePage[]): Promise<TemplatePa
   return pages.map(pg => {
     if (!pg.isMedicalLaw) return pg;
     if (pg.layers.some(l => l.type === 'med-title')) return pg;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const cfg = (pg as any)._rawMedConfig;
     if (!cfg) return pg;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const titleLayer = makeLayer('med-title') as import('@/types/layer').MedTitleLayer;
     titleLayer.content       = cfg.title          ?? titleLayer.content;
     titleLayer.font          = cfg.titleFont       ?? titleLayer.font;
@@ -158,7 +128,7 @@ async function migrateMedTextToLayers(pages: TemplatePage[]): Promise<TemplatePa
     titleLayer.letterSpacing = cfg.titleTrack      ?? titleLayer.letterSpacing;
     titleLayer.lineHeight    = cfg.titleLineHeight  ?? cfg.lineHeight ?? titleLayer.lineHeight;
     titleLayer.align         = cfg.align           ?? titleLayer.align;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const descLayer = makeLayer('med-desc') as import('@/types/layer').MedDescLayer;
     descLayer.content       = cfg.desc           ?? descLayer.content;
     descLayer.font          = cfg.descFont        ?? descLayer.font;
@@ -187,10 +157,12 @@ export interface TemplatePage {
 
 /* ── 클라우드용 경량 레이어 직렬화 (blob URL 이미지 제외) ── */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function serializeLayerCloud(l: Layer): Record<string, unknown> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { img, frameMaskImg, frameMaskProcessed, _imgFilterCache, _holeCanvas, ...rest } = l as any;
+   
+  // HTMLImageElement·Canvas 등 직렬화 불가 필드 제거
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { img: _i, frameMaskImg: _fm, frameMaskProcessed: _fp, _imgFilterCache: _fc, _holeCanvas: _hc, ...rest } = l as any;
   const out: Record<string, unknown> = { ...rest };
 
   if ('img' in l) {

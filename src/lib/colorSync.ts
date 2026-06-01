@@ -4,7 +4,7 @@
 =========================== */
 
 import type { Page } from '@/types/page';
-import type { TextboxLayer, FrameLayer, LogoLayer, ImageLayer, BackgroundLayer, MedTitleLayer } from '@/types/layer';
+import type { TextboxLayer, FrameLayer, LogoLayer, ImageLayer, BackgroundLayer } from '@/types/layer';
 import { replaceTextboxImageColors } from './colorHelpers';
 
 export function syncColorsAcrossPages(

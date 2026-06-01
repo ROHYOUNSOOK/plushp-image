@@ -14,7 +14,6 @@ import type { Page } from '@/types/page';
 import {
   loadImageFromFile,
   applyBackgroundImage,
-  applyFrameImage,
   applyImageLayerImage,
   createDroppedImageLayer,
   compressForUpload,

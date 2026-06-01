@@ -3,7 +3,7 @@
    — 원본: plus_page_spread_통합.html 3766~3841, 3875~3927행
 =========================== */
 
-import type { Layer, BackgroundLayer, FrameLayer, ImageLayer, LogoLayer } from '@/types/layer';
+import type { BackgroundLayer, FrameLayer, ImageLayer, LogoLayer } from '@/types/layer';
 import type { Page } from '@/types/page';
 import { W, H } from '@/types/constants';
 import { loadImage } from './utils';

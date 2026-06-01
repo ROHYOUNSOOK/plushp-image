@@ -9,7 +9,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import { type ScheduleRow } from '@/lib/supabase';
 import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
 import { useScheduleApplication } from '@/hooks/useScheduleApplication';
-import { useEditorStore } from '@/store/editorStore';
+
 import { toast } from '@/components/editor/Toast';
 
 interface Doctor {
@@ -39,7 +39,6 @@ export function usePlanForm(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   );
-  const pushHistory = useEditorStore(s => s.pushHistory);
   const { navigateToEditor: doNavigate, navigating } = useScheduleApplication();
 
   const buildPayload = async (form: FormValues) => {
