@@ -63,6 +63,17 @@ export default function MyTasksPage() {
               })}
             </div>
           )}
+          <Link
+            href="/editor"
+            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+          >
+            편집기 →
+          </Link>
+        </div>
+      </header>
+
+      <div className="p-6 max-w-[1280px] mx-auto space-y-6">
+        {!loading && rows.length > 0 && (
           <div className="flex items-center gap-2">
             <CustomSelect
               value={dateFilter}
@@ -71,17 +82,8 @@ export default function MyTasksPage() {
               placeholder="업로드날짜"
               options={[{ value: '', label: '업로드날짜' }, ...dates.map(d => ({ value: d, label: d }))]}
             />
-            <Link
-              href="/editor"
-              className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
-            >
-              편집기 →
-            </Link>
           </div>
-        </div>
-      </header>
-
-      <div className="p-6 max-w-[1280px] mx-auto space-y-6">
+        )}
         {loading ? (
           <div className="text-sm text-gray-400 text-center py-20">로딩 중...</div>
         ) : rows.length === 0 ? (
