@@ -105,7 +105,7 @@ export default function CustomSelect({
         type="button"
         onClick={handleOpen}
         disabled={disabled}
-        className={`w-full flex items-center justify-between gap-1 ${visual} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+        className={`appearance-none w-full flex items-center justify-between gap-1 ${visual} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
       >
         <span className={`truncate flex-1 text-left ${!selected ? 'opacity-50' : ''}`}>
           {selected?.label ?? placeholder}
