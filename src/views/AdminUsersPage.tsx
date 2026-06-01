@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, Suspense } from 'react';
+import CustomSelect from '@/components/ui/CustomSelect';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAdminUsers, type UserRow } from '@/hooks/useAdminUsers';
@@ -143,14 +144,12 @@ function AdminUsersPageInner() {
                       <td className="px-5 py-3.5 text-gray-500">{user.email}</td>
                       <td className="px-5 py-3.5">
                         {isEditing ? (
-                          <select
-                            className="text-sm border border-gray-200 rounded-lg px-2 py-1 outline-none focus:border-blue-400 bg-white"
+                          <CustomSelect
+                            className="text-sm border border-gray-200 rounded-lg px-2 py-1 bg-white"
                             value={edit.department}
-                            onChange={e => setEditField(user.id, 'department', e.target.value)}
-                          >
-                            <option value="-">-</option>
-                            {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-                          </select>
+                            onChange={v => setEditField(user.id, 'department', v)}
+                            options={[{ value: '-', label: '-' }, ...DEPARTMENTS.map(d => ({ value: d, label: d }))]}
+                          />
                         ) : (
                           <span className={`text-xs px-2 py-1 rounded-full ${user.department && user.department !== '-' ? 'bg-blue-100 text-blue-700' : 'text-gray-400'}`}>
                             {user.department || '-'}
@@ -159,28 +158,25 @@ function AdminUsersPageInner() {
                       </td>
                       <td className="px-5 py-3.5">
                         {isEditing ? (
-                          <select
-                            className="text-sm border border-gray-200 rounded-lg px-2 py-1 outline-none focus:border-blue-400 bg-white"
+                          <CustomSelect
+                            className="text-sm border border-gray-200 rounded-lg px-2 py-1 bg-white"
                             value={edit.team}
-                            onChange={e => setEditField(user.id, 'team', e.target.value)}
+                            onChange={v => setEditField(user.id, 'team', v)}
                             disabled={!availableTeams.length}
-                          >
-                            <option value="-">-</option>
-                            {availableTeams.map(t => <option key={t} value={t}>{t}</option>)}
-                          </select>
+                            options={[{ value: '-', label: '-' }, ...availableTeams.map(t => ({ value: t, label: t }))]}
+                          />
                         ) : (
                           <span className="text-gray-600">{user.team || '-'}</span>
                         )}
                       </td>
                       <td className="px-5 py-3.5">
                         {isEditing ? (
-                          <select
-                            className="text-sm border border-gray-200 rounded-lg px-2 py-1 outline-none focus:border-blue-400 bg-white"
+                          <CustomSelect
+                            className="text-sm border border-gray-200 rounded-lg px-2 py-1 bg-white"
                             value={edit.role}
-                            onChange={e => setEditField(user.id, 'role', e.target.value)}
-                          >
-                            {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-                          </select>
+                            onChange={v => setEditField(user.id, 'role', v)}
+                            options={ROLES.map(r => ({ value: r, label: r }))}
+                          />
                         ) : (
                           <span className={`text-xs px-2 py-1 rounded-full ${user.role === '관리자' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
                             {user.role || '직원'}

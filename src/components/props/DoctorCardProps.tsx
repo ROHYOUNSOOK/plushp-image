@@ -6,6 +6,7 @@ import { useEditorStore } from '@/store/editorStore';
 import ColorPickerField from '@/components/ui/ColorPickerField';
 import NumberInput from '@/components/ui/NumberInput';
 import { applyDoctorCardTemplate } from '@/lib/doctorCardTemplate';
+import CustomSelect from '@/components/ui/CustomSelect';
 import { toast } from '@/components/editor/Toast';
 
 const FONTS = ['GmarketSans', 'Pretendard', 'SCoreDream', 'Jalnan'];
@@ -76,10 +77,9 @@ export default function DoctorCardProps({ layer }: { layer: DoctorCardLayer }) {
       <ColorPickerField label="색" color={layer.subjectColor} onChange={c => update({ subjectColor: c })} />
       <div className="flex items-center gap-2 mb-1.5">
         <span className="text-xs text-gray-600 w-16 shrink-0">폰트</span>
-        <select value={layer.subjectFont} onChange={e => update({ subjectFont: e.target.value })}
-          className="flex-1 text-xs text-gray-900 px-1.5 py-1 border border-gray-300 rounded">
-          {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
-        </select>
+        <CustomSelect value={layer.subjectFont} onChange={v => update({ subjectFont: v })}
+          className="flex-1 text-xs text-gray-900 px-1.5 py-1 border border-gray-300 rounded"
+          options={FONTS.map(f => ({ value: f, label: f }))} />
       </div>
 
       {/* 이름 */}
@@ -93,10 +93,9 @@ export default function DoctorCardProps({ layer }: { layer: DoctorCardLayer }) {
       <ColorPickerField label="색" color={layer.nameColor} onChange={c => update({ nameColor: c })} />
       <div className="flex items-center gap-2 mb-1.5">
         <span className="text-xs text-gray-600 w-16 shrink-0">폰트</span>
-        <select value={layer.nameFont} onChange={e => update({ nameFont: e.target.value })}
-          className="flex-1 text-xs text-gray-900 px-1.5 py-1 border border-gray-300 rounded">
-          {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
-        </select>
+        <CustomSelect value={layer.nameFont} onChange={v => update({ nameFont: v })}
+          className="flex-1 text-xs text-gray-900 px-1.5 py-1 border border-gray-300 rounded"
+          options={FONTS.map(f => ({ value: f, label: f }))} />
       </div>
 
       {/* suffix */}

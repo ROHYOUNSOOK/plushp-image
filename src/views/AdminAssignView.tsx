@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAssignment, type Designer } from '@/hooks/useAssignment';
+import CustomSelect from '@/components/ui/CustomSelect';
 import { getScheduleStatus, STATUS_LABELS, STATUS_BADGE_CLASSES, type ScheduleStatus } from '@/lib/scheduleStatus';
 
 type StatusFilter = '전체' | ScheduleStatus;
@@ -101,19 +102,20 @@ export default function AdminAssignView() {
               {status !== 'confirmed' && (
                 <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
                   <span className="text-[11px] text-gray-400 whitespace-nowrap">담당자</span>
-                  <select
-                    className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:border-gray-400 transition min-w-[120px]"
+                  <CustomSelect
+                    className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white min-w-[120px]"
                     value={row.assigned_to ?? ''}
-                    onChange={e => handleAssign(row.id, e.target.value)}
+                    onChange={v => handleAssign(row.id, v)}
                     disabled={saving === row.id}
-                  >
-                    <option value="">미배분</option>
-                    {designers.map(d => (
-                      <option key={d.id} value={d.id}>
-                        {d.name} ({d.team || '-'}) · 진행중 {inProgressCount[d.id] ?? 0}건
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="미배분"
+                    options={[
+                      { value: '', label: '미배분' },
+                      ...designers.map(d => ({
+                        value: d.id,
+                        label: `${d.name} (${d.team || '-'}) · 진행중 ${inProgressCount[d.id] ?? 0}건`,
+                      })),
+                    ]}
+                  />
                 </div>
               )}
             </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import CustomSelect from '@/components/ui/CustomSelect';
 import { createBrowserClient } from '@supabase/ssr';
 import { type PlanUser } from '@/hooks/usePlanData';
 
@@ -54,34 +55,31 @@ export default function PlanFilter({ onSelect }: Props) {
     <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border-b border-blue-100">
       <span className="text-xs font-semibold text-blue-400 mr-1">필터</span>
 
-      <select
-        className="text-xs border border-blue-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 outline-none"
+      <CustomSelect
+        className="text-xs border border-blue-200 rounded-lg px-2 py-1.5 bg-white text-gray-700"
         value={dept}
-        onChange={e => handleDeptChange(e.target.value)}
-      >
-        <option value="">부서 선택</option>
-        {Object.keys(DEPT_TEAMS).map(d => <option key={d} value={d}>{d}</option>)}
-      </select>
+        onChange={handleDeptChange}
+        placeholder="부서 선택"
+        options={[{ value: '', label: '부서 선택' }, ...Object.keys(DEPT_TEAMS).map(d => ({ value: d, label: d }))]}
+      />
 
-      <select
-        className="text-xs border border-blue-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 outline-none disabled:opacity-40"
+      <CustomSelect
+        className="text-xs border border-blue-200 rounded-lg px-2 py-1.5 bg-white text-gray-700"
         value={team}
-        onChange={e => setTeam(e.target.value)}
+        onChange={setTeam}
         disabled={!dept}
-      >
-        <option value="">팀 선택</option>
-        {(DEPT_TEAMS[dept] ?? []).map(t => <option key={t} value={t}>{t}</option>)}
-      </select>
+        placeholder="팀 선택"
+        options={[{ value: '', label: '팀 선택' }, ...(DEPT_TEAMS[dept] ?? []).map(t => ({ value: t, label: t }))]}
+      />
 
-      <select
-        className="text-xs border border-blue-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 outline-none disabled:opacity-40"
+      <CustomSelect
+        className="text-xs border border-blue-200 rounded-lg px-2 py-1.5 bg-white text-gray-700"
         value={selectedUser}
-        onChange={e => handleUserChange(e.target.value)}
+        onChange={handleUserChange}
         disabled={!users.length}
-      >
-        <option value="">직원 선택</option>
-        {users.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
-      </select>
+        placeholder="직원 선택"
+        options={[{ value: '', label: '직원 선택' }, ...users.map(u => ({ value: u.id, label: u.name || u.email }))]}
+      />
     </div>
   );
 }

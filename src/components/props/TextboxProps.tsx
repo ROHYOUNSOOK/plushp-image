@@ -6,6 +6,7 @@ import type { TextboxLayer } from '@/types/layer';
 import { useEditorStore } from '@/store/editorStore';
 import ColorPickerField from '@/components/ui/ColorPickerField';
 import NumberInput from '@/components/ui/NumberInput';
+import CustomSelect from '@/components/ui/CustomSelect';
 import SliderInput from '@/components/ui/SliderInput';
 
 const FONTS = ['GmarketSans', 'Pretendard', 'SCoreDream', 'Jalnan'];
@@ -56,26 +57,24 @@ export default function TextboxProps({ layer }: { layer: TextboxLayer }) {
       {/* 폰트 */}
       <div className="flex items-center gap-2 mb-1.5">
         <span className="text-xs text-gray-600 w-16 shrink-0">폰트</span>
-        <select
+        <CustomSelect
           value={layer.font}
-          onChange={e => update({ font: e.target.value })}
+          onChange={v => update({ font: v })}
           className="flex-1 text-xs text-gray-900 px-1.5 py-1 border border-gray-300 rounded"
-        >
-          {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
-        </select>
+          options={FONTS.map(f => ({ value: f, label: f }))}
+        />
       </div>
 
       <NumberInput label="크기" value={layer.fontSize} onChange={v => update({ fontSize: v })} min={10} max={500} />
 
       <div className="flex items-center gap-2 mb-1.5">
         <span className="text-xs text-gray-600 w-16 shrink-0">굵기</span>
-        <select
+        <CustomSelect
           value={layer.fontWeight}
-          onChange={e => update({ fontWeight: e.target.value })}
+          onChange={v => update({ fontWeight: v })}
           className="flex-1 text-xs text-gray-900 px-1.5 py-1 border border-gray-300 rounded"
-        >
-          {['300', '400', '500', '700', '900'].map(w => <option key={w} value={w}>{w}</option>)}
-        </select>
+          options={['300', '400', '500', '700', '900'].map(w => ({ value: w, label: w }))}
+        />
       </div>
 
       {/* 정렬 */}

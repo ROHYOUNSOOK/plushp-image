@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
+import CustomSelect from '@/components/ui/CustomSelect';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { useAssignment } from '@/hooks/useAssignment';
@@ -80,50 +81,47 @@ export default function AdminTaskStatusView() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <select
+        <CustomSelect
           value={marketer}
-          onChange={e => setMarketer(e.target.value)}
-          className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white outline-none focus:border-gray-400 transition"
-        >
-          <option value="">작성자</option>
-          {marketers.map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
-        <select
+          onChange={setMarketer}
+          className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white"
+          placeholder="작성자"
+          options={[{ value: '', label: '작성자' }, ...marketers.map(m => ({ value: m, label: m }))]}
+        />
+        <CustomSelect
           value={designerId}
-          onChange={e => setDesignerId(e.target.value)}
-          className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white outline-none focus:border-gray-400 transition"
-        >
-          <option value="">담당디자이너</option>
-          {designers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-        </select>
-        <select
+          onChange={setDesignerId}
+          className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white"
+          placeholder="담당디자이너"
+          options={[{ value: '', label: '담당디자이너' }, ...designers.map(d => ({ value: d.id, label: d.name }))]}
+        />
+        <CustomSelect
           value={accountId}
-          onChange={e => setAccountId(e.target.value)}
-          className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white outline-none focus:border-gray-400 transition"
-        >
-          <option value="">블로그 아이디</option>
-          {accountIds.map(a => <option key={a} value={a}>{a}</option>)}
-        </select>
-        <select
+          onChange={setAccountId}
+          className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white"
+          placeholder="블로그 아이디"
+          options={[{ value: '', label: '블로그 아이디' }, ...accountIds.map(a => ({ value: a, label: a }))]}
+        />
+        <CustomSelect
           value={date}
-          onChange={e => setDate(e.target.value)}
-          className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white outline-none focus:border-gray-400 transition"
-        >
-          <option value="">날짜</option>
-          {dates.map(d => <option key={d} value={d}>{d}</option>)}
-        </select>
-        <select
+          onChange={setDate}
+          className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white"
+          placeholder="날짜"
+          options={[{ value: '', label: '날짜' }, ...dates.map(d => ({ value: d, label: d }))]}
+        />
+        <CustomSelect
           value={status}
-          onChange={e => setStatus(e.target.value as StatusFilter)}
-          className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white outline-none focus:border-gray-400 transition"
-        >
-          <option value="전체">상태</option>
-          <option value="unassigned">미배분</option>
-          <option value="assigned">배분완료</option>
-          <option value="in_progress">진행중</option>
-          <option value="design_done">디자인완료</option>
-          <option value="confirmed">컨펌완료</option>
-        </select>
+          onChange={v => setStatus(v as StatusFilter)}
+          className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white"
+          options={[
+            { value: '전체', label: '상태' },
+            { value: 'unassigned', label: '미배분' },
+            { value: 'assigned', label: '배분완료' },
+            { value: 'in_progress', label: '진행중' },
+            { value: 'design_done', label: '디자인완료' },
+            { value: 'confirmed', label: '컨펌완료' },
+          ]}
+        />
         <span className="ml-auto text-xs text-gray-400">{sorted.length}건</span>
       </div>
 

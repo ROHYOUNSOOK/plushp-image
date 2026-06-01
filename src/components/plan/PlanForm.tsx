@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import CustomSelect from '@/components/ui/CustomSelect';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { type ScheduleRow } from '@/lib/supabase';
@@ -184,15 +185,14 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
             </div>
             <div className="grid grid-cols-2 gap-3 mt-3">
               <Field label="블로그 아이디">
-                <select
-                  className="w-full text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] focus:ring-2 focus:ring-[#1450a0/10] transition disabled:bg-gray-50 disabled:text-gray-500"
+                <CustomSelect
+                  className="w-full text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white transition"
                   value={form.account_id}
-                  onChange={e => setField('account_id', e.target.value)}
+                  onChange={v => setField('account_id', v)}
                   disabled={readOnly}
-                >
-                  <option value="">선택</option>
-                  {blogAccounts.map(id => <option key={id} value={id}>{id}</option>)}
-                </select>
+                  placeholder="선택"
+                  options={[{ value: '', label: '선택' }, ...blogAccounts.map(id => ({ value: id, label: id }))]}
+                />
               </Field>
               <Field label="키워드">
                 <Input value={form.keyword} onChange={v => setField('keyword', v)} placeholder="ex. 동춘동정형외과" disabled={readOnly} />
