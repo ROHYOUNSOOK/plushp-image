@@ -129,16 +129,17 @@ export default function AdminTaskStatusView() {
         <div className="text-sm text-gray-300 text-center py-16">데이터가 없습니다.</div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full text-sm">
+          <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-32">상태</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-52">작성일시 / 업로드날짜</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-32">작성자</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-32">담당디자이너</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-48">블로그 아이디</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500">키워드</th>
-                <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 w-44">바로가기</th>
+                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-24">상태</th>
+                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-36">작성일시</th>
+                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-28">업로드날짜</th>
+                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-28">작성자</th>
+                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-28">담당디자이너</th>
+                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-36">블로그 아이디</th>
+                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-gray-500">키워드</th>
+                <th className="text-right px-3 py-2.5 text-[11px] font-semibold text-gray-500 w-36">바로가기</th>
               </tr>
             </thead>
             <tbody>
@@ -149,33 +150,35 @@ export default function AdminTaskStatusView() {
                   key={row.id}
                   className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors"
                 >
-                  <td className="px-5 py-3.5">
+                  <td className="px-3 py-2.5">
                     <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${STATUS_BADGE_CLASSES[s]}`}>
                       {STATUS_LABELS[s]}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 whitespace-nowrap">
-                    <div className="text-gray-600 text-xs">{formatDateTime(row.created_at)}</div>
-                    {row.date && <div className="text-gray-400 text-[11px] mt-0.5">업로드 {row.date}</div>}
+                  <td className="px-3 py-2.5 text-gray-600 whitespace-nowrap text-[11px]">{formatDateTime(row.created_at)}</td>
+                  <td className="px-3 py-2.5 whitespace-nowrap">
+                    {row.date
+                      ? <span className="text-[11px] font-medium text-gray-700">{row.date}</span>
+                      : <span className="text-[11px] text-gray-300">-</span>}
                   </td>
-                  <td className="px-5 py-3.5 text-gray-700">{row.marketer || '-'}</td>
-                  <td className="px-5 py-3.5 text-gray-600">
+                  <td className="px-3 py-2.5 text-gray-700 text-[11px]">{row.marketer || '-'}</td>
+                  <td className="px-3 py-2.5 text-gray-600 text-[11px]">
                     {row.assigned_to ? (designerMap[row.assigned_to] ?? '알 수 없음') : '-'}
                   </td>
-                  <td className="px-5 py-3.5 text-gray-600">{row.account_id || '-'}</td>
-                  <td className="px-5 py-3.5 text-gray-800 font-medium">{row.keyword || '(키워드 없음)'}</td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center justify-end gap-1.5" onClick={e => e.stopPropagation()}>
+                  <td className="px-3 py-2.5 text-gray-600 text-[11px]">{row.account_id || '-'}</td>
+                  <td className="px-3 py-2.5 text-gray-800 font-medium text-xs">{row.keyword || '(키워드 없음)'}</td>
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
                       <button
                         onClick={() => router.push(`/plan?id=${row.id}`)}
-                        className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors whitespace-nowrap"
+                        className="text-[11px] px-2 py-1 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors whitespace-nowrap"
                       >
                         기획안
                       </button>
                       <button
                         onClick={() => navigateToEditor(row, allDoctors)}
                         disabled={navigating}
-                        className="text-xs px-2.5 py-1 rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] disabled:opacity-50 transition-colors whitespace-nowrap"
+                        className="text-[11px] px-2 py-1 rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] disabled:opacity-50 transition-colors whitespace-nowrap"
                       >
                         {navigating ? '이동 중...' : '편집기'}
                       </button>
