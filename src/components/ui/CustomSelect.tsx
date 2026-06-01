@@ -39,16 +39,20 @@ export default function CustomSelect({
     if (!triggerRef.current) return;
     const r = triggerRef.current.getBoundingClientRect();
     const dropH = Math.min(options.length * 28 + 8, 240);
+    const minW = Math.max(r.width, 160);
+    const maxW = dropdownMaxWidth ?? minW;
     const openUp = window.innerHeight - r.bottom < dropH + 8 && r.top > dropH + 8;
+    // 오른쪽 공간이 부족하면 오른쪽 끝을 트리거 오른쪽에 맞춤
+    const overflowsRight = r.left + maxW > window.innerWidth - 8;
     setDropStyle({
       position: 'fixed',
       zIndex: 9999,
-      left: r.left,
-      minWidth: Math.max(r.width, 160),
+      ...(overflowsRight ? { right: window.innerWidth - r.right } : { left: r.left }),
+      minWidth: minW,
       ...(dropdownMaxWidth ? { maxWidth: dropdownMaxWidth } : {}),
       ...(openUp ? { bottom: window.innerHeight - r.top + 4 } : { top: r.bottom + 4 }),
     });
-  }, [options.length]);
+  }, [options.length, dropdownMaxWidth]);
 
   const handleOpen = () => {
     if (disabled) return;
@@ -74,7 +78,7 @@ export default function CustomSelect({
         <div
           ref={dropRef}
           style={dropStyle}
-          className="bg-white border border-gray-200 rounded-lg shadow-lg py-1 max-h-60 overflow-y-auto"
+          className="bg-white border border-gray-200 rounded-lg shadow-lg py-1 max-h-60 overflow-y-auto [color-scheme:light]"
         >
           {options.map(opt => (
             <button
@@ -95,7 +99,7 @@ export default function CustomSelect({
     : null;
 
   return (
-    <div className={`relative ${layout}`}>
+    <div className={`relative [color-scheme:light] ${layout}`}>
       <button
         ref={triggerRef}
         type="button"
