@@ -99,7 +99,7 @@ export default function CustomSelect({
     : null;
 
   return (
-    <div className={`relative [color-scheme:light] ${layout}`}>
+    <div className={`relative ${layout}`}>
       <button
         ref={triggerRef}
         type="button"

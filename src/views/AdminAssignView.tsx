@@ -115,7 +115,7 @@ export default function AdminAssignView() {
                 <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
                   <span className="text-[11px] text-gray-400 whitespace-nowrap">담당자</span>
                   <CustomSelect
-                    className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white min-w-[120px]"
+                    className="text-xs text-gray-700 border border-gray-200 rounded-lg px-2 py-1.5 bg-white min-w-[120px]"
                     dropdownMaxWidth={270}
                     value={row.assigned_to ?? ''}
                     onChange={v => handleAssign(row.id, v)}
