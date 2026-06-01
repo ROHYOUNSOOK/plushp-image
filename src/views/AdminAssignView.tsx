@@ -104,6 +104,7 @@ export default function AdminAssignView() {
                   <span className="text-[11px] text-gray-400 whitespace-nowrap">담당자</span>
                   <CustomSelect
                     className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white min-w-[120px]"
+                    dropdownMaxWidth={270}
                     value={row.assigned_to ?? ''}
                     onChange={v => handleAssign(row.id, v)}
                     disabled={saving === row.id}

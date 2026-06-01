@@ -15,6 +15,7 @@ interface Props {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  dropdownMaxWidth?: number;
 }
 
 function splitCls(cls: string) {
@@ -25,7 +26,7 @@ function splitCls(cls: string) {
 }
 
 export default function CustomSelect({
-  value, onChange, options, placeholder = '선택', disabled = false, className = '',
+  value, onChange, options, placeholder = '선택', disabled = false, className = '', dropdownMaxWidth,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [dropStyle, setDropStyle] = useState<React.CSSProperties>({});
@@ -44,6 +45,7 @@ export default function CustomSelect({
       zIndex: 9999,
       left: r.left,
       minWidth: Math.max(r.width, 160),
+      ...(dropdownMaxWidth ? { maxWidth: dropdownMaxWidth } : {}),
       ...(openUp ? { bottom: window.innerHeight - r.top + 4 } : { top: r.bottom + 4 }),
     });
   }, [options.length]);

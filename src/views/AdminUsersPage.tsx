@@ -145,7 +145,7 @@ function AdminUsersPageInner() {
                       <td className="px-5 py-3.5">
                         {isEditing ? (
                           <CustomSelect
-                            className="text-sm border border-gray-200 rounded-lg px-2 py-1 bg-white"
+                            className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white"
                             value={edit.department}
                             onChange={v => setEditField(user.id, 'department', v)}
                             options={[{ value: '-', label: '-' }, ...DEPARTMENTS.map(d => ({ value: d, label: d }))]}
@@ -159,7 +159,7 @@ function AdminUsersPageInner() {
                       <td className="px-5 py-3.5">
                         {isEditing ? (
                           <CustomSelect
-                            className="text-sm border border-gray-200 rounded-lg px-2 py-1 bg-white"
+                            className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white"
                             value={edit.team}
                             onChange={v => setEditField(user.id, 'team', v)}
                             disabled={!availableTeams.length}
@@ -172,7 +172,7 @@ function AdminUsersPageInner() {
                       <td className="px-5 py-3.5">
                         {isEditing ? (
                           <CustomSelect
-                            className="text-sm border border-gray-200 rounded-lg px-2 py-1 bg-white"
+                            className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white"
                             value={edit.role}
                             onChange={v => setEditField(user.id, 'role', v)}
                             options={ROLES.map(r => ({ value: r, label: r }))}
