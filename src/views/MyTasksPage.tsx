@@ -69,7 +69,7 @@ export default function MyTasksPage() {
               onChange={setDateFilter}
               className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white"
               placeholder="업로드날짜"
-              options={[{ value: '', label: '전체' }, ...dates.map(d => ({ value: d, label: d }))]}
+              options={[{ value: '', label: '업로드날짜' }, ...dates.map(d => ({ value: d, label: d }))]}
             />
             <Link
               href="/editor"

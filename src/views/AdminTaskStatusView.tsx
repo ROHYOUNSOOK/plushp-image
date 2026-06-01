@@ -106,8 +106,8 @@ export default function AdminTaskStatusView() {
           value={date}
           onChange={setDate}
           className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 bg-white"
-          placeholder="날짜"
-          options={[{ value: '', label: '날짜' }, ...dates.map(d => ({ value: d, label: d }))]}
+          placeholder="업로드날짜"
+          options={[{ value: '', label: '업로드날짜' }, ...dates.map(d => ({ value: d, label: d }))]}
         />
         <CustomSelect
           value={status}
