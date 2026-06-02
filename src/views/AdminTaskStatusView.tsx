@@ -173,13 +173,15 @@ export default function AdminTaskStatusView() {
                       >
                         기획안
                       </button>
-                      <button
-                        onClick={() => navigateToEditor(row, allDoctors)}
-                        disabled={navigating}
-                        className="text-xs px-2.5 py-1 rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] disabled:opacity-50 transition-colors whitespace-nowrap"
-                      >
-                        {navigating ? '이동 중...' : '편집기'}
-                      </button>
+                      {(s === 'design_done' || s === 'confirmed') && (
+                        <button
+                          onClick={() => navigateToEditor(row, allDoctors)}
+                          disabled={navigating}
+                          className="text-xs px-2.5 py-1 rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] disabled:opacity-50 transition-colors whitespace-nowrap"
+                        >
+                          {navigating ? '이동 중...' : '편집기'}
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
