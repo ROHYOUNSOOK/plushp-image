@@ -135,7 +135,7 @@ export default function AdminTaskStatusView() {
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-28">업로드날짜</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-36">작성자</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-36">담당디자이너</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-32">블로그 아이디</th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 w-40">블로그 아이디</th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500">키워드</th>
                 <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-500 w-36">바로가기</th>
               </tr>

@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react';
 import CustomSelect from '@/components/ui/CustomSelect';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAdminUsers, type UserRow } from '@/hooks/useAdminUsers';
 import AdminAssignView from '@/views/AdminAssignView';
 import AdminTaskStatusView from '@/views/AdminTaskStatusView';
@@ -31,10 +31,16 @@ function AdminUsersPageInner() {
   const { users, loading, updateUser } = useAdminUsers();
   const [editing, setEditing] = useState<Record<string, EditState>>({});
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialTab = (TABS as string[]).includes(searchParams.get('tab') ?? '')
     ? (searchParams.get('tab') as Tab)
     : '직원관리';
   const [tab, setTab] = useState<Tab>(initialTab);
+
+  const switchTab = (t: Tab) => {
+    setTab(t);
+    router.replace(`/admin/users?tab=${encodeURIComponent(t)}`);
+  };
 
   const startEdit = (user: UserRow) => {
     setEditing(prev => ({
@@ -89,7 +95,7 @@ function AdminUsersPageInner() {
           {TABS.map(t => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => switchTab(t)}
               className={`text-sm px-4 py-2 rounded-full border transition-colors ${
                 tab === t
                   ? 'bg-[#1450a0] text-white border-[#1450a0]'
@@ -145,7 +151,7 @@ function AdminUsersPageInner() {
                       <td className="px-5 py-3.5">
                         {isEditing ? (
                           <CustomSelect
-                            className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white"
+                            className="text-xs text-gray-700 border border-gray-200 rounded px-1.5 py-0.5 bg-white"
                             value={edit.department}
                             onChange={v => setEditField(user.id, 'department', v)}
                             options={[{ value: '-', label: '-' }, ...DEPARTMENTS.map(d => ({ value: d, label: d }))]}
@@ -159,7 +165,7 @@ function AdminUsersPageInner() {
                       <td className="px-5 py-3.5">
                         {isEditing ? (
                           <CustomSelect
-                            className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white"
+                            className="text-xs text-gray-700 border border-gray-200 rounded px-1.5 py-0.5 bg-white"
                             value={edit.team}
                             onChange={v => setEditField(user.id, 'team', v)}
                             disabled={!availableTeams.length}
@@ -172,7 +178,7 @@ function AdminUsersPageInner() {
                       <td className="px-5 py-3.5">
                         {isEditing ? (
                           <CustomSelect
-                            className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white"
+                            className="text-xs text-gray-700 border border-gray-200 rounded px-1.5 py-0.5 bg-white"
                             value={edit.role}
                             onChange={v => setEditField(user.id, 'role', v)}
                             options={ROLES.map(r => ({ value: r, label: r }))}
