@@ -149,12 +149,36 @@ export async function compressForUpload(img: HTMLImageElement): Promise<Blob> {
   const MAX_PX = 2160;
   const toBlob = (canvas: HTMLCanvasElement, q: number) =>
     new Promise<Blob>(res => canvas.toBlob(b => res(b!), 'image/jpeg', q));
-  const canvas = document.createElement('canvas');
+
   const { naturalWidth: w, naturalHeight: h } = img;
-  const scale = Math.min(1, MAX_PX / Math.max(w, h));
-  canvas.width  = Math.round(w * scale);
-  canvas.height = Math.round(h * scale);
-  canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const finalScale = Math.min(1, MAX_PX / Math.max(w, h));
+  const targetW = Math.round(w * finalScale);
+  const targetH = Math.round(h * finalScale);
+
+  // 단계적 리사이즈 (절반씩 축소 → 포토샵 쌍입방 근사)
+  let curW = w, curH = h;
+  let src: HTMLImageElement | HTMLCanvasElement = img;
+  while (curW > targetW * 2 || curH > targetH * 2) {
+    curW = Math.max(Math.round(curW / 2), targetW);
+    curH = Math.max(Math.round(curH / 2), targetH);
+    const step = document.createElement('canvas');
+    step.width = curW;
+    step.height = curH;
+    const ctx = step.getContext('2d')!;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(src, 0, 0, curW, curH);
+    src = step;
+  }
+
+  // 최종 캔버스
+  const canvas = document.createElement('canvas');
+  canvas.width = targetW;
+  canvas.height = targetH;
+  const ctx = canvas.getContext('2d')!;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(src, 0, 0, targetW, targetH);
   return toBlob(canvas, 1.0);
 }
 
