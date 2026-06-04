@@ -194,13 +194,16 @@ export async function compressForUpload(img: HTMLImageElement): Promise<Blob> {
     ctx.drawImage(src, 0, 0, targetW, targetH);
   }
 
-  // 2. 샤프닝 (unsharp mask) — 축소 후 뭉개짐 보완
-  ctx.filter = 'contrast(1.03) saturate(1.02)';
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.drawImage(canvas, 0, 0);
-  ctx.filter = 'none';
+  // 2. Unsharp Mask — 새 캔버스에 contrast/sharpen 필터 적용 (자기 자신에게 적용 금지)
+  const output = document.createElement('canvas');
+  output.width = targetW;
+  output.height = targetH;
+  const oCtx = output.getContext('2d')!;
+  oCtx.filter = 'contrast(1.08) saturate(1.05)';
+  oCtx.drawImage(canvas, 0, 0);
+  oCtx.filter = 'none';
 
-  return toBlob(canvas, 1.0);
+  return toBlob(output, 1.0);
 }
 
 export async function loadImageFromFile(file: File): Promise<{ img: HTMLImageElement; url: string }> {
