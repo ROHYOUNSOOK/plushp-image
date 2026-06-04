@@ -198,44 +198,51 @@ export function useScheduleApplication() {
     }
   };
 
-  const applyRandomBackgroundAndFrames = async () => {
+  const applyRandomBackground = async () => {
     try {
-      toast('배경 및 프레임 변경 중...', 0);
+      toast('배경 변경 중...', 0);
       const state = useEditorStore.getState();
-      const textPages = state.pages.filter(
-        p => !p.isMedicalLaw && !p.layers.some(l => l.type === 'doctor-card'),
-      );
-
-      const [bgResult, frameImages] = await Promise.all([
-        pickRandomBackground(),
-        loadRandomFrameImages(textPages.length),
-      ]);
-
+      const { img, url } = await pickRandomBackground();
       state.pushHistory();
-      applyBgToAllPages(bgResult.img, bgResult.url, state.pages);
-
-      textPages.forEach((page, idx) => {
-        const frameResult = frameImages[idx];
-        if (!frameResult?.img) return;
-        const frameLayer = page.layers.find(l => l.type === 'frame') as FrameLayer | undefined;
-        if (frameLayer) {
-          frameLayer.frameMaskImg = frameResult.img;
-          frameLayer.frameMaskUrl = frameResult.url ?? '';
-          const bgLayer = page.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-          if (bgLayer?.solidColor && frameResult.img) {
-            frameLayer.frameMaskProcessed = replaceTextboxImageColors(frameResult.img, bgLayer.solidColor);
-          }
-        }
-      });
-
+      applyBgToAllPages(img, url, state.pages);
       state.setPages([...state.pages]);
       hideToast();
-      toast('배경 및 프레임 변경 완료');
+      toast('배경 변경 완료');
     } catch {
       hideToast();
       toast('변경 실패');
     }
   };
 
-  return { isApplying, applySelectedSchedule, applyRandomBackgroundAndFrames, navigateToEditor, navigating };
+  const applyRandomFrameForCurrentPage = async () => {
+    try {
+      const state = useEditorStore.getState();
+      const page = state.pages[state.currentPage];
+      if (!page || page.isMedicalLaw || page.layers.some(l => l.type === 'doctor-card')) {
+        toast('이 페이지는 프레임을 변경할 수 없습니다');
+        return;
+      }
+      toast('프레임 변경 중...', 0);
+      const [frameResult] = await loadRandomFrameImages(1);
+      if (!frameResult?.img) { hideToast(); toast('변경 실패'); return; }
+      state.pushHistory();
+      const frameLayer = page.layers.find(l => l.type === 'frame') as FrameLayer | undefined;
+      if (frameLayer) {
+        frameLayer.frameMaskImg = frameResult.img;
+        frameLayer.frameMaskUrl = frameResult.url ?? '';
+        const bgLayer = page.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
+        if (bgLayer?.solidColor) {
+          frameLayer.frameMaskProcessed = replaceTextboxImageColors(frameResult.img, bgLayer.solidColor);
+        }
+      }
+      state.setPages([...state.pages]);
+      hideToast();
+      toast('프레임 변경 완료');
+    } catch {
+      hideToast();
+      toast('변경 실패');
+    }
+  };
+
+  return { isApplying, applySelectedSchedule, applyRandomBackground, applyRandomFrameForCurrentPage, navigateToEditor, navigating };
 }
