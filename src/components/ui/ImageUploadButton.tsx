@@ -3,8 +3,6 @@
 
 import { useRef } from 'react';
 
-const MAX_SIZE_MB = 10;
-
 interface ImageUploadButtonProps {
   label: string;
   accept?: string;
@@ -30,11 +28,6 @@ export default function ImageUploadButton({ label, accept = 'image/*', onFile }:
         onChange={e => {
           const file = e.target.files?.[0];
           if (!file) return;
-          if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-            alert(`이미지 용량이 너무 큽니다.\n최대 ${MAX_SIZE_MB}MB까지 업로드 가능합니다.\n(현재 파일: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
-            e.target.value = '';
-            return;
-          }
           onFile(file);
           e.target.value = '';
         }}
