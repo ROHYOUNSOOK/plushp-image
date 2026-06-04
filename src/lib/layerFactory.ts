@@ -49,7 +49,7 @@ export function makeLayer(type: LayerType): Layer {
         ...base, type: 'textbox',
         name: '텍스트박스', positionPreset: preset, w, h, x, y, freePos: false,
         img: null, url: null, processedImg: null,
-        fillColor: null, fillAlpha: 1, radius: 4, autoSize: true,
+        fillColor: null, fillAlpha: 1, radius: 0, autoSize: true,
         shadow: { enabled: false, color: null, alpha: 0.2, blur: 10, offsetX: 0, offsetY: 20 },
         border: { enabled: false, color: '#ffffff', width: 2, alpha: 1 },
         content: '텍스트를 입력하세요', font: 'GmarketSans', fontSize: 110, fontWeight: '900',
