@@ -155,21 +155,15 @@ export async function compressForUpload(img: HTMLImageElement): Promise<Blob> {
   const targetW = Math.round(w * finalScale);
   const targetH = Math.round(h * finalScale);
 
-  // 단계적 리사이즈 (절반씩 축소 → 포토샵 쌍입방 근사)
-  let curW = w, curH = h;
-  let src: HTMLImageElement | HTMLCanvasElement = img;
-  while (curW > targetW * 2 || curH > targetH * 2) {
-    curW = Math.max(Math.round(curW / 2), targetW);
-    curH = Math.max(Math.round(curH / 2), targetH);
-    const step = document.createElement('canvas');
-    step.width = curW;
-    step.height = curH;
-    const ctx = step.getContext('2d')!;
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(src, 0, 0, curW, curH);
-    src = step;
-  }
+  // 1. createImageBitmap으로 고품질 리샘플링 (브라우저 최적 알고리즘)
+  let bitmap: ImageBitmap | null = null;
+  try {
+    bitmap = await createImageBitmap(img, {
+      resizeWidth: targetW,
+      resizeHeight: targetH,
+      resizeQuality: 'high',
+    });
+  } catch { /* 미지원 브라우저 → fallback */ }
 
   // 최종 캔버스
   const canvas = document.createElement('canvas');
@@ -178,7 +172,34 @@ export async function compressForUpload(img: HTMLImageElement): Promise<Blob> {
   const ctx = canvas.getContext('2d')!;
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(src, 0, 0, targetW, targetH);
+
+  if (bitmap) {
+    ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+    bitmap.close();
+  } else {
+    // fallback: 단계적 리사이즈
+    let curW = w, curH = h;
+    let src: HTMLImageElement | HTMLCanvasElement = img;
+    while (curW > targetW * 2 || curH > targetH * 2) {
+      curW = Math.max(Math.round(curW / 2), targetW);
+      curH = Math.max(Math.round(curH / 2), targetH);
+      const step = document.createElement('canvas');
+      step.width = curW; step.height = curH;
+      const sCtx = step.getContext('2d')!;
+      sCtx.imageSmoothingEnabled = true;
+      sCtx.imageSmoothingQuality = 'high';
+      sCtx.drawImage(src, 0, 0, curW, curH);
+      src = step;
+    }
+    ctx.drawImage(src, 0, 0, targetW, targetH);
+  }
+
+  // 2. 샤프닝 (unsharp mask) — 축소 후 뭉개짐 보완
+  ctx.filter = 'contrast(1.03) saturate(1.02)';
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.drawImage(canvas, 0, 0);
+  ctx.filter = 'none';
+
   return toBlob(canvas, 1.0);
 }
 

@@ -794,6 +794,17 @@ export function useCanvasEvents({
         if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || active?.isContentEditable) return;
         if (state.selectedLayerIds.length > 0 && !state.inlineEditingId) {
           e.preventDefault();
+          // 프레임 편집 모드: 프레임 자체가 아닌 내부 이미지만 제거
+          if (state.frameEditMode) {
+            const selId = state.selectedLayerId ?? state.selectedLayerIds[0];
+            const layer = state.pages[state.currentPage]?.layers.find(l => l.id === selId);
+            if (layer?.type === 'frame') {
+              state.pushHistory();
+              state.updateLayer(selId, { img: null, url: null, imgOffsetX: 0, imgOffsetY: 0, imgScale: 1 });
+              toast('내부 이미지 제거됨');
+            }
+            return;
+          }
           state.pushHistory();
           const toDelete = state.selectedLayerIds.filter(id => {
             const layer = state.pages[state.currentPage]?.layers.find(l => l.id === id);
