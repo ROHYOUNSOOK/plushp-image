@@ -47,7 +47,7 @@ export function useScheduleData() {
             .from('plus_schedule')
             .select('*')
             .eq('completed', false)
-            .order('date', { ascending: true });
+            .order('date', { ascending: false });
 
           if (isAdmin) {
             // 관리자: 배분된 미완료 건만 (미배분 제외)
@@ -96,7 +96,7 @@ export function useScheduleData() {
     }
   }, [currentScheduleRow?.id, mergedRows.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const dates = [...new Set(mergedRows.map(r => r.date).filter(Boolean))];
+  const dates = [...new Set(mergedRows.map(r => r.date).filter(Boolean))].sort().reverse();
   const keywords = mergedRows.filter(r => r.date === selectedDate);
 
   return {
