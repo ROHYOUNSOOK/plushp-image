@@ -202,7 +202,7 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
             };
             return (
               <>
-                <SliderInput label="노출" value={layer.imgLightness} min={-20} max={20}
+                <SliderInput label="노출" value={layer.imgLightness} min={-20} max={20} step={0.1}
                   onChange={v => onFilterChange({ imgLightness: v })}
                   onChangeEnd={onFilterEnd} />
                 <SliderInput label="색온도" value={layer.imgTemperature} min={-20} max={20}
@@ -234,7 +234,11 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
             className="text-xs text-gray-400 hover:text-gray-700 mt-0.5"
             onClick={() => {
               pushHistory();
-              update({ imgLightness: 0, imgTemperature: 0, imgContrast: 0, imgSaturation: 0, imgScale: 1, imgRotation: 0, _imgFilterCache: null });
+              const img = layer.img;
+              const sc = img ? Math.max(layer.w / img.naturalWidth, layer.h / img.naturalHeight) : 1;
+              const ox = img ? (layer.w - img.naturalWidth * sc) / 2 : 0;
+              const oy = img ? (layer.h - img.naturalHeight * sc) / 2 : 0;
+              update({ imgLightness: 0, imgTemperature: 0, imgContrast: 0, imgSaturation: 0, imgScale: sc, imgOffsetX: ox, imgOffsetY: oy, imgRotation: 0, _imgFilterCache: null });
             }}
           >
             전체 초기화
