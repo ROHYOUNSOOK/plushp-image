@@ -22,26 +22,26 @@ export default function SchedulePanel() {
       <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">📅 스케줄 적용</div>
       <div className="flex flex-col gap-1">
         {!editorReadOnly && (
-          <div className="flex gap-1">
+          <>
             <button
               onClick={() => {
                 if (!confirm('배경을 변경하시겠습니까?\n전체 페이지의 배경이 변경됩니다.')) return;
                 applyRandomBackground();
               }}
-              className="flex-1 py-1 text-xs rounded border transition-colors px-2 border-gray-300 bg-white hover:bg-gray-100 text-gray-600"
+              className="w-full py-1 text-xs rounded border transition-colors px-2 border-gray-300 bg-white hover:bg-gray-100 text-gray-600"
             >
-              🎲 배경
+              🎲 배경 변경
             </button>
             <button
               onClick={() => {
                 if (!confirm('현재 페이지의 프레임을 변경하시겠습니까?')) return;
                 applyRandomFrameForCurrentPage();
               }}
-              className="flex-1 py-1 text-xs rounded border transition-colors px-2 border-[#1450a0] bg-[#1450a0] hover:bg-[#1045a0] text-white"
+              className="w-full py-1 text-xs rounded border transition-colors px-2 border-[#1450a0] bg-[#1450a0] hover:bg-[#1045a0] text-white"
             >
-              🎲 프레임
+              🎲 프레임 변경
             </button>
-          </div>
+          </>
         )}
 
         <CustomSelect
