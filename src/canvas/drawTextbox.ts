@@ -6,7 +6,7 @@
 import type { TextboxLayer } from '@/types/layer';
 import { hexToRgb, calcAutoFillColor, calcShadowColor } from '@/lib/colorHelpers';
 import { calcTextboxPos } from '@/lib/utils';
-import { rrPath } from './pathHelpers';
+import { rrPathCorners } from './pathHelpers';
 import { wrapText } from './drawText';
 
 export function drawTextbox(
@@ -60,19 +60,25 @@ export function drawTextbox(
     ctx.drawImage(layer.processedImg, layer.x, layer.y, layer.w, layer.h);
     ctx.globalAlpha = 1;
   } else {
+    const _r = layer.radius || 0;
+    const _tl = layer.radiusTL ?? _r;
+    const _tr = layer.radiusTR ?? _r;
+    const _br = layer.radiusBR ?? _r;
+    const _bl = layer.radiusBL ?? _r;
+
     const _fillHex = layer.fillColor || calcAutoFillColor(bgKeyColor);
     const { r: fr, g: fg, b: fb } = hexToRgb(_fillHex);
     ctx.fillStyle = `rgba(${fr},${fg},${fb},${layer.fillAlpha ?? 1})`;
     ctx.beginPath();
-    rrPath(ctx, layer.x, layer.y, layer.w, layer.h, layer.radius || 0);
+    rrPathCorners(ctx, layer.x, layer.y, layer.w, layer.h, _tl, _tr, _br, _bl);
     ctx.fill();
 
     if (layer.border?.enabled) {
-      const { r: br, g: bg, b: bb } = hexToRgb(layer.border.color || '#ffffff');
-      ctx.strokeStyle = `rgba(${br},${bg},${bb},${layer.border.alpha ?? 1})`;
+      const { r: brd, g: bgd, b: bbd } = hexToRgb(layer.border.color || '#ffffff');
+      ctx.strokeStyle = `rgba(${brd},${bgd},${bbd},${layer.border.alpha ?? 1})`;
       ctx.lineWidth = layer.border.width || 2;
       ctx.beginPath();
-      rrPath(ctx, layer.x, layer.y, layer.w, layer.h, layer.radius || 0);
+      rrPathCorners(ctx, layer.x, layer.y, layer.w, layer.h, _tl, _tr, _br, _bl);
       ctx.stroke();
     }
   }

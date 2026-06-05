@@ -19,6 +19,25 @@ export function rrPath(
   ctx.closePath();
 }
 
+/** 모서리별 둥근 사각형 경로 (tl, tr, br, bl 개별 지정) */
+export function rrPathCorners(
+  ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
+  tl: number, tr: number, br: number, bl: number,
+): void {
+  const m = Math.min(w / 2, h / 2);
+  tl = Math.max(0, Math.min(tl, m));
+  tr = Math.max(0, Math.min(tr, m));
+  br = Math.max(0, Math.min(br, m));
+  bl = Math.max(0, Math.min(bl, m));
+  if (ctx.roundRect) { ctx.roundRect(x, y, w, h, [tl, tr, br, bl]); return; }
+  ctx.moveTo(x + tl, y);
+  ctx.lineTo(x + w - tr, y); ctx.quadraticCurveTo(x + w, y, x + w, y + tr);
+  ctx.lineTo(x + w, y + h - br); ctx.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+  ctx.lineTo(x + bl, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - bl);
+  ctx.lineTo(x, y + tl); ctx.quadraticCurveTo(x, y, x + tl, y);
+  ctx.closePath();
+}
+
 /** 정다각형 경로 (타원 기반) */
 export function polygonPath(
   ctx: CanvasRenderingContext2D,

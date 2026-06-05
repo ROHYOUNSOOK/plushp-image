@@ -116,7 +116,7 @@ export default function TextboxProps({ layer }: { layer: TextboxLayer }) {
       <ColorPickerField label="글자색" color={layer.textColor} onChange={c => update({ textColor: c })} />
       <ColorPickerField label="배경색" color={layer.fillColor || '#333333'} onChange={c => update({ fillColor: c })} />
       <SliderInput label="배경투명" value={layer.fillAlpha * 100} onChange={v => update({ fillAlpha: v / 100 })} min={0} max={100} />
-      <NumberInput label="둥글기" value={layer.radius} onChange={v => update({ radius: v })} min={0} max={100} />
+      <NumberInput label="둥글기(전체)" value={layer.radius} onChange={v => update({ radius: v, radiusTL: v, radiusTR: v, radiusBR: v, radiusBL: v })} min={0} max={100} />
 
       {/* 자동 크기 */}
       <div className="flex items-center gap-2 mt-2">
@@ -166,6 +166,15 @@ export default function TextboxProps({ layer }: { layer: TextboxLayer }) {
           <NumberInput label="Y" value={layer.shadow.offsetY} onChange={v => update({ shadow: { ...layer.shadow, offsetY: v } })} />
         </>
       )}
+
+      {/* 모서리별 둥글기 */}
+      <div className="text-xs text-gray-500 mt-3">모서리 둥글기</div>
+      <div className="grid grid-cols-2 gap-1">
+        <NumberInput label="좌상" value={layer.radiusTL ?? layer.radius} onChange={v => update({ radiusTL: v })} min={0} max={200} />
+        <NumberInput label="우상" value={layer.radiusTR ?? layer.radius} onChange={v => update({ radiusTR: v })} min={0} max={200} />
+        <NumberInput label="좌하" value={layer.radiusBL ?? layer.radius} onChange={v => update({ radiusBL: v })} min={0} max={200} />
+        <NumberInput label="우하" value={layer.radiusBR ?? layer.radius} onChange={v => update({ radiusBR: v })} min={0} max={200} />
+      </div>
     </div>
   );
 }

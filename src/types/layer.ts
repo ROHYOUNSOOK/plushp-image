@@ -136,6 +136,11 @@ export interface TextboxLayer extends LayerBase {
   fillColor: string | null;
   fillAlpha: number;
   radius: number;
+  // 모서리별 둥글기 (미설정 시 radius로 폴백)
+  radiusTL?: number;
+  radiusTR?: number;
+  radiusBR?: number;
+  radiusBL?: number;
   autoSize: boolean;
   shadow: ShadowConfig;
   border: BorderConfig;
