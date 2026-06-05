@@ -68,7 +68,7 @@ type DragState = {
   frameW: number; frameH: number;
 } | null;
 
-type CycleState = { x: number; y: number; ids: string[]; idx: number } | null;
+type CycleState = { x: number; y: number; ids: string[]; idx: number; pendingIdx?: number; moved?: boolean } | null;
 type ViewState = { scale: number; ox: number; oy: number };
 
 interface UseCanvasEventsParams {
@@ -244,11 +244,15 @@ export function useCanvasEvents({
     if (!e.shiftKey && overlapping.length > 1 && hit) {
       const nearPrev = prev && Math.hypot(x - prev.x, y - prev.y) < CYCLE_RADIUS;
       if (nearPrev && prev) {
-        const nextIdx = (prev.idx + 1) % prev.ids.length;
-        const nextId = prev.ids[nextIdx];
-        const nextLayer = page.layers.find(l => l.id === nextId) ?? null;
-        cycleRef.current = { x, y, ids: prev.ids, idx: nextIdx };
-        hit = nextLayer;
+        // 같은 자리 재클릭: 현재 선택 레이어를 잡고 드래그 가능하게 유지하되,
+        // 순수 클릭(이동 없음)이면 pointerup에서 다음 레이어로 순환한다.
+        const curId = prev.ids[prev.idx];
+        const curLayer = page.layers.find(l => l.id === curId) ?? null;
+        hit = curLayer ?? hit;
+        cycleRef.current = {
+          x, y, ids: prev.ids, idx: prev.idx,
+          pendingIdx: (prev.idx + 1) % prev.ids.length, moved: false,
+        };
       } else {
         const ids = overlapping.map(l => l.id);
         const topIdx = ids.indexOf(hit.id);
@@ -321,6 +325,11 @@ export function useCanvasEvents({
 
     const dx = x - drag.ox;
     const dy = y - drag.oy;
+
+    // 순환 대기 중 실제 이동이 발생하면 → 클릭이 아니라 드래그 (순환 취소)
+    if (cycleRef.current?.pendingIdx != null && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+      cycleRef.current.moved = true;
+    }
 
     if (drag.type === 'group-move') {
       const state = useEditorStore.getState();
@@ -491,13 +500,24 @@ export function useCanvasEvents({
         _state.updateLayer(drag.layerId, { x: newX, y: newY, w: newW, h: newH } as Partial<PositionedLayer>);
       }
     }
-  }, [dragRef, panRef, getPointer, setView]);
+  }, [dragRef, panRef, cycleRef, getPointer, setView]);
 
   /* ── Pointer Up ── */
   const onPointerUp = useCallback(() => {
+    // 순환 대기 상태: 이동 없는 순수 클릭이면 다음 겹친 레이어로 순환
+    const c = cycleRef.current;
+    if (c && c.pendingIdx != null) {
+      if (!c.moved) {
+        const nextId = c.ids[c.pendingIdx];
+        useEditorStore.getState().selectSingle(nextId);
+        cycleRef.current = { x: c.x, y: c.y, ids: c.ids, idx: c.pendingIdx };
+      } else {
+        cycleRef.current = { x: c.x, y: c.y, ids: c.ids, idx: c.idx };
+      }
+    }
     panRef.current = null;
     dragRef.current = null;
-  }, [panRef, dragRef]);
+  }, [panRef, dragRef, cycleRef]);
 
   /* ── Double Click ── */
   const onDoubleClick = useCallback((e: React.MouseEvent) => {
