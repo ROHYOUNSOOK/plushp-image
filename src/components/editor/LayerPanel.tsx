@@ -232,7 +232,7 @@ export default function LayerPanel() {
             onDragEnd={onDragEnd}
             onClick={e => handleClick(layer.id, e)}
             className={`flex items-center gap-1 px-1.5 py-1 rounded mb-0.5 cursor-pointer text-xs group
-              ${isSelected ? 'bg-blue-100 text-blue-800' : 'hover:bg-gray-100'}
+              ${isSelected ? 'bg-blue-100 text-blue-800' : 'text-gray-700 hover:bg-gray-100'}
               ${layer.locked ? 'opacity-60' : ''}
               ${isDragging ? 'opacity-40' : ''}
               ${isDragOver ? 'border-t-2 border-blue-400' : ''}
