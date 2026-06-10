@@ -16,7 +16,7 @@ import {
   applyBackgroundImage,
   applyImageLayerImage,
   createDroppedImageLayer,
-  compressForUpload,
+  compressForUploadWithImage,
 } from '@/lib/imageUpload';
 import { toast } from '@/components/editor/Toast';
 
@@ -591,15 +591,16 @@ export function useCanvasEvents({
       state.pushHistory();
       const hit = hitTestLayer(x, y, page);
       if (hit && hit.type === 'frame') {
-        // 즉시 적용 (blob URL)
         const fr = hit as import('@/types/layer').FrameLayer;
-        const sc = Math.max(fr.w / img.naturalWidth, fr.h / img.naturalHeight);
+        // 편집·저장 해상도 일치: 업로드될 압축본을 그대로 편집 이미지로 사용
+        const { blob: frameBlob, img: fImg, url: fUrl } = await compressForUploadWithImage(img);
+        const sc = Math.max(fr.w / fImg.naturalWidth, fr.h / fImg.naturalHeight);
         useEditorStore.getState().updateLayer(hit.id, {
-          img,
-          url,
+          img: fImg,
+          url: fUrl,
           imgScale: sc,
-          imgOffsetX: (fr.w - img.naturalWidth * sc) / 2,
-          imgOffsetY: (fr.h - img.naturalHeight * sc) / 2,
+          imgOffsetX: (fr.w - fImg.naturalWidth * sc) / 2,
+          imgOffsetY: (fr.h - fImg.naturalHeight * sc) / 2,
         });
         state.selectSingle(hit.id);
 
@@ -615,9 +616,8 @@ export function useCanvasEvents({
           if (alreadyExists && !confirm(`페이지 ${pageIndex}의 이미지가 이미 존재합니다.\n새 이미지로 교체하시겠습니까?`)) return;
           dropToast('이미지 업로드 중...', 0);
           try {
-            const compressed = await compressForUpload(img);
             const formData = new FormData();
-            formData.append('file', compressed, 'image.jpg');
+            formData.append('file', frameBlob, 'image.jpg');
             formData.append('folderName', folderName);
             formData.append('pageIndex', String(pageIndex));
             const controller = new AbortController();

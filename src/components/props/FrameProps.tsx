@@ -9,7 +9,7 @@ import NumberInput from '@/components/ui/NumberInput';
 import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import SliderInput from '@/components/ui/SliderInput';
 import ImageUploadButton from '@/components/ui/ImageUploadButton';
-import { loadImageFromFile, compressForUpload } from '@/lib/imageUpload';
+import { loadImageFromFile, compressForUploadWithImage } from '@/lib/imageUpload';
 import { checkScheduleImageExists } from '@/lib/supabase';
 import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
 import { setFilterFrozen } from '@/canvas/webglFilters';
@@ -124,10 +124,12 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
           label={layer.img ? '프레임 내부 이미지 교체' : '프레임 내부 이미지'}
           onFile={async (file) => {
             try {
-              const { img, url: blobUrl } = await loadImageFromFile(file);
+              const { img: origImg } = await loadImageFromFile(file);
               pushHistory();
 
-                  // 즉시 적용 (blob URL) — 업로드 완료 전에도 에디터에 표시
+              // 편집·저장 해상도 일치: 업로드될 압축본을 그대로 편집 이미지로 사용
+              // (imgScale/offset이 서버 재로드 이미지와 어긋나지 않게)
+              const { blob: compressed, img, url: blobUrl } = await compressForUploadWithImage(origImg);
               const sc = Math.max(layer.w / img.naturalWidth, layer.h / img.naturalHeight);
               useEditorStore.getState().updateLayer(layer.id, {
                 img,
@@ -153,7 +155,6 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
               if (alreadyExists && !confirm(`페이지 ${pageIndex}의 이미지가 이미 존재합니다.\n새 이미지로 교체하시겠습니까?`)) return;
               toast('이미지 업로드 중...', 0);
               try {
-                const compressed = await compressForUpload(img);
                 const formData = new FormData();
                 formData.append('file', compressed, 'image.jpg');
                 formData.append('folderName', folderName);

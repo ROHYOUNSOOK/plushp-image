@@ -216,3 +216,17 @@ export async function loadImageFromFile(file: File): Promise<{ img: HTMLImageEle
     throw new Error('이미지 로드 실패');
   }
 }
+
+/**
+ * 업로드용으로 압축한 뒤, 그 압축본을 다시 이미지로 로드해서 함께 반환한다.
+ * 편집 시 표시하는 이미지와 서버에 저장되는 이미지의 해상도를 일치시켜,
+ * 프레임 내부 이미지의 imgScale/offset이 템플릿 재로드 시에도 어긋나지 않게 한다.
+ */
+export async function compressForUploadWithImage(
+  src: HTMLImageElement,
+): Promise<{ blob: Blob; img: HTMLImageElement; url: string }> {
+  const blob = await compressForUpload(src);
+  const url = URL.createObjectURL(blob);
+  const img = await loadImage(url);
+  return { blob, img, url };
+}
