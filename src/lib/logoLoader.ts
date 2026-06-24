@@ -78,7 +78,7 @@ export async function autoLoadLogos(): Promise<void> {
           stroke: { enabled: true, color: null, width: 3, radius: 0 },
           shadow: { enabled: false, color: null, alpha: 0.4, blur: 5, offsetX: 0, offsetY: 5 },
         };
-        newLayers = [medLogo, ...newLayers];
+        newLayers = [...newLayers, medLogo];
       }
 
       return { ...pg, layers: newLayers };

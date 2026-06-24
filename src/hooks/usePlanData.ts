@@ -70,7 +70,7 @@ export function usePlanData(filterUserId?: string) {
     Promise.all([
       query,
       supabase.from('plus_doctors').select('id, doctor_name, specialty, department'),
-      supabase.from('blog_accounts').select('blog_id').like('blog_id', '%plushospital%').order('blog_id'),
+      supabase.from('blog_accounts').select('blog_id').order('blog_id'),
     ]).then(([scheduleRes, doctorRes, blogRes]) => {
       setLoading(false);
       if (scheduleRes.error) {

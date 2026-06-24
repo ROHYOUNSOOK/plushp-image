@@ -104,7 +104,7 @@ async function migrateMedLogoToLayer(pages: TemplatePage[]): Promise<TemplatePag
       x, y, w: Math.round(drawW), h: Math.round(drawH),
       stroke: { enabled: oldLogo.strokeEnabled ?? true, color: oldLogo.strokeColor ?? null, width: oldLogo.strokeWidth ?? 3, radius: 0 },
     };
-    return { ...pg, layers: [logoLayer, ...pg.layers] };
+    return { ...pg, layers: [...pg.layers, logoLayer] };
   });
 }
 

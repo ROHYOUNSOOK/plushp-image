@@ -228,6 +228,16 @@ export function buildSchedulePages({
         ? pages[doctorPageIdx].layers.map(l => l.id === drExistingTb.id ? drTb : l)
         : [...pages[doctorPageIdx].layers, drTb],
     };
+
+    // 의사카드·텍스트박스가 추가된 뒤 로고가 가운데로 밀리므로 항상 최상단으로 이동
+    const drFinalLayers = pages[doctorPageIdx].layers;
+    const drLogo = drFinalLayers.find(l => l.type === 'logo');
+    if (drLogo) {
+      pages[doctorPageIdx] = {
+        ...pages[doctorPageIdx],
+        layers: [...drFinalLayers.filter(l => l.type !== 'logo'), drLogo],
+      };
+    }
   }
 
   // 의료법 페이지
