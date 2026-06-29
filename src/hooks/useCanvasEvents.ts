@@ -234,12 +234,8 @@ export function useCanvasEvents({
     const prev = cycleRef.current;
     const overlapping = getOverlappingLayers(x, y, page);
     let hit = hitTestLayer(x, y, page);
-
-    // 의료법 페이지: 박스 내부 텍스트 영역 클릭 → med-title/med-desc 우선 선택
-    if (page.isMedicalLaw && hit?.type === 'med-box') {
-      const textHit = hitTestMedText(x, y, page);
-      if (textHit) hit = textHit;
-    }
+    // 의료법 페이지: 단일 클릭은 박스를 선택(이동 가능)하고,
+    // 제목/내용 텍스트 선택은 더블클릭(onDoubleClick)에서 처리한다.
 
     if (!e.shiftKey && overlapping.length > 1 && hit) {
       const nearPrev = prev && Math.hypot(x - prev.x, y - prev.y) < CYCLE_RADIUS;
