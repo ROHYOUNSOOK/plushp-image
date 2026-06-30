@@ -152,7 +152,7 @@ export default function AdminAssignView() {
                     disabled={navigating}
                     className="text-xs px-3 py-1.5 rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] disabled:opacity-50 transition-colors whitespace-nowrap"
                   >
-                    {navigating ? '이동 중...' : '편집기로 이동'}
+                    {navigating ? '이동 중...' : '편집기'}
                   </button>
                 )}
               </div>
