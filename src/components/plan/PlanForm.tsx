@@ -200,8 +200,8 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
             </div>
           </Section>
 
-          <Section title="문구 / 이미지 요청">
-            <div className="grid grid-cols-2 gap-2 mb-1.5">
+          <Section title="페이지 구성">
+            <div className="grid grid-cols-2 gap-2 mb-1.5 ml-6 mr-7">
               <span className="text-[10px] font-medium text-gray-400 text-center">문구</span>
               <span className="text-[10px] font-medium text-orange-400 text-center">이미지 요청</span>
             </div>
@@ -234,60 +234,71 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
                 </button>
               )}
             </div>
-          </Section>
 
-          <Section title="원장님">
-            <div className="space-y-2">
-              {form.doctors.map((d, i) => (
-                <div key={i} className="flex items-center gap-2 relative">
-                  <span className="text-[11px] font-medium text-gray-300 w-4 shrink-0 text-right">{i + 1}</span>
-                  <div className="flex-1 min-w-0 relative">
-                    <input
-                      className="w-full text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] focus:ring-2 focus:ring-[#1450a0/10] transition placeholder:text-gray-500 disabled:bg-gray-50 disabled:text-gray-500"
-                      value={d}
-                      onChange={e => setDoctorAt(i, e.target.value)}
-                      onFocus={() => !readOnly && openDoctorDropdown(i)}
-                      onBlur={() => setTimeout(() => { setSuggestions([]); setActiveDoctorIdx(null); }, 150)}
-                      placeholder="이름 입력 또는 선택"
-                      disabled={readOnly}
-                    />
-                    {!readOnly && activeDoctorIdx === i && suggestions.length > 0 && (
-                      <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-y-auto max-h-48">
-                        {suggestions.map(s => (
+            {/* 원장님 페이지 (별도 블록 — 페이지 추가 로직과 무관) */}
+            <div className="mt-4 rounded-lg border-l-4 border-[#1450a0] bg-[#f4f7fc] px-3 py-3">
+              <div className="flex items-center gap-2 mb-2.5">
+                <span className="text-[11px] font-medium text-gray-300 w-4 shrink-0 text-right">{form.texts.length + 1}</span>
+                <span className="text-xs font-semibold text-[#1450a0]">원장님 페이지</span>
+              </div>
+
+              <div className="ml-6 space-y-2.5">
+                <div>
+                  <label className="block text-[11px] font-medium text-gray-400 mb-1">원장님 페이지 제목</label>
+                  <Input
+                    value={form.doctor_specialty}
+                    onChange={v => setField('doctor_specialty', v)}
+                    placeholder="ex. 정형외과 전문의 진료"
+                    disabled={readOnly}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-gray-400 mb-1">원장님</label>
+                  <div className="space-y-2">
+                    {form.doctors.map((d, i) => (
+                      <div key={i} className="flex items-center gap-2 relative">
+                        <div className="flex-1 min-w-0 relative">
+                          <input
+                            className="w-full text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] focus:ring-2 focus:ring-[#1450a0/10] transition placeholder:text-gray-500 disabled:bg-gray-50 disabled:text-gray-500"
+                            value={d}
+                            onChange={e => setDoctorAt(i, e.target.value)}
+                            onFocus={() => !readOnly && openDoctorDropdown(i)}
+                            onBlur={() => setTimeout(() => { setSuggestions([]); setActiveDoctorIdx(null); }, 150)}
+                            placeholder="이름 입력 또는 선택"
+                            disabled={readOnly}
+                          />
+                          {!readOnly && activeDoctorIdx === i && suggestions.length > 0 && (
+                            <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-y-auto max-h-48">
+                              {suggestions.map(s => (
+                                <button
+                                  key={s}
+                                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#e3edf8] border-b border-gray-100 last:border-0"
+                                  onMouseDown={() => pickSuggestion(s)}
+                                >
+                                  {s}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {!readOnly && (
                           <button
-                            key={s}
-                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#e3edf8] border-b border-gray-100 last:border-0"
-                            onMouseDown={() => pickSuggestion(s)}
-                          >
-                            {s}
-                          </button>
-                        ))}
+                            onClick={() => removeDoctor(i)}
+                            className={`shrink-0 w-5 text-base leading-none transition-colors ${form.doctors.length > 1 ? 'text-gray-300 hover:text-red-400' : 'invisible'}`}
+                          >×</button>
+                        )}
                       </div>
+                    ))}
+                    {!readOnly && form.doctors.length < 4 && (
+                      <button onClick={addDoctor} className="mt-1 text-xs text-[#1450a0] hover:text-[#1045a0] transition-colors">
+                        + 원장님 추가
+                      </button>
                     )}
                   </div>
-                  {!readOnly && (
-                    <button
-                      onClick={() => removeDoctor(i)}
-                      className={`shrink-0 w-5 text-base leading-none transition-colors ${form.doctors.length > 1 ? 'text-gray-300 hover:text-red-400' : 'invisible'}`}
-                    >×</button>
-                  )}
                 </div>
-              ))}
-              {!readOnly && form.doctors.length < 4 && (
-                <button onClick={addDoctor} className="ml-6 mt-1 text-xs text-[#1450a0] hover:text-[#1045a0] transition-colors">
-                  + 원장님 추가
-                </button>
-              )}
+              </div>
             </div>
-          </Section>
-
-          <Section title="진료과">
-            <Input
-              value={form.doctor_specialty}
-              onChange={v => setField('doctor_specialty', v)}
-              placeholder="ex. 정형외과 전문의 진료"
-              disabled={readOnly}
-            />
           </Section>
 
         </div>
