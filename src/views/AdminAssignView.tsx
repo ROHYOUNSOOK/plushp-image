@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
 import { useAssignment, type Designer } from '@/hooks/useAssignment';
+import { useScheduleApplication } from '@/hooks/useScheduleApplication';
+import type { DoctorInfo } from '@/hooks/useScheduleData';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { getScheduleStatus, STATUS_LABELS, STATUS_BADGE_CLASSES, type ScheduleStatus } from '@/lib/scheduleStatus';
 
@@ -16,6 +19,17 @@ export default function AdminAssignView() {
   const [dateFilter, setDateFilter] = useState<string>('');
   const [saving, setSaving] = useState<string | null>(null);
   const router = useRouter();
+  const { navigateToEditor, navigating } = useScheduleApplication();
+  const [allDoctors, setAllDoctors] = useState<DoctorInfo[]>([]);
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    );
+    supabase.from('plus_doctors').select('id, doctor_name, specialty, department')
+      .then(({ data }) => setAllDoctors(data ?? []));
+  }, []);
 
   const dates = [...new Set(rows.map(r => r.date).filter(Boolean))].sort().reverse();
 
@@ -111,26 +125,37 @@ export default function AdminAssignView() {
                   <span className="text-xs text-gray-400 whitespace-nowrap">업로드 {row.date}</span>
                 )}
               </div>
-              {status !== 'confirmed' && (
-                <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
-                  <span className="text-[11px] text-gray-400 whitespace-nowrap">담당자</span>
-                  <CustomSelect
-                    className="text-xs text-gray-700 border border-gray-200 rounded-lg px-2 py-1.5 bg-white min-w-[120px]"
-                    dropdownMaxWidth={270}
-                    value={row.assigned_to ?? ''}
-                    onChange={v => handleAssign(row.id, v)}
-                    disabled={saving === row.id}
-                    placeholder="미배분"
-                    options={[
-                      { value: '', label: '미배분' },
-                      ...designers.map(d => ({
-                        value: d.id,
-                        label: `${d.name} (${d.team || '-'}) · 진행중 ${inProgressCount[d.id] ?? 0}건`,
-                      })),
-                    ]}
-                  />
-                </div>
-              )}
+              <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+                {status !== 'confirmed' && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-gray-400 whitespace-nowrap">담당자</span>
+                    <CustomSelect
+                      className="text-xs text-gray-700 border border-gray-200 rounded-lg px-2 py-1.5 bg-white min-w-[120px]"
+                      dropdownMaxWidth={270}
+                      value={row.assigned_to ?? ''}
+                      onChange={v => handleAssign(row.id, v)}
+                      disabled={saving === row.id}
+                      placeholder="미배분"
+                      options={[
+                        { value: '', label: '미배분' },
+                        ...designers.map(d => ({
+                          value: d.id,
+                          label: `${d.name} (${d.team || '-'}) · 진행중 ${inProgressCount[d.id] ?? 0}건`,
+                        })),
+                      ]}
+                    />
+                  </div>
+                )}
+                {(status === 'design_done' || status === 'confirmed') && (
+                  <button
+                    onClick={() => navigateToEditor(row, allDoctors)}
+                    disabled={navigating}
+                    className="text-xs px-3 py-1.5 rounded-lg bg-[#1450a0] text-white hover:bg-[#1045a0] disabled:opacity-50 transition-colors whitespace-nowrap"
+                  >
+                    {navigating ? '이동 중...' : '편집기로 이동'}
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}
