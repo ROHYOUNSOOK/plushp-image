@@ -27,10 +27,10 @@ export default function LogoProps({ layer }: { layer: LogoLayer }) {
 
   const update = (u: Partial<LogoLayer>) => updateLayer(layer.id, u);
 
-  const setLogoVariant = async (url: string) => {
+  const setLogoVariant = async (url: string, strokeDefault: boolean) => {
     try {
       const img = await loadLogoFromUrl(url);
-      update({ img, url });
+      update({ img, url, stroke: { ...layer.stroke, enabled: strokeDefault } });
     } catch {
       toast('로고 변경 실패');
     }
@@ -48,7 +48,7 @@ export default function LogoProps({ layer }: { layer: LogoLayer }) {
           return (
             <button
               key={v.url}
-              onClick={() => setLogoVariant(v.url)}
+              onClick={() => setLogoVariant(v.url, v.stroke)}
               className={`py-1.5 text-xs rounded border transition-colors ${
                 active
                   ? 'bg-[#1450a0] text-white border-[#1450a0]'

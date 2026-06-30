@@ -36,9 +36,10 @@ export async function getDefaultLogoImage(): Promise<HTMLImageElement> {
 }
 
 // 로고 변형 (원형/기본) — public/plus/ 에 위치
+// stroke: 적용 시 외곽선 기본 활성 여부 (원X는 외곽선 없음)
 export const LOGO_VARIANTS = [
-  { label: '원', url: '/plus/pluslogo_circle.png' },
-  { label: '기본(원X)', url: '/plus/pluslogo.png' },
+  { label: '원', url: '/plus/pluslogo_circle.png', stroke: true },
+  { label: '기본(원X)', url: '/plus/pluslogo.png', stroke: false },
 ] as const;
 
 /** 특정 URL의 로고 이미지를 로드 (blob URL 우선, 캔버스 오염 없음) */
