@@ -74,7 +74,8 @@ export function applyDoctorCardTemplate(
       card.doctorName = doctorNames[i];
       card.name = doctorNames[i];
     }
-    if (doctorDepartments && doctorDepartments[i]) card.subject = doctorDepartments[i];
+    // 진료과목은 의사 진료과(department)만 따름 — 없으면 빈 값 (페이지 제목·기본값 따라가지 않음)
+    card.subject = (doctorDepartments && doctorDepartments[i]) ? doctorDepartments[i] : '';
     if (doctorSpecialties && doctorSpecialties[i]) card.specialty = doctorSpecialties[i];
     card.subjectSize = p.subjectSize;
     card.nameSize = p.nameSize;
