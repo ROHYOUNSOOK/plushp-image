@@ -200,6 +200,15 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
             </div>
           </Section>
 
+          <div className="relative">
+          {/* 넓은 화면: 왼쪽 여백 안내 문구 */}
+          <aside className="hidden xl:block absolute right-full mr-6 top-0 w-56">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 text-[11px] text-amber-700 leading-relaxed">
+              <p className="font-semibold mb-1.5">📌 안내</p>
+              <p>※ 원장님 페이지 · 의료법 페이지는 <b>자동 생성</b>됩니다. 따로 추가하지 마세요.</p>
+              <p className="mt-2">페이지 구성 오른쪽 <b>×</b> 버튼으로 페이지 삭제가 가능합니다.</p>
+            </div>
+          </aside>
           <Section title="페이지 구성">
             <div className="grid grid-cols-2 gap-2 mb-1.5 ml-6 mr-7">
               <span className="text-[10px] font-medium text-gray-400 text-center">문구</span>
@@ -300,6 +309,7 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
               </div>
             </div>
           </Section>
+          </div>
 
         </div>
       </div>
