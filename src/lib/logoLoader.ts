@@ -35,6 +35,21 @@ export async function getDefaultLogoImage(): Promise<HTMLImageElement> {
   return _cached;
 }
 
+// 로고 변형 (원형/기본) — public/plus/ 에 위치
+export const LOGO_VARIANTS = [
+  { label: '원', url: '/plus/pluslogo_circle.png' },
+  { label: '기본(원X)', url: '/plus/pluslogo.png' },
+] as const;
+
+/** 특정 URL의 로고 이미지를 로드 (blob URL 우선, 캔버스 오염 없음) */
+export async function loadLogoFromUrl(url: string): Promise<HTMLImageElement> {
+  try {
+    return await loadImageViaBlobUrl(url);
+  } catch {
+    return await loadImage(url);
+  }
+}
+
 /**
  * 이미지가 없는 모든 페이지의 로고 레이어에 기본 로고 자동 로드
  * addPage / applySchedule 후 호출

@@ -9,6 +9,7 @@ import SliderInput from '@/components/ui/SliderInput';
 import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import ImageUploadButton from '@/components/ui/ImageUploadButton';
 import { loadImageFromFile, applyLogoImage } from '@/lib/imageUpload';
+import { LOGO_VARIANTS, loadLogoFromUrl } from '@/lib/logoLoader';
 import { toast } from '@/components/editor/Toast';
 import { W, H } from '@/types/constants';
 
@@ -26,9 +27,39 @@ export default function LogoProps({ layer }: { layer: LogoLayer }) {
 
   const update = (u: Partial<LogoLayer>) => updateLayer(layer.id, u);
 
+  const setLogoVariant = async (url: string) => {
+    try {
+      const img = await loadLogoFromUrl(url);
+      update({ img, url });
+    } catch {
+      toast('로고 변경 실패');
+    }
+  };
+  const activeUrl = layer.url ?? LOGO_VARIANTS[0].url;
+
   return (
     <div className="space-y-3">
       <div className="font-bold text-xs text-gray-500 uppercase">로고</div>
+
+      {/* 로고 종류 탭 */}
+      <div className="grid grid-cols-2 gap-1">
+        {LOGO_VARIANTS.map(v => {
+          const active = activeUrl.endsWith(v.url);
+          return (
+            <button
+              key={v.url}
+              onClick={() => setLogoVariant(v.url)}
+              className={`py-1.5 text-xs rounded border transition-colors ${
+                active
+                  ? 'bg-[#1450a0] text-white border-[#1450a0]'
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {v.label}
+            </button>
+          );
+        })}
+      </div>
 
       {/* 가이드라인 코너 위치 프리셋 */}
       <div>
