@@ -75,7 +75,6 @@ export function applyDoctorCardTemplate(
       card.name = doctorNames[i];
     }
     if (doctorDepartments && doctorDepartments[i]) card.subject = doctorDepartments[i];
-    else if (doctorSpecialty) card.subject = doctorSpecialty;
     if (doctorSpecialties && doctorSpecialties[i]) card.specialty = doctorSpecialties[i];
     card.subjectSize = p.subjectSize;
     card.nameSize = p.nameSize;
