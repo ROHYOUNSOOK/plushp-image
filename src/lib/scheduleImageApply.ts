@@ -11,6 +11,10 @@ export function applyScheduleTextsToTemplatePages(
   return pages.map(pg => {
     const textIdx = textPages.indexOf(pg);
     if (textIdx < 0 || texts[textIdx] === undefined) return pg;
+    // 텍스트박스가 2개 이상이면 디자이너가 수동으로 분할/편집한 것 → 저장된 내용 보존
+    // (단일 텍스트박스 페이지에서만 기획안 문구 자동 반영)
+    const textboxes = pg.layers.filter(l => l.type === 'textbox');
+    if (textboxes.length !== 1) return pg;
     return {
       ...pg,
       layers: pg.layers.map(l => {
