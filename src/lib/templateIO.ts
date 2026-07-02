@@ -170,7 +170,9 @@ function serializeLayerCloud(l: Layer): Record<string, unknown> {
   if ('img' in l) {
     out.dataUrl = null;
     out.imageUrl = null;
-    if (l.type === 'image') {
+    // image·logo 타입은 remote URL(원격/로컬 정적 경로) 보존 — 로고는 선택한 변형(원/기본)이
+    // 템플릿에 남아야 재로드 시 기본(원형)으로 되돌아가지 않는다.
+    if (l.type === 'image' || l.type === 'logo') {
       const u = (rest.url ?? null) as string | null;
       const isRemote = u && !u.startsWith('blob:') && (u.startsWith('http') || u.startsWith('/api/proxy-image') || u.startsWith('/plus/'));
       out.url = isRemote ? u : null;
