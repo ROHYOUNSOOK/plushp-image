@@ -230,3 +230,37 @@ export async function compressForUploadWithImage(
   const img = await loadImage(url);
   return { blob, img, url };
 }
+
+/**
+ * 스케줄 폴더에 이미지를 업로드한다 (Vultr schedule/폴더명/pageIndex[_suffix].jpg).
+ * suffix 없으면 프레임 내부 이미지(N.jpg)와 동일한 파일명 규칙,
+ * suffix 있으면 이미지 레이어 전용 파일명으로 분리 저장되어 프레임과 충돌하지 않는다.
+ */
+export async function uploadScheduleImage(
+  folderName: string,
+  pageIndex: number,
+  blob: Blob,
+  suffix?: string,
+): Promise<string | null> {
+  const formData = new FormData();
+  formData.append('file', blob, 'image.jpg');
+  formData.append('folderName', folderName);
+  formData.append('pageIndex', String(pageIndex));
+  if (suffix) formData.append('suffix', suffix);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  try {
+    const res = await fetch('/api/upload-schedule-image', {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    const data = await res.json();
+    return data.url ?? null;
+  } catch {
+    clearTimeout(timeout);
+    return null;
+  }
+}

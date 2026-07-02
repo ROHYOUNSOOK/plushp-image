@@ -17,6 +17,7 @@ import {
   applyImageLayerImage,
   createDroppedImageLayer,
   compressForUploadWithImage,
+  uploadScheduleImage,
 } from '@/lib/imageUpload';
 import { toast } from '@/components/editor/Toast';
 
@@ -611,35 +612,43 @@ export function useCanvasEvents({
           const alreadyExists = await checkScheduleImageExists(folderName, pageIndex);
           if (alreadyExists && !confirm(`페이지 ${pageIndex}의 이미지가 이미 존재합니다.\n새 이미지로 교체하시겠습니까?`)) return;
           dropToast('이미지 업로드 중...', 0);
-          try {
-            const formData = new FormData();
-            formData.append('file', frameBlob, 'image.jpg');
-            formData.append('folderName', folderName);
-            formData.append('pageIndex', String(pageIndex));
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 30000);
-            const res = await fetch('/api/upload-schedule-image', { method: 'POST', body: formData, signal: controller.signal });
-            clearTimeout(timeout);
-            const data = await res.json();
-            dropHideToast();
-            if (data.url) {
-              useEditorStore.getState().updateLayer(hit.id, { url: data.url });
-              dropToast('업로드 완료');
-            } else {
-              dropToast('업로드 실패 — 로컬 이미지로 적용됨');
-            }
-          } catch {
-            dropHideToast();
+          const uploadedUrl = await uploadScheduleImage(folderName, pageIndex, frameBlob);
+          dropHideToast();
+          if (uploadedUrl) {
+            useEditorStore.getState().updateLayer(hit.id, { url: uploadedUrl });
+            dropToast('업로드 완료');
+          } else {
             dropToast('업로드 실패 — 로컬 이미지로 적용됨');
           }
         } else {
           toast('프레임 이미지 적용');
         }
       } else if (hit && hit.type === 'image') {
-        applyImageLayerImage(hit as import('@/types/layer').ImageLayer, img, url);
+        const imgLayer = hit as import('@/types/layer').ImageLayer;
+        // 편집·저장 해상도 일치 (프레임 내부 이미지와 동일 방식)
+        const { blob: imgBlob, img: cImg, url: cUrl } = await compressForUploadWithImage(img);
+        applyImageLayerImage(imgLayer, cImg, cUrl);
         state.selectSingle(hit.id);
         state.setPages([...state.pages]);
         toast('이미지 교체');
+
+        const scheduleRow = state.currentScheduleRow;
+        if (scheduleRow) {
+          const { buildScheduleFolderName } = await import('./useScheduleApplication');
+          const folderName = buildScheduleFolderName(scheduleRow as unknown as Parameters<typeof buildScheduleFolderName>[0]);
+          const pageIdx = state.pages.findIndex(pg => pg.layers.some(l => l.id === hit.id));
+          const pageIndex = (pageIdx >= 0 ? pageIdx : state.currentPage) + 1;
+          const { toast: dropToast, hideToast: dropHideToast } = await import('@/components/editor/Toast');
+          dropToast('이미지 업로드 중...', 0);
+          const uploadedUrl = await uploadScheduleImage(folderName, pageIndex, imgBlob, `img${hit.id}`);
+          dropHideToast();
+          if (uploadedUrl) {
+            useEditorStore.getState().updateLayer(hit.id, { url: uploadedUrl });
+            dropToast('업로드 완료');
+          } else {
+            dropToast('업로드 실패 — 로컬 이미지로 적용됨');
+          }
+        }
       } else {
         const bgLayer = page.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
         if (bgLayer) {
@@ -648,12 +657,32 @@ export function useCanvasEvents({
           state.setPages([...state.pages]);
           toast('배경 이미지 적용');
         } else {
-          const layer = createDroppedImageLayer(img, url, x, y);
+          // 편집·저장 해상도 일치 (프레임 내부 이미지와 동일 방식)
+          const { blob: newBlob, img: nImg, url: nUrl } = await compressForUploadWithImage(img);
+          const layer = createDroppedImageLayer(nImg, nUrl, x, y);
           const tbIdx = page.layers.findIndex(l => l.type === 'textbox');
           page.layers.splice(tbIdx >= 0 ? tbIdx : page.layers.length, 0, layer);
           state.selectSingle(layer.id);
           state.setPages([...state.pages]);
           toast('새 이미지 레이어 추가');
+
+          const scheduleRow = state.currentScheduleRow;
+          if (scheduleRow) {
+            const { buildScheduleFolderName } = await import('./useScheduleApplication');
+            const folderName = buildScheduleFolderName(scheduleRow as unknown as Parameters<typeof buildScheduleFolderName>[0]);
+            const pageIdx = state.pages.findIndex(pg => pg.layers.some(l => l.id === layer.id));
+            const pageIndex = (pageIdx >= 0 ? pageIdx : state.currentPage) + 1;
+            const { toast: dropToast, hideToast: dropHideToast } = await import('@/components/editor/Toast');
+            dropToast('이미지 업로드 중...', 0);
+            const uploadedUrl = await uploadScheduleImage(folderName, pageIndex, newBlob, `img${layer.id}`);
+            dropHideToast();
+            if (uploadedUrl) {
+              useEditorStore.getState().updateLayer(layer.id, { url: uploadedUrl });
+              dropToast('업로드 완료');
+            } else {
+              dropToast('업로드 실패 — 로컬 이미지로 적용됨');
+            }
+          }
         }
       }
     } catch {

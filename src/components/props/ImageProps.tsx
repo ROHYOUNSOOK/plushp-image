@@ -7,8 +7,8 @@ import NumberInput from '@/components/ui/NumberInput';
 import SliderInput from '@/components/ui/SliderInput';
 import ImageUploadButton from '@/components/ui/ImageUploadButton';
 import CustomCheckbox from '@/components/ui/CustomCheckbox';
-import { loadImageFromFile, applyImageLayerImage } from '@/lib/imageUpload';
-import { toast } from '@/components/editor/Toast';
+import { loadImageFromFile, applyImageLayerImage, compressForUploadWithImage, uploadScheduleImage } from '@/lib/imageUpload';
+import { toast, hideToast } from '@/components/editor/Toast';
 
 export default function ImageProps({ layer }: { layer: ImageLayer }) {
   const updateLayer = useEditorStore(s => s.updateLayer);
@@ -51,11 +51,36 @@ export default function ImageProps({ layer }: { layer: ImageLayer }) {
           label={layer.img ? '이미지 교체' : '이미지 업로드'}
           onFile={async (file) => {
             try {
-              const { img, url } = await loadImageFromFile(file);
+              const { img: origImg } = await loadImageFromFile(file);
               useEditorStore.getState().pushHistory();
-              applyImageLayerImage(layer, img, url);
+
+              // 편집·저장 해상도 일치 (프레임 내부 이미지와 동일 방식)
+              const { blob, img, url: blobUrl } = await compressForUploadWithImage(origImg);
+              applyImageLayerImage(layer, img, blobUrl);
               useEditorStore.getState().setPages([...useEditorStore.getState().pages]);
               toast('이미지 적용');
+
+              const scheduleRow = useEditorStore.getState().currentScheduleRow;
+              if (!scheduleRow) {
+                toast('스케줄을 먼저 적용해주세요 (이미지는 로컬에만 적용됨)');
+                return;
+              }
+
+              const { buildScheduleFolderName } = await import('@/hooks/useScheduleApplication');
+              const folderName = buildScheduleFolderName(scheduleRow as unknown as Parameters<typeof buildScheduleFolderName>[0]);
+              const state = useEditorStore.getState();
+              const pageIdx = state.pages.findIndex(pg => pg.layers.some(l => l.id === layer.id));
+              const pageIndex = (pageIdx >= 0 ? pageIdx : state.currentPage ?? 0) + 1;
+
+              toast('이미지 업로드 중...', 0);
+              const uploadedUrl = await uploadScheduleImage(folderName, pageIndex, blob, `img${layer.id}`);
+              hideToast();
+              if (uploadedUrl) {
+                useEditorStore.getState().updateLayer(layer.id, { url: uploadedUrl });
+                toast('업로드 완료');
+              } else {
+                toast('업로드 실패 — 로컬 이미지로 적용됨');
+              }
             } catch { toast('이미지 로드 실패'); }
           }}
         />
