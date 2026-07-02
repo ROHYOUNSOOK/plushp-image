@@ -3,11 +3,12 @@
    Template Save / Load
 =========================== */
 
-import type { Layer, BackgroundLayer } from '@/types/layer';
+import type { Layer, BackgroundLayer, ImageLayer } from '@/types/layer';
 import type { Page } from '@/types/page';
 import { makeLayer } from './layerFactory';
 import { loadImage } from './utils';
 import { toProxyUrl } from './supabase';
+import { pruneOrphanedImageLayerFiles } from './imageUpload';
 
 /* ── 파일명 생성 ── */
 
@@ -224,6 +225,12 @@ export async function saveCloudTemplate(
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('클라우드 저장 실패');
+
+  // 저장(확정) 시점에만 서버의 미사용 이미지 레이어 파일 정리 (Undo 이후엔 참조가 되살아나므로 안전)
+  const referencedUrls = pages.flatMap(pg =>
+    pg.layers.filter((l): l is ImageLayer => l.type === 'image').map(l => l.url)
+  );
+  pruneOrphanedImageLayerFiles(folder, referencedUrls);
 }
 
 /* ── 클라우드 불러오기 ── */

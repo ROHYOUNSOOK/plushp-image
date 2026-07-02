@@ -286,14 +286,10 @@ export async function uploadScheduleImage(
 const IMAGE_LAYER_FILENAME_RE = /^\d+_img[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/i;
 
 /**
- * 이미지 레이어를 교체할 때, 그 레이어가 이전에 서버에 올렸던 파일을 삭제한다.
- * 파일명이 이미지 레이어 전용 패턴(_img 접미사)일 때만 삭제 요청하므로
- * 프레임 내부 이미지(N.jpg 등, 접미사 없음)는 절대 삭제 대상이 되지 않는다.
- * 실패해도 무시(best-effort) — 새 이미지 적용을 막지 않는다.
+ * 스케줄 폴더의 파일 하나를 삭제한다 (서버가 _img 접미사 패턴만 허용 — 이중 안전장치로 여기서도 검사).
+ * 실패해도 무시(best-effort).
  */
-export async function deleteOldImageLayerFile(folderName: string, oldUrl: string | null): Promise<void> {
-  if (!oldUrl) return;
-  const filename = oldUrl.split('/').pop() ?? '';
+async function deleteScheduleFile(folderName: string, filename: string): Promise<void> {
   if (!IMAGE_LAYER_FILENAME_RE.test(filename)) return;
   try {
     await fetch('/api/delete-schedule-image', {
@@ -301,5 +297,40 @@ export async function deleteOldImageLayerFile(folderName: string, oldUrl: string
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ folderName, filename }),
     });
+  } catch { /* best-effort, 실패 무시 */ }
+}
+
+/**
+ * 이미지 레이어를 교체할 때, 그 레이어가 이전에 서버에 올렸던 파일을 삭제한다.
+ * (같은 레이어 인스턴스 안에서 이미지를 바꾸는 경우 전용 — 레이어 삭제/Undo와는 무관)
+ */
+export async function deleteOldImageLayerFile(folderName: string, oldUrl: string | null): Promise<void> {
+  if (!oldUrl) return;
+  const filename = oldUrl.split('/').pop() ?? '';
+  await deleteScheduleFile(folderName, filename);
+}
+
+/**
+ * 템플릿 저장 시점에 호출 — 스케줄 폴더의 _img 접미사 파일 중,
+ * 지금 저장되는 최종 페이지 상태에서 더 이상 어떤 레이어도 참조하지 않는 파일을 정리한다.
+ * Undo로 되돌린 뒤 저장하면 그 레이어의 url이 referencedUrls에 다시 포함되므로 삭제되지 않는다
+ * (레이어 삭제 즉시 지우지 않고 "저장(확정) 시점"에만 정리 → Undo와 충돌 없음).
+ * 프레임 내부 이미지(_img 접미사 없음)는 애초에 목록에서 걸러지므로 절대 삭제되지 않는다.
+ */
+export async function pruneOrphanedImageLayerFiles(
+  folderName: string,
+  referencedUrls: (string | null | undefined)[],
+): Promise<void> {
+  try {
+    const { listScheduleFolderFiles } = await import('./supabase');
+    const allFiles = await listScheduleFolderFiles(folderName);
+    const imageLayerFiles = allFiles.filter(f => IMAGE_LAYER_FILENAME_RE.test(f));
+    if (imageLayerFiles.length === 0) return;
+
+    const referencedFilenames = new Set(
+      referencedUrls.filter(Boolean).map(u => (u as string).split('/').pop())
+    );
+    const orphaned = imageLayerFiles.filter(f => !referencedFilenames.has(f));
+    await Promise.all(orphaned.map(f => deleteScheduleFile(folderName, f)));
   } catch { /* best-effort, 실패 무시 */ }
 }

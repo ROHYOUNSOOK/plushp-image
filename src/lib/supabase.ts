@@ -81,6 +81,11 @@ async function listFilesFromDir(dirUrl: string): Promise<string[]> {
   }
 }
 
+/** 스케줄 폴더 내 파일 목록 (nginx autoindex 기반) */
+export async function listScheduleFolderFiles(folderName: string): Promise<string[]> {
+  return listFilesFromDir(`${SCHEDULE_BASE}/${folderName}`);
+}
+
 async function loadImageFromUrl(url: string): Promise<HTMLImageElement | null> {
   try {
     const res = await fetch(toProxyUrl(url));

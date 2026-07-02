@@ -254,12 +254,15 @@ export const useEditorStore = create<EditorState>((set) => ({
   }),
 
   updateLayer: (id, updates) => set(state => {
-    const pages = [...state.pages];
-    const page = { ...pages[state.currentPage] };
-    page.layers = page.layers.map(l =>
-      l.id === id ? { ...l, ...updates } as Layer : l
-    );
-    pages[state.currentPage] = page;
+    // currentPage로 고정하지 않고 전체 페이지에서 해당 id를 가진 레이어를 찾아 갱신한다.
+    // (비동기 업로드 완료 콜백이 다른 페이지로 이동한 뒤에 도착해도 정상 반영되도록)
+    const pages = state.pages.map(page => {
+      if (!page.layers.some(l => l.id === id)) return page;
+      return {
+        ...page,
+        layers: page.layers.map(l => l.id === id ? { ...l, ...updates } as Layer : l),
+      };
+    });
     return { pages };
   }),
 
