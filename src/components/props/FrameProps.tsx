@@ -9,7 +9,7 @@ import NumberInput from '@/components/ui/NumberInput';
 import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import SliderInput from '@/components/ui/SliderInput';
 import ImageUploadButton from '@/components/ui/ImageUploadButton';
-import { loadImageFromFile, compressForUploadWithImage } from '@/lib/imageUpload';
+import { loadImageFromFile, compressForUploadWithImage, uploadScheduleImage } from '@/lib/imageUpload';
 import { checkScheduleImageExists } from '@/lib/supabase';
 import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
 import { setFilterFrozen } from '@/canvas/webglFilters';
@@ -154,31 +154,12 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
               const alreadyExists = await checkScheduleImageExists(folderName, pageIndex);
               if (alreadyExists && !confirm(`페이지 ${pageIndex}의 이미지가 이미 존재합니다.\n새 이미지로 교체하시겠습니까?`)) return;
               toast('이미지 업로드 중...', 0);
-              try {
-                const formData = new FormData();
-                formData.append('file', compressed, 'image.jpg');
-                formData.append('folderName', folderName);
-                formData.append('pageIndex', String(pageIndex));
-
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 30000);
-                const res = await fetch('/api/upload-schedule-image', {
-                  method: 'POST',
-                  body: formData,
-                  signal: controller.signal,
-                });
-                clearTimeout(timeout);
-                const data = await res.json();
-
-                hideToast();
-                if (data.url) {
-                  useEditorStore.getState().updateLayer(layer.id, { url: data.url });
-                  toast('업로드 완료');
-                } else {
-                  toast('업로드 실패 — 로컬 이미지로 적용됨');
-                }
-              } catch {
-                hideToast();
+              const uploadedUrl = await uploadScheduleImage(folderName, pageIndex, compressed);
+              hideToast();
+              if (uploadedUrl) {
+                useEditorStore.getState().updateLayer(layer.id, { url: uploadedUrl });
+                toast('업로드 완료');
+              } else {
                 toast('업로드 실패 — 로컬 이미지로 적용됨');
               }
             } catch { toast('이미지 로드 실패'); }

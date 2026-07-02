@@ -145,10 +145,20 @@ export function applyBgToAllPages(img: HTMLImageElement, url: string, pages: Pag
 }
 
 /** 파일에서 이미지 로드 (URL.createObjectURL 사용) */
+/** 캔버스에 투명 픽셀이 있는지 검사 (PNG 투명 배경 보존 여부 판단용) */
+function hasTransparency(canvas: HTMLCanvasElement): boolean {
+  const ctx = canvas.getContext('2d')!;
+  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] < 255) return true;
+  }
+  return false;
+}
+
 export async function compressForUpload(img: HTMLImageElement): Promise<Blob> {
   const MAX_PX = 2160;
-  const toBlob = (canvas: HTMLCanvasElement, q: number) =>
-    new Promise<Blob>(res => canvas.toBlob(b => res(b!), 'image/jpeg', q));
+  const toBlob = (canvas: HTMLCanvasElement, mime: string, q: number) =>
+    new Promise<Blob>(res => canvas.toBlob(b => res(b!), mime, q));
 
   const { naturalWidth: w, naturalHeight: h } = img;
   const finalScale = Math.min(1, MAX_PX / Math.max(w, h));
@@ -194,6 +204,12 @@ export async function compressForUpload(img: HTMLImageElement): Promise<Blob> {
     ctx.drawImage(src, 0, 0, targetW, targetH);
   }
 
+  // PNG 투명 배경 보존: 알파 채널 있으면 JPEG(불투명 강제) 대신 PNG로 저장
+  // (JPEG는 알파를 지원하지 않아 투명 영역이 검은색으로 채워짐)
+  if (hasTransparency(canvas)) {
+    return toBlob(canvas, 'image/png', 1.0);
+  }
+
   // 2. Unsharp Mask — 새 캔버스에 contrast/sharpen 필터 적용 (자기 자신에게 적용 금지)
   const output = document.createElement('canvas');
   output.width = targetW;
@@ -203,7 +219,7 @@ export async function compressForUpload(img: HTMLImageElement): Promise<Blob> {
   oCtx.drawImage(canvas, 0, 0);
   oCtx.filter = 'none';
 
-  return toBlob(output, 1.0);
+  return toBlob(output, 'image/jpeg', 1.0);
 }
 
 export async function loadImageFromFile(file: File): Promise<{ img: HTMLImageElement; url: string }> {
@@ -242,8 +258,9 @@ export async function uploadScheduleImage(
   blob: Blob,
   suffix?: string,
 ): Promise<string | null> {
+  const ext = blob.type === 'image/png' ? 'png' : 'jpg';
   const formData = new FormData();
-  formData.append('file', blob, 'image.jpg');
+  formData.append('file', blob, `image.${ext}`);
   formData.append('folderName', folderName);
   formData.append('pageIndex', String(pageIndex));
   if (suffix) formData.append('suffix', suffix);
