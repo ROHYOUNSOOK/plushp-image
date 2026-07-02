@@ -208,14 +208,18 @@ export function drawMedicalLawPage(
   canvasH: number,
   page: Page,
   bgKeyColor: string,
-  firstPageBg?: { img: HTMLImageElement | null; solidColor?: string },
+  firstPageBg?: { img: HTMLImageElement | null; solidColor?: string; scale?: number },
 ): void {
   // 배경: firstPageBg 우선, 없으면 페이지 내 BackgroundLayer 폴백
   const bgLayer = page.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
   const bgImg   = firstPageBg?.img   ?? bgLayer?.img   ?? null;
   const bgSolid = firstPageBg?.solidColor ?? bgLayer?.solidColor ?? '#e8f4f7';
+  // userScale: 배경 레이어의 확대 배율(기본 101%)을 그대로 적용해
+  // cover 스케일 경계의 1px 미만 여백을 방지 (다른 페이지와 동일 로직)
+  const userScale = firstPageBg?.scale ?? bgLayer?.transform?.scale ?? 1.01;
   if (bgImg) {
-    const scale = Math.max(canvasW / bgImg.naturalWidth, canvasH / bgImg.naturalHeight);
+    const baseScale = Math.max(canvasW / bgImg.naturalWidth, canvasH / bgImg.naturalHeight);
+    const scale = baseScale * userScale;
     const dw = bgImg.naturalWidth * scale, dh = bgImg.naturalHeight * scale;
     ctx.drawImage(bgImg, (canvasW - dw) / 2, (canvasH - dh) / 2, dw, dh);
   } else {

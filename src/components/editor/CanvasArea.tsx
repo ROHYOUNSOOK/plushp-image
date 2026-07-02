@@ -143,7 +143,7 @@ export default function CanvasArea({ showShortcuts = true }: { showShortcuts?: b
         selectedLayerIds: state.selectedLayerIds,
         hoverId: state.hoverId,
         inlineEditingId: state.inlineEditingId,
-        firstPageBg: firstPageBg ? { img: firstPageBg.img, solidColor: firstPageBg.solidColor } : undefined,
+        firstPageBg: firstPageBg ? { img: firstPageBg.img, solidColor: firstPageBg.solidColor, scale: firstPageBg.transform?.scale } : undefined,
         isDragOver: state.isDragOver,
         dropTargetId: state.dropTargetId,
       };

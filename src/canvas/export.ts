@@ -34,7 +34,7 @@ export function renderPageToCanvas(
     selectedLayerIds: [],
     hoverId: null,
     inlineEditingId: null,
-    firstPageBg: firstPageBg ? { img: firstPageBg.img, solidColor: firstPageBg.solidColor } : undefined,
+    firstPageBg: firstPageBg ? { img: firstPageBg.img, solidColor: firstPageBg.solidColor, scale: firstPageBg.transform?.scale } : undefined,
     isDragOver: false,
     dropTargetId: null,
   };

@@ -30,7 +30,7 @@ export interface DrawContext {
   selectedLayerIds: string[];
   hoverId: string | null;
   inlineEditingId: string | null;
-  firstPageBg?: { img: HTMLImageElement | null; solidColor?: string };
+  firstPageBg?: { img: HTMLImageElement | null; solidColor?: string; scale?: number };
   isDragOver: boolean;
   dropTargetId: string | null;
 }
