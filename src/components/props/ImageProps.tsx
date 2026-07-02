@@ -7,7 +7,7 @@ import NumberInput from '@/components/ui/NumberInput';
 import SliderInput from '@/components/ui/SliderInput';
 import ImageUploadButton from '@/components/ui/ImageUploadButton';
 import CustomCheckbox from '@/components/ui/CustomCheckbox';
-import { loadImageFromFile, applyImageLayerImage, compressForUploadWithImage, uploadScheduleImage } from '@/lib/imageUpload';
+import { loadImageFromFile, applyImageLayerImage, compressForUploadWithImage, uploadScheduleImage, deleteOldImageLayerFile } from '@/lib/imageUpload';
 import { toast, hideToast } from '@/components/editor/Toast';
 
 export default function ImageProps({ layer }: { layer: ImageLayer }) {
@@ -51,6 +51,7 @@ export default function ImageProps({ layer }: { layer: ImageLayer }) {
           label={layer.img ? '이미지 교체' : '이미지 업로드'}
           onFile={async (file) => {
             try {
+              const previousUrl = layer.url; // 교체 전 URL — 업로드 성공 후 서버의 이전 파일 삭제용
               const { img: origImg } = await loadImageFromFile(file);
               useEditorStore.getState().pushHistory();
 
@@ -78,6 +79,8 @@ export default function ImageProps({ layer }: { layer: ImageLayer }) {
               if (uploadedUrl) {
                 useEditorStore.getState().updateLayer(layer.id, { url: uploadedUrl });
                 toast('업로드 완료');
+                // 같은 레이어의 이전 이미지가 서버에 남지 않도록 정리 (프레임 이미지는 대상 아님)
+                deleteOldImageLayerFile(folderName, previousUrl);
               } else {
                 toast('업로드 실패 — 로컬 이미지로 적용됨');
               }

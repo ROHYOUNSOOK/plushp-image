@@ -281,3 +281,25 @@ export async function uploadScheduleImage(
     return null;
   }
 }
+
+// 이미지 레이어 전용 파일명 패턴 (숫자_img접미사.ext) — 프레임 내부 이미지(숫자.ext)는 매치되지 않음
+const IMAGE_LAYER_FILENAME_RE = /^\d+_img[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/i;
+
+/**
+ * 이미지 레이어를 교체할 때, 그 레이어가 이전에 서버에 올렸던 파일을 삭제한다.
+ * 파일명이 이미지 레이어 전용 패턴(_img 접미사)일 때만 삭제 요청하므로
+ * 프레임 내부 이미지(N.jpg 등, 접미사 없음)는 절대 삭제 대상이 되지 않는다.
+ * 실패해도 무시(best-effort) — 새 이미지 적용을 막지 않는다.
+ */
+export async function deleteOldImageLayerFile(folderName: string, oldUrl: string | null): Promise<void> {
+  if (!oldUrl) return;
+  const filename = oldUrl.split('/').pop() ?? '';
+  if (!IMAGE_LAYER_FILENAME_RE.test(filename)) return;
+  try {
+    await fetch('/api/delete-schedule-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folderName, filename }),
+    });
+  } catch { /* best-effort, 실패 무시 */ }
+}

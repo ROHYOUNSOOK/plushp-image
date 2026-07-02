@@ -18,6 +18,7 @@ import {
   createDroppedImageLayer,
   compressForUploadWithImage,
   uploadScheduleImage,
+  deleteOldImageLayerFile,
 } from '@/lib/imageUpload';
 import { toast } from '@/components/editor/Toast';
 
@@ -625,6 +626,7 @@ export function useCanvasEvents({
         }
       } else if (hit && hit.type === 'image') {
         const imgLayer = hit as import('@/types/layer').ImageLayer;
+        const previousUrl = imgLayer.url; // 교체 전 URL — 업로드 성공 후 서버의 이전 파일 삭제용
         // 편집·저장 해상도 일치 (프레임 내부 이미지와 동일 방식)
         const { blob: imgBlob, img: cImg, url: cUrl } = await compressForUploadWithImage(img);
         applyImageLayerImage(imgLayer, cImg, cUrl);
@@ -645,6 +647,8 @@ export function useCanvasEvents({
           if (uploadedUrl) {
             useEditorStore.getState().updateLayer(hit.id, { url: uploadedUrl });
             dropToast('업로드 완료');
+            // 같은 레이어의 이전 이미지가 서버에 남지 않도록 정리 (프레임 이미지는 대상 아님)
+            deleteOldImageLayerFile(folderName, previousUrl);
           } else {
             dropToast('업로드 실패 — 로컬 이미지로 적용됨');
           }
