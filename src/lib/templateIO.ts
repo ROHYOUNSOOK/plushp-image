@@ -8,7 +8,39 @@ import type { Page } from '@/types/page';
 import { makeLayer } from './layerFactory';
 import { loadImage } from './utils';
 import { toProxyUrl } from './supabase';
-import { pruneOrphanedImageLayerFiles } from './imageUpload';
+import { pruneOrphanedImageLayerFiles, isImageLayerUrl, compressForUpload, uploadScheduleImage } from './imageUpload';
+
+/** 원격 URL이 실제로 서버에 존재하는지 확인 (HEAD) */
+async function urlExists(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(toProxyUrl(url), { method: 'HEAD', cache: 'no-store' });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 이미지 레이어가 가리키는 파일이 서버에서 사라진 경우(레이어 삭제→저장→Undo→재저장 등)
+ * 브라우저에 남아있는 이미지(layer.img)로 같은 파일명에 재업로드해 자가치유한다.
+ * 파일이 이미 존재하면 아무 것도 하지 않음(불필요한 재업로드 방지).
+ */
+async function healMissingImageLayerFiles(pages: Page[], folder: string): Promise<void> {
+  await Promise.all(
+    pages.flatMap((pg, pageIdx) =>
+      pg.layers
+        .filter((l): l is ImageLayer => l.type === 'image' && !!l.img && isImageLayerUrl(l.url))
+        .map(async l => {
+          const exists = await urlExists(l.url!);
+          if (exists) return;
+          try {
+            const blob = await compressForUpload(l.img!);
+            await uploadScheduleImage(folder, pageIdx + 1, blob, `img${l.id}`);
+          } catch { /* best-effort, 실패해도 저장 자체는 계속 진행 */ }
+        })
+    )
+  );
+}
 
 /* ── 파일명 생성 ── */
 
@@ -197,6 +229,11 @@ export async function saveCloudTemplate(
   scheduleRow: Record<string, unknown> | null = null,
 ): Promise<void> {
   const folder = buildTemplateFilename(scheduleRow);
+
+  // 자가치유: Undo 등으로 되살아난 레이어가 이미 서버에서 정리된 파일을 참조 중이면
+  // 브라우저에 남은 이미지로 같은 파일명에 재업로드해 링크를 복구한다.
+  await healMissingImageLayerFiles(pages, folder);
+
   const data = await Promise.all(
     pages.map(async pg => {
       const bgLayer = pg.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;

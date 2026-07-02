@@ -647,8 +647,10 @@ export function useCanvasEvents({
           if (uploadedUrl) {
             useEditorStore.getState().updateLayer(hit.id, { url: uploadedUrl });
             dropToast('업로드 완료');
-            // 같은 레이어의 이전 이미지가 서버에 남지 않도록 정리 (프레임 이미지는 대상 아님)
-            deleteOldImageLayerFile(folderName, previousUrl);
+            // 같은 레이어의 이전 이미지 정리 — 새 파일과 파일명이 다를 때만(같으면 방금 올린 파일을 덮어쓴 것)
+            if (previousUrl && previousUrl.split('/').pop() !== uploadedUrl.split('/').pop()) {
+              deleteOldImageLayerFile(folderName, previousUrl);
+            }
           } else {
             dropToast('업로드 실패 — 로컬 이미지로 적용됨');
           }

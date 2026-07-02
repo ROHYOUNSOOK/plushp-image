@@ -285,6 +285,13 @@ export async function uploadScheduleImage(
 // 이미지 레이어 전용 파일명 패턴 (숫자_img접미사.ext) — 프레임 내부 이미지(숫자.ext)는 매치되지 않음
 const IMAGE_LAYER_FILENAME_RE = /^\d+_img[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/i;
 
+/** url이 이미지 레이어 전용 파일명 패턴(_img 접미사)인지 검사 */
+export function isImageLayerUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  const filename = url.split('/').pop() ?? '';
+  return IMAGE_LAYER_FILENAME_RE.test(filename);
+}
+
 /**
  * 스케줄 폴더의 파일 하나를 삭제한다 (서버가 _img 접미사 패턴만 허용 — 이중 안전장치로 여기서도 검사).
  * 실패해도 무시(best-effort).
