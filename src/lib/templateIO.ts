@@ -7,6 +7,7 @@ import type { Layer, BackgroundLayer } from '@/types/layer';
 import type { Page } from '@/types/page';
 import { makeLayer } from './layerFactory';
 import { loadImage } from './utils';
+import { toProxyUrl } from './supabase';
 
 /* ── 파일명 생성 ── */
 
@@ -53,7 +54,8 @@ async function deserializeLayer(raw: Record<string, unknown>): Promise<Layer> {
   } else if ('url' in layer && layer.url && typeof layer.url === 'string') {
     const u = layer.url as string;
     if (u.startsWith('http') || u.startsWith('/api/proxy-image') || u.startsWith('/plus/')) {
-      try { layer.img = await loadImage(u); } catch { layer.img = null; }
+      // HTTPS 배포 환경에서는 프록시 경유(Mixed Content·CORS 회피)
+      try { layer.img = await loadImage(toProxyUrl(u)); } catch { layer.img = null; }
     } else {
       layer.img = null;
     }
@@ -70,7 +72,7 @@ async function deserializeLayer(raw: Record<string, unknown>): Promise<Layer> {
   } else if ('frameMaskUrl' in layer && layer.frameMaskUrl && typeof layer.frameMaskUrl === 'string') {
     const mu = layer.frameMaskUrl as string;
     if (mu.startsWith('http') || mu.startsWith('/api/proxy-image') || mu.startsWith('/plus/')) {
-      try { layer.frameMaskImg = await loadImage(mu); } catch { layer.frameMaskImg = null; }
+      try { layer.frameMaskImg = await loadImage(toProxyUrl(mu)); } catch { layer.frameMaskImg = null; }
     } else {
       layer.frameMaskImg = null;
     }

@@ -216,7 +216,7 @@ export function drawMedicalLawPage(
   const bgSolid = firstPageBg?.solidColor ?? bgLayer?.solidColor ?? '#e8f4f7';
   // userScale: 배경 레이어의 확대 배율(기본 101%)을 그대로 적용해
   // cover 스케일 경계의 1px 미만 여백을 방지 (다른 페이지와 동일 로직)
-  const userScale = firstPageBg?.scale ?? bgLayer?.transform?.scale ?? 1.01;
+  const userScale = firstPageBg?.scale ?? bgLayer?.transform?.scale ?? 1.05;
   if (bgImg) {
     const baseScale = Math.max(canvasW / bgImg.naturalWidth, canvasH / bgImg.naturalHeight);
     const scale = baseScale * userScale;

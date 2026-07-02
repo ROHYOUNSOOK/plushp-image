@@ -16,7 +16,7 @@ export function makeLayer(type: LayerType): Layer {
       return {
         ...base, type: 'background',
         img: null, url: null, solidColor: '#4aabb8',
-        transform: { rotation: 0, flipH: false, flipV: false, scale: 1.01 },
+        transform: { rotation: 0, flipH: false, flipV: false, scale: 1.05 },
       };
 
     case 'frame':
