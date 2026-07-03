@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { useAssignment, type Designer } from '@/hooks/useAssignment';
 import { useScheduleApplication } from '@/hooks/useScheduleApplication';
@@ -16,9 +16,17 @@ const FILTER_OPTIONS: StatusFilter[] = ['전체', 'unassigned', 'assigned', 'in_
 export default function AdminAssignView() {
   const { rows, designers, loading, assign } = useAssignment();
   const [filter, setFilter] = useState<StatusFilter>('전체');
-  const [dateFilter, setDateFilter] = useState<string>('');
-  const [saving, setSaving] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [dateFilter, setDateFilterState] = useState<string>(searchParams.get('date') ?? '');
+  const [saving, setSaving] = useState<string | null>(null);
+
+  const setDateFilter = (v: string) => {
+    setDateFilterState(v);
+    const params = new URLSearchParams(searchParams.toString());
+    if (v) params.set('date', v); else params.delete('date');
+    router.replace(`/admin/users?${params.toString()}`);
+  };
   const { navigateToEditor, navigating } = useScheduleApplication();
   const [allDoctors, setAllDoctors] = useState<DoctorInfo[]>([]);
 
