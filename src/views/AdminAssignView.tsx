@@ -105,7 +105,11 @@ export default function AdminAssignView() {
             <div
               key={row.id}
               className="px-5 py-3.5 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
-              onClick={() => router.push(`/plan?id=${row.id}`)}
+              onClick={() => {
+                const params = new URLSearchParams({ id: row.id });
+                if (dateFilter) params.set('date', dateFilter);
+                router.push(`/plan?${params.toString()}`);
+              }}
             >
               <span className="text-sm font-semibold text-gray-800 truncate shrink-0 max-w-[180px]">
                 {row.keyword || '(키워드 없음)'}

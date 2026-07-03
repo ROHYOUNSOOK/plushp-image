@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import CustomSelect from '@/components/ui/CustomSelect';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { type ScheduleRow } from '@/lib/supabase';
 import { usePlanForm } from '@/hooks/usePlanForm';
@@ -36,15 +36,22 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
   const [activeDoctorIdx, setActiveDoctorIdx] = useState<number | null>(null);
   const [myName, setMyName] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const { handleSave, handleDelete, handleRevision } = usePlanForm(row, allDoctors, onSaved);
 
   const readOnly = !permissions.canEditPlans;
   const canDelete = permissions.canDeletePlans;
 
+  // 업무배분에서 넘어온 경우, 그때 선택돼 있던 업로드 날짜 필터를 그대로 들고 돌아간다.
+  const fromDate = searchParams.get('date');
+  const assignHref = fromDate
+    ? `/admin/users?tab=업무배분&date=${encodeURIComponent(fromDate)}`
+    : '/admin/users?tab=업무배분';
+
   // 역할별 이동 버튼: 마케터 → 내 업무 / 관리자 → 업무 배분 / 디자이너 → 비활성(뷰어)
   const navTarget = permissions.isAdmin
-    ? { label: '업무 배분으로 →', href: '/admin/users?tab=업무배분' }
+    ? { label: '업무 배분으로 →', href: assignHref }
     : permissions.isMarketer
       ? { label: '내 업무로 →', href: '/my-tasks-marketer' }
       : null;
