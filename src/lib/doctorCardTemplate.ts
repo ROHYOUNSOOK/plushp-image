@@ -125,8 +125,8 @@ export function applyDoctorCardTemplate(
   // 기존 배경박스 제거
   layers = layers.filter(l => !(l as TextboxLayer)._isDoctorCardBg);
 
-  // 배경 텍스트박스 생성
-  const minCardY = Math.min(...updatedCards.map(c => c.y));
+  // 배경 텍스트박스 생성 — 캔버스 하단에 고정(높이 200px), 화면 밖으로 넘어가지 않도록
+  const BG_H = 200;
   const bgLayer: TextboxLayer = {
     id: uid(),
     type: 'textbox',
@@ -134,7 +134,7 @@ export function applyDoctorCardTemplate(
     visible: true,
     locked: false,
     _isDoctorCardBg: true,
-    x: 0, y: minCardY - 40, w: W, h: 250,
+    x: 0, y: H - BG_H, w: W, h: BG_H,
     positionPreset: null,
     freePos: true,
     img: null, url: null, processedImg: null,
