@@ -147,7 +147,25 @@ export const useEditorStore = create<EditorState>((set) => ({
       }
     }
 
-    const newPage: Page = { id: state.pages.length + 1, name: '', layers: [logoLayer] };
+    // 기존 페이지(의료법 제외)의 배경 레이어를 복제해 새 페이지에도 동일 배경 적용
+    type BgLayer = import('@/types/layer').BackgroundLayer;
+    let bgLayer: BgLayer | null = null;
+    const srcBg = state.pages
+      .find(pg => !pg.isMedicalLaw && pg.layers.some(l => l.type === 'background'))
+      ?.layers.find(l => l.type === 'background') as BgLayer | undefined;
+    if (srcBg) {
+      const base = makeLayer('background') as BgLayer;
+      bgLayer = {
+        ...base,
+        img: srcBg.img,
+        url: srcBg.url,
+        solidColor: srcBg.solidColor,
+        transform: { ...srcBg.transform },
+      };
+    }
+
+    const newLayers = bgLayer ? [bgLayer, logoLayer] : [logoLayer];
+    const newPage: Page = { id: state.pages.length + 1, name: '', layers: newLayers };
     const pages = [...state.pages, newPage];
     return {
       pages,

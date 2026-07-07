@@ -96,7 +96,10 @@ export function usePlanForm(
       onSaved(saved);
       return saved;
     } catch (e: unknown) {
-      toast('저장 실패: ' + (e instanceof Error ? e.message : String(e)));
+      // Supabase 에러는 Error 인스턴스가 아니라 { message, details, hint, code } 객체
+      const err = e as { message?: string; details?: string; hint?: string; code?: string };
+      const msg = err?.message || err?.details || err?.hint || JSON.stringify(e);
+      toast('저장 실패: ' + msg);
       return null;
     }
   };
