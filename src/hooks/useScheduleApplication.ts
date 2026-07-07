@@ -89,9 +89,12 @@ export async function applyCloudTemplate(selectedRow: ScheduleRow, folderName: s
 export async function applyRandomFlow(selectedRow: ScheduleRow, allDoctors: DoctorInfo[], folderName: string): Promise<void> {
   toast('이미지 불러오는 중...', 0);
   const { specialties, departments, ids } = resolveDoctorInfo(selectedRow.doctors, allDoctors);
+  const doctors2 = selectedRow.doctors2 ?? [];
+  const g2Info = doctors2.length ? resolveDoctorInfo(doctors2, allDoctors) : null;
 
-  const [doctorImagesResult, frameImages, frameInnerImages] = await Promise.all([
+  const [doctorImagesResult, doctorImages2Result, frameImages, frameInnerImages] = await Promise.all([
     loadDoctorImages(ids),
+    loadDoctorImages(g2Info ? g2Info.ids : []),
     loadRandomFrameImages(selectedRow.texts.length),
     loadScheduleInnerImages(folderName, selectedRow.texts.length),
     fetch('/api/ensure-schedule-folder', {
@@ -99,7 +102,7 @@ export async function applyRandomFlow(selectedRow: ScheduleRow, allDoctors: Doct
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ folderName }),
     }).catch(() => {}),
-  ]) as [Awaited<ReturnType<typeof loadDoctorImages>>, { img: HTMLImageElement | null; url: string | null }[], { img: HTMLImageElement | null; url: string | null }[], unknown];
+  ]) as [Awaited<ReturnType<typeof loadDoctorImages>>, Awaited<ReturnType<typeof loadDoctorImages>>, { img: HTMLImageElement | null; url: string | null }[], { img: HTMLImageElement | null; url: string | null }[], unknown];
 
   const doctorImages = doctorImagesResult.map(r => r?.img ?? null);
   const doctorImageUrls = doctorImagesResult.map(r => r?.url ?? null);
@@ -110,6 +113,14 @@ export async function applyRandomFlow(selectedRow: ScheduleRow, allDoctors: Doct
   state.applySchedule(
     selectedRow.texts, selectedRow.doctors, selectedRow.doctor_specialty,
     specialties, departments, doctorImageUrls, doctorImages, frameImages, frameInnerImages,
+    g2Info ? {
+      doctors: doctors2,
+      doctorSpecialty: selectedRow.doctor_specialty2 ?? '',
+      doctorSpecialties: g2Info.specialties,
+      doctorDepartments: g2Info.departments,
+      doctorImageUrls: doctorImages2Result.map(r => r?.url ?? null),
+      doctorImages: doctorImages2Result.map(r => r?.img ?? null),
+    } : undefined,
   );
   await autoLoadLogos();
 

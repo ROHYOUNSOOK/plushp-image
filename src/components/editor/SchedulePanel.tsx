@@ -73,6 +73,7 @@ export default function SchedulePanel() {
           <div className="text-[10px] text-gray-500">
             문구 {selectedRow.texts.length}장
             {selectedRow.doctors.length > 0 && ` + 원장님 1장 (${selectedRow.doctors.join(', ')})`}
+            {(selectedRow.doctors2?.length ?? 0) > 0 && ` + 원장님 1장 (${selectedRow.doctors2!.join(', ')})`}
             {' + 의료법 1장'}
           </div>
         )}

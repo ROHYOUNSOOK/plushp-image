@@ -14,6 +14,9 @@ export interface ScheduleRow {
   texts: string[];
   doctors: string[];
   doctor_specialty: string;
+  // 두 번째 원장님 페이지 (선택) — 비어있으면 원장님 페이지는 1장만 생성됨
+  doctors2?: string[] | null;
+  doctor_specialty2?: string | null;
   page6_medical_law: string;
   marketer: string;
   assigned_to?: string | null;

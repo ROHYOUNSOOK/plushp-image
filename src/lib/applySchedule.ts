@@ -26,6 +26,15 @@ function calcLogoCornerPos(corner: TbCorner, lw: number, lh: number) {
   };
 }
 
+interface DoctorGroup {
+  doctors: string[];
+  doctorSpecialty: string;
+  doctorSpecialties: string[];
+  doctorDepartments: string[];
+  doctorImageUrls: (string | null)[];
+  doctorImages: (HTMLImageElement | null)[];
+}
+
 export interface ApplyScheduleParams {
   texts: string[];
   doctors: string[];
@@ -34,6 +43,13 @@ export interface ApplyScheduleParams {
   doctorDepartments: string[];
   doctorImageUrls: (string | null)[];
   doctorImages: (HTMLImageElement | null)[];
+  // 두 번째 원장님 페이지 (선택)
+  doctors2?: string[];
+  doctorSpecialty2?: string;
+  doctorSpecialties2?: string[];
+  doctorDepartments2?: string[];
+  doctorImageUrls2?: (string | null)[];
+  doctorImages2?: (HTMLImageElement | null)[];
   frameImages: { img: HTMLImageElement | null; url: string | null }[];
   frameInnerImages?: { img: HTMLImageElement | null; url: string | null }[];
   currentPages: Page[];
@@ -47,13 +63,26 @@ export function buildSchedulePages({
   doctorDepartments,
   doctorImageUrls,
   doctorImages,
+  doctors2 = [],
+  doctorSpecialty2 = '',
+  doctorSpecialties2 = [],
+  doctorDepartments2 = [],
+  doctorImageUrls2 = [],
+  doctorImages2 = [],
   frameImages,
   frameInnerImages = [],
   currentPages,
 }: ApplyScheduleParams): Page[] {
   const textCount = texts.length;
-  const hasDoctors = doctors.length > 0;
-  const totalCount = textCount + (hasDoctors ? 1 : 0) + 1; // +1 의료법
+  // 비어있지 않은 원장님 그룹 목록 (그룹당 원장님 페이지 1장)
+  const doctorGroups: DoctorGroup[] = [];
+  if (doctors.length > 0) {
+    doctorGroups.push({ doctors, doctorSpecialty, doctorSpecialties, doctorDepartments, doctorImageUrls, doctorImages });
+  }
+  if (doctors2.length > 0) {
+    doctorGroups.push({ doctors: doctors2, doctorSpecialty: doctorSpecialty2, doctorSpecialties: doctorSpecialties2, doctorDepartments: doctorDepartments2, doctorImageUrls: doctorImageUrls2, doctorImages: doctorImages2 });
+  }
+  const totalCount = textCount + doctorGroups.length + 1; // +1 의료법
 
   // 기존 페이지 재활용 or 추가/제거
   let pages: Page[] = [...currentPages];
@@ -137,108 +166,11 @@ export function buildSchedulePages({
     };
   });
 
-  // 원장님 페이지
-  if (hasDoctors) {
-    const doctorPageIdx = textCount;
-    const drExistingLogo = pages[doctorPageIdx].layers.find(l => l.type === 'logo') as LogoLayer | undefined;
-    const drLogoLayer: LogoLayer = drExistingLogo ?? (() => {
-      const l = makeLayer('logo') as LogoLayer;
-      l.stroke = { enabled: true, color: null, width: 3, radius: 0 };
-      if (refLogo) { l.img = refLogo.img; l.url = refLogo.url; l.w = refLogo.w; l.h = refLogo.h; }
-      return l;
-    })();
-
-    pages[doctorPageIdx] = {
-      ...pages[doctorPageIdx],
-      name: '원장님',
-      isMedicalLaw: false,
-      layers: [
-        ...pages[doctorPageIdx].layers.filter(l => l.type !== 'logo' && l.type !== 'textbox' && !(l as unknown as TextboxLayer)._isDoctorCardBg),
-        drLogoLayer,
-      ],
-    };
-
-    const dc = Math.min(Math.max(doctors.length, 1), 4) as 1 | 2 | 3 | 4;
-    pages[doctorPageIdx] = applyDoctorCardTemplate(pages[doctorPageIdx], dc, doctors, doctorSpecialty, doctorSpecialties, doctorDepartments);
-
-    if (doctorImages && doctorImages.some(img => img !== null)) {
-      pages[doctorPageIdx] = {
-        ...pages[doctorPageIdx],
-        layers: pages[doctorPageIdx].layers.filter(l => !(l as ImageLayer & { _isDoctorImg?: boolean })._isDoctorImg),
-      };
-
-      const doctorCards = pages[doctorPageIdx].layers
-        .filter(l => l.type === 'doctor-card')
-        .sort((a, b) => a.x - b.x) as (import('@/types/layer').DoctorCardLayer & { _zoneCenter?: number })[];
-
-      const imgH = IMG_H_PRESETS[dc] ?? 630;
-      const yOffset = Y_OFFSETS[dc] ?? -20;
-      const slotW = Math.floor(1080 / dc);
-      const newImgLayers: ImageLayer[] = [];
-
-      for (let i = 0; i < dc; i++) {
-        const img = doctorImages[i];
-        if (!img) continue;
-        const aspect = img.naturalWidth / img.naturalHeight;
-        const imgW = Math.round(imgH * aspect);
-        const card = doctorCards[i];
-        let imgX: number, imgY: number;
-        if (card) {
-          const centerX = (card as { _zoneCenter?: number })._zoneCenter ?? (card.x + (card.w || 0) / 2);
-          imgX = Math.round(centerX - imgW / 2);
-          imgY = card.y - imgH + yOffset;
-        } else {
-          imgX = Math.round(slotW * i + (slotW - imgW) / 2);
-          imgY = 1080 - imgH - 160;
-        }
-
-        const imgLayer = {
-          ...(makeLayer('image') as ImageLayer),
-          _isDoctorImg: true,
-          name: doctors[i] ?? `원장님 ${i + 1}`,
-          img,
-          url: doctorImageUrls?.[i] ?? null,
-          x: imgX, y: imgY, w: imgW, h: imgH,
-          shadow: { enabled: true, color: null, alpha: 0.2, blur: 10, offsetX: 0, offsetY: 20 },
-        } as ImageLayer & { _isDoctorImg: boolean };
-        newImgLayers.push(imgLayer);
-      }
-
-      const tbIdx = pages[doctorPageIdx].layers.findIndex(l => l.type === 'textbox');
-      const layersCopy = [...pages[doctorPageIdx].layers];
-      layersCopy.splice(tbIdx >= 0 ? tbIdx : layersCopy.length, 0, ...newImgLayers);
-      pages[doctorPageIdx] = { ...pages[doctorPageIdx], layers: layersCopy };
-    }
-
-    const drExistingTb = pages[doctorPageIdx].layers.find(
-      l => l.type === 'textbox' && !(l as TextboxLayer)._isDoctorCardBg
-    ) as TextboxLayer | undefined;
-    const drTb: TextboxLayer = drExistingTb
-      ? { ...drExistingTb, content: doctorSpecialty }
-      : {
-          ...(makeLayer('textbox') as TextboxLayer),
-          content: doctorSpecialty,
-          freePos: false,
-          positionPreset: 'top-center' as const,
-          w: 900, h: 220,
-        };
-    pages[doctorPageIdx] = {
-      ...pages[doctorPageIdx],
-      layers: drExistingTb
-        ? pages[doctorPageIdx].layers.map(l => l.id === drExistingTb.id ? drTb : l)
-        : [...pages[doctorPageIdx].layers, drTb],
-    };
-
-    // 의사카드·텍스트박스가 추가된 뒤 로고가 가운데로 밀리므로 항상 최상단으로 이동
-    const drFinalLayers = pages[doctorPageIdx].layers;
-    const drLogo = drFinalLayers.find(l => l.type === 'logo');
-    if (drLogo) {
-      pages[doctorPageIdx] = {
-        ...pages[doctorPageIdx],
-        layers: [...drFinalLayers.filter(l => l.type !== 'logo'), drLogo],
-      };
-    }
-  }
+  // 원장님 페이지 (그룹 수만큼 — 문구 페이지 다음부터 순서대로)
+  doctorGroups.forEach((g, gi) => {
+    const idx = textCount + gi;
+    pages[idx] = buildDoctorPage(pages[idx], refLogo, g);
+  });
 
   // 의료법 페이지
   const medIdx = totalCount - 1;
@@ -292,4 +224,111 @@ export function buildSchedulePages({
   }));
 
   return pages;
+}
+
+/** 원장님 페이지 한 장을 빌드한다 (그룹 데이터 기준). 기존 단일 원장님 페이지 로직과 100% 동일. */
+function buildDoctorPage(inputPage: Page, refLogo: LogoLayer | undefined, g: DoctorGroup): Page {
+  const { doctors, doctorSpecialty, doctorSpecialties, doctorDepartments, doctorImageUrls, doctorImages } = g;
+  let page = inputPage;
+
+  const drExistingLogo = page.layers.find(l => l.type === 'logo') as LogoLayer | undefined;
+  const drLogoLayer: LogoLayer = drExistingLogo ?? (() => {
+    const l = makeLayer('logo') as LogoLayer;
+    l.stroke = { enabled: true, color: null, width: 3, radius: 0 };
+    if (refLogo) { l.img = refLogo.img; l.url = refLogo.url; l.w = refLogo.w; l.h = refLogo.h; }
+    return l;
+  })();
+
+  page = {
+    ...page,
+    name: '원장님',
+    isMedicalLaw: false,
+    layers: [
+      ...page.layers.filter(l => l.type !== 'logo' && l.type !== 'textbox' && !(l as unknown as TextboxLayer)._isDoctorCardBg),
+      drLogoLayer,
+    ],
+  };
+
+  const dc = Math.min(Math.max(doctors.length, 1), 4) as 1 | 2 | 3 | 4;
+  page = applyDoctorCardTemplate(page, dc, doctors, doctorSpecialty, doctorSpecialties, doctorDepartments);
+
+  if (doctorImages && doctorImages.some(img => img !== null)) {
+    page = {
+      ...page,
+      layers: page.layers.filter(l => !(l as ImageLayer & { _isDoctorImg?: boolean })._isDoctorImg),
+    };
+
+    const doctorCards = page.layers
+      .filter(l => l.type === 'doctor-card')
+      .sort((a, b) => a.x - b.x) as (import('@/types/layer').DoctorCardLayer & { _zoneCenter?: number })[];
+
+    const imgH = IMG_H_PRESETS[dc] ?? 630;
+    const yOffset = Y_OFFSETS[dc] ?? -20;
+    const slotW = Math.floor(1080 / dc);
+    const newImgLayers: ImageLayer[] = [];
+
+    for (let i = 0; i < dc; i++) {
+      const img = doctorImages[i];
+      if (!img) continue;
+      const aspect = img.naturalWidth / img.naturalHeight;
+      const imgW = Math.round(imgH * aspect);
+      const card = doctorCards[i];
+      let imgX: number, imgY: number;
+      if (card) {
+        const centerX = (card as { _zoneCenter?: number })._zoneCenter ?? (card.x + (card.w || 0) / 2);
+        imgX = Math.round(centerX - imgW / 2);
+        imgY = card.y - imgH + yOffset;
+      } else {
+        imgX = Math.round(slotW * i + (slotW - imgW) / 2);
+        imgY = 1080 - imgH - 160;
+      }
+
+      const imgLayer = {
+        ...(makeLayer('image') as ImageLayer),
+        _isDoctorImg: true,
+        name: doctors[i] ?? `원장님 ${i + 1}`,
+        img,
+        url: doctorImageUrls?.[i] ?? null,
+        x: imgX, y: imgY, w: imgW, h: imgH,
+        shadow: { enabled: true, color: null, alpha: 0.2, blur: 10, offsetX: 0, offsetY: 20 },
+      } as ImageLayer & { _isDoctorImg: boolean };
+      newImgLayers.push(imgLayer);
+    }
+
+    const tbIdx = page.layers.findIndex(l => l.type === 'textbox');
+    const layersCopy = [...page.layers];
+    layersCopy.splice(tbIdx >= 0 ? tbIdx : layersCopy.length, 0, ...newImgLayers);
+    page = { ...page, layers: layersCopy };
+  }
+
+  const drExistingTb = page.layers.find(
+    l => l.type === 'textbox' && !(l as TextboxLayer)._isDoctorCardBg
+  ) as TextboxLayer | undefined;
+  const drTb: TextboxLayer = drExistingTb
+    ? { ...drExistingTb, content: doctorSpecialty }
+    : {
+        ...(makeLayer('textbox') as TextboxLayer),
+        content: doctorSpecialty,
+        freePos: false,
+        positionPreset: 'top-center' as const,
+        w: 900, h: 220,
+      };
+  page = {
+    ...page,
+    layers: drExistingTb
+      ? page.layers.map(l => l.id === drExistingTb.id ? drTb : l)
+      : [...page.layers, drTb],
+  };
+
+  // 의사카드·텍스트박스가 추가된 뒤 로고가 가운데로 밀리므로 항상 최상단으로 이동
+  const drFinalLayers = page.layers;
+  const drLogo = drFinalLayers.find(l => l.type === 'logo');
+  if (drLogo) {
+    page = {
+      ...page,
+      layers: [...drFinalLayers.filter(l => l.type !== 'logo'), drLogo],
+    };
+  }
+
+  return page;
 }

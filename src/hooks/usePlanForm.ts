@@ -28,6 +28,8 @@ interface FormValues {
   image_notes: string[];
   doctors: string[];
   doctor_specialty: string;
+  doctors2: string[];
+  doctor_specialty2: string;
 }
 
 export function usePlanForm(
@@ -52,6 +54,8 @@ export function usePlanForm(
       image_notes: form.image_notes,
       doctors: form.doctors.filter(d => d.trim()),
       doctor_specialty: form.doctor_specialty,
+      doctors2: form.doctors2.filter(d => d.trim()),
+      doctor_specialty2: form.doctor_specialty2,
       completed: row?.completed ?? false,
       ...(row?.id ? {} : { created_by: user?.id ?? null }),
     };

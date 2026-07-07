@@ -23,6 +23,16 @@ import {
 
 /* ── 스토어 타입 ── */
 
+// 두 번째 원장님 페이지용 그룹 데이터
+export interface DoctorGroupInput {
+  doctors: string[];
+  doctorSpecialty: string;
+  doctorSpecialties: string[];
+  doctorDepartments: string[];
+  doctorImageUrls: (string | null)[];
+  doctorImages: (HTMLImageElement | null)[];
+}
+
 export interface EditorState extends HistoryState {
   // 페이지
   pages: Page[];
@@ -87,7 +97,7 @@ export interface EditorState extends HistoryState {
   setIsDragOver: (v: boolean) => void;
   setDropTargetId: (id: string | null) => void;
   toggleMedicalLaw: (index: number) => void;
-  applySchedule: (texts: string[], doctors: string[], doctorSpecialty: string, doctorSpecialties?: string[], doctorDepartments?: string[], doctorImageUrls?: (string | null)[], doctorImages?: (HTMLImageElement | null)[], frameImages?: { img: HTMLImageElement | null; url: string | null }[], frameInnerImages?: { img: HTMLImageElement | null; url: string | null }[]) => void;
+  applySchedule: (texts: string[], doctors: string[], doctorSpecialty: string, doctorSpecialties?: string[], doctorDepartments?: string[], doctorImageUrls?: (string | null)[], doctorImages?: (HTMLImageElement | null)[], frameImages?: { img: HTMLImageElement | null; url: string | null }[], frameInnerImages?: { img: HTMLImageElement | null; url: string | null }[], group2?: DoctorGroupInput) => void;
   setCurrentScheduleRow: (row: Record<string, unknown> | null) => void;
   setEditorReadOnly: (v: boolean) => void;
   resetEditor: () => void;
@@ -419,11 +429,17 @@ export const useEditorStore = create<EditorState>((set) => ({
     return { pages };
   }),
 
-  applySchedule: (texts, doctors, doctorSpecialty, doctorSpecialties = [], doctorDepartments = [], doctorImageUrls = [], doctorImages = [], frameImages = [] as { img: HTMLImageElement | null; url: string | null }[], frameInnerImages = []) => set(state => {
+  applySchedule: (texts, doctors, doctorSpecialty, doctorSpecialties = [], doctorDepartments = [], doctorImageUrls = [], doctorImages = [], frameImages = [] as { img: HTMLImageElement | null; url: string | null }[], frameInnerImages = [], group2) => set(state => {
     const pages = buildSchedulePages({
       texts, doctors, doctorSpecialty,
       doctorSpecialties, doctorDepartments,
       doctorImageUrls, doctorImages, frameImages, frameInnerImages,
+      doctors2: group2?.doctors,
+      doctorSpecialty2: group2?.doctorSpecialty,
+      doctorSpecialties2: group2?.doctorSpecialties,
+      doctorDepartments2: group2?.doctorDepartments,
+      doctorImageUrls2: group2?.doctorImageUrls,
+      doctorImages2: group2?.doctorImages,
       currentPages: state.pages,
     });
     return { pages, currentPage: 0, selectedLayerId: null, selectedLayerIds: [] };

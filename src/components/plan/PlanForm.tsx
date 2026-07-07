@@ -27,13 +27,16 @@ const EMPTY_FORM = {
   image_notes: ['', '', '', ''],
   doctors: [''],
   doctor_specialty: '',
+  doctors2: [] as string[],       // 두 번째 원장님 페이지 (비어있으면 미생성)
+  doctor_specialty2: '',
 };
 
 export default function PlanForm({ row, allDoctors, blogAccounts, permissions, onSaved, onDeleted }: Props) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [activeDoctorIdx, setActiveDoctorIdx] = useState<number | null>(null);
+  // 어느 원장님 페이지(그룹)의 몇 번째 입력에서 드롭다운이 열렸는지
+  const [activeDoctor, setActiveDoctor] = useState<{ group: 1 | 2; idx: number } | null>(null);
   const [myName, setMyName] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -85,12 +88,14 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
         image_notes: row.image_notes?.length ? [...row.image_notes] : Array(row.texts?.length || 4).fill(''),
         doctors: row.doctors?.length ? row.doctors : [''],
         doctor_specialty: row.doctor_specialty ?? '',
+        doctors2: row.doctors2?.length ? [...row.doctors2] : [],
+        doctor_specialty2: row.doctor_specialty2 ?? '',
       });
     } else {
       setForm({ ...EMPTY_FORM, marketer: myName });
     }
     setSuggestions([]);
-    setActiveDoctorIdx(null);
+    setActiveDoctor(null);
   }, [row?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // When user name loads after form init, fill marketer if still empty
@@ -117,30 +122,124 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
     image_notes: f.image_notes.filter((_, idx) => idx !== i),
   }));
 
-  const setDoctorAt = (i: number, v: string) => {
-    setForm(f => { const doctors = [...f.doctors]; doctors[i] = v; return { ...f, doctors }; });
+  const doctorKey = (group: 1 | 2) => (group === 1 ? 'doctors' : 'doctors2') as 'doctors' | 'doctors2';
+
+  const setDoctorAt = (group: 1 | 2, i: number, v: string) => {
+    const key = doctorKey(group);
+    setForm(f => { const arr = [...f[key]]; arr[i] = v; return { ...f, [key]: arr }; });
     const filtered = v.trim()
       ? allDoctors.filter(d => d.doctor_name.includes(v.trim())).map(d => d.doctor_name)
       : allDoctors.map(d => d.doctor_name);
     setSuggestions(filtered);
-    setActiveDoctorIdx(i);
+    setActiveDoctor({ group, idx: i });
   };
 
-  const openDoctorDropdown = (i: number) => {
+  const openDoctorDropdown = (group: 1 | 2, i: number) => {
     setSuggestions(allDoctors.map(d => d.doctor_name));
-    setActiveDoctorIdx(i);
+    setActiveDoctor({ group, idx: i });
   };
 
   const pickSuggestion = (name: string) => {
-    if (activeDoctorIdx !== null) {
-      setForm(f => { const doctors = [...f.doctors]; doctors[activeDoctorIdx] = name; return { ...f, doctors }; });
+    if (activeDoctor) {
+      const key = doctorKey(activeDoctor.group);
+      const idx = activeDoctor.idx;
+      setForm(f => { const arr = [...f[key]]; arr[idx] = name; return { ...f, [key]: arr }; });
     }
     setSuggestions([]);
-    setActiveDoctorIdx(null);
+    setActiveDoctor(null);
   };
 
-  const addDoctor = () => setForm(f => ({ ...f, doctors: [...f.doctors, ''] }));
-  const removeDoctor = (i: number) => setForm(f => ({ ...f, doctors: f.doctors.filter((_, idx) => idx !== i) }));
+  const addDoctor = (group: 1 | 2) => {
+    const key = doctorKey(group);
+    setForm(f => ({ ...f, [key]: [...f[key], ''] }));
+  };
+  const removeDoctor = (group: 1 | 2, i: number) => {
+    const key = doctorKey(group);
+    setForm(f => ({ ...f, [key]: f[key].filter((_, idx) => idx !== i) }));
+  };
+
+  // 두 번째 원장님 페이지 추가/삭제 (빈 배열이면 페이지 미생성)
+  const addDoctorPage = () => setForm(f => ({ ...f, doctors2: [''], doctor_specialty2: '' }));
+  const removeDoctorPage = () => setForm(f => ({ ...f, doctors2: [], doctor_specialty2: '' }));
+
+  // 원장님 페이지 블록 (그룹 1/2 공통 렌더)
+  const renderDoctorBlock = (
+    group: 1 | 2,
+    doctorsArr: string[],
+    specialty: string,
+    pageNumber: number,
+    onRemovePage?: () => void,
+  ) => (
+    <div className="mt-4 rounded-lg border-l-4 border-[#1450a0] bg-[#f4f7fc] px-3 py-3">
+      <div className="flex items-center gap-2 mb-2.5">
+        <span className="text-[11px] font-medium text-gray-300 w-4 shrink-0 text-right">{pageNumber}</span>
+        <span className="text-xs font-semibold text-[#1450a0]">원장님 페이지</span>
+        {!readOnly && onRemovePage && (
+          <button
+            onClick={onRemovePage}
+            className="ml-auto text-[11px] text-gray-400 hover:text-red-400 transition-colors"
+          >페이지 삭제</button>
+        )}
+      </div>
+
+      <div className="ml-6 space-y-2.5">
+        <div>
+          <label className="block text-[11px] font-medium text-gray-400 mb-1">원장님 페이지 제목</label>
+          <Input
+            value={specialty}
+            onChange={v => setField(group === 1 ? 'doctor_specialty' : 'doctor_specialty2', v)}
+            placeholder="ex. 정형외과 전문의 진료"
+            disabled={readOnly}
+          />
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-medium text-gray-400 mb-1">원장님</label>
+          <div className="space-y-2">
+            {doctorsArr.map((d, i) => (
+              <div key={i} className="flex items-center gap-2 relative">
+                <div className="flex-1 min-w-0 relative">
+                  <input
+                    className="w-full text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] focus:ring-2 focus:ring-[#1450a0/10] transition placeholder:text-gray-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    value={d}
+                    onChange={e => setDoctorAt(group, i, e.target.value)}
+                    onFocus={() => !readOnly && openDoctorDropdown(group, i)}
+                    onBlur={() => setTimeout(() => { setSuggestions([]); setActiveDoctor(null); }, 150)}
+                    placeholder="이름 입력 또는 선택"
+                    disabled={readOnly}
+                  />
+                  {!readOnly && activeDoctor?.group === group && activeDoctor?.idx === i && suggestions.length > 0 && (
+                    <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-y-auto max-h-48">
+                      {suggestions.map(s => (
+                        <button
+                          key={s}
+                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#e3edf8] border-b border-gray-100 last:border-0"
+                          onMouseDown={() => pickSuggestion(s)}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {!readOnly && (
+                  <button
+                    onClick={() => removeDoctor(group, i)}
+                    className={`shrink-0 w-5 text-base leading-none transition-colors ${doctorsArr.length > 1 ? 'text-gray-300 hover:text-red-400' : 'invisible'}`}
+                  >×</button>
+                )}
+              </div>
+            ))}
+            {!readOnly && doctorsArr.length < 4 && (
+              <button onClick={() => addDoctor(group)} className="mt-1 text-xs text-[#1450a0] hover:text-[#1045a0] transition-colors">
+                + 원장님 추가
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -252,69 +351,19 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
             </div>
 
             {/* 원장님 페이지 (별도 블록 — 페이지 추가 로직과 무관) */}
-            <div className="mt-4 rounded-lg border-l-4 border-[#1450a0] bg-[#f4f7fc] px-3 py-3">
-              <div className="flex items-center gap-2 mb-2.5">
-                <span className="text-[11px] font-medium text-gray-300 w-4 shrink-0 text-right">{form.texts.length + 1}</span>
-                <span className="text-xs font-semibold text-[#1450a0]">원장님 페이지</span>
-              </div>
+            {renderDoctorBlock(1, form.doctors, form.doctor_specialty, form.texts.length + 1)}
 
-              <div className="ml-6 space-y-2.5">
-                <div>
-                  <label className="block text-[11px] font-medium text-gray-400 mb-1">원장님 페이지 제목</label>
-                  <Input
-                    value={form.doctor_specialty}
-                    onChange={v => setField('doctor_specialty', v)}
-                    placeholder="ex. 정형외과 전문의 진료"
-                    disabled={readOnly}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-medium text-gray-400 mb-1">원장님</label>
-                  <div className="space-y-2">
-                    {form.doctors.map((d, i) => (
-                      <div key={i} className="flex items-center gap-2 relative">
-                        <div className="flex-1 min-w-0 relative">
-                          <input
-                            className="w-full text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-2 bg-white outline-none focus:border-[#1450a0] focus:ring-2 focus:ring-[#1450a0/10] transition placeholder:text-gray-500 disabled:bg-gray-50 disabled:text-gray-500"
-                            value={d}
-                            onChange={e => setDoctorAt(i, e.target.value)}
-                            onFocus={() => !readOnly && openDoctorDropdown(i)}
-                            onBlur={() => setTimeout(() => { setSuggestions([]); setActiveDoctorIdx(null); }, 150)}
-                            placeholder="이름 입력 또는 선택"
-                            disabled={readOnly}
-                          />
-                          {!readOnly && activeDoctorIdx === i && suggestions.length > 0 && (
-                            <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-y-auto max-h-48">
-                              {suggestions.map(s => (
-                                <button
-                                  key={s}
-                                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#e3edf8] border-b border-gray-100 last:border-0"
-                                  onMouseDown={() => pickSuggestion(s)}
-                                >
-                                  {s}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        {!readOnly && (
-                          <button
-                            onClick={() => removeDoctor(i)}
-                            className={`shrink-0 w-5 text-base leading-none transition-colors ${form.doctors.length > 1 ? 'text-gray-300 hover:text-red-400' : 'invisible'}`}
-                          >×</button>
-                        )}
-                      </div>
-                    ))}
-                    {!readOnly && form.doctors.length < 4 && (
-                      <button onClick={addDoctor} className="mt-1 text-xs text-[#1450a0] hover:text-[#1045a0] transition-colors">
-                        + 원장님 추가
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* 두 번째 원장님 페이지 (선택) */}
+            {form.doctors2.length > 0
+              ? renderDoctorBlock(2, form.doctors2, form.doctor_specialty2, form.texts.length + 2, removeDoctorPage)
+              : (!readOnly && (
+                  <button
+                    onClick={addDoctorPage}
+                    className="mt-3 ml-6 text-xs text-[#1450a0] hover:text-[#1045a0] transition-colors"
+                  >
+                    + 원장님 페이지 추가
+                  </button>
+                ))}
           </Section>
           </div>
 
