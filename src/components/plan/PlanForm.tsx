@@ -230,7 +230,7 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
                 )}
               </div>
             ))}
-            {!readOnly && doctorsArr.length < 4 && (
+            {!readOnly && doctorsArr.length < 5 && (
               <button onClick={() => addDoctor(group)} className="mt-1 text-xs text-[#1450a0] hover:text-[#1045a0] transition-colors">
                 + 원장님 추가
               </button>
