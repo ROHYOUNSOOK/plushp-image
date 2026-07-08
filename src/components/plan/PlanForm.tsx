@@ -383,7 +383,7 @@ export default function PlanForm({ row, allDoctors, blogAccounts, permissions, o
           <button
             onClick={async () => { setSaving(true); await handleSave(form); setSaving(false); }}
             disabled={saving}
-            className="flex-1 py-2.5 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors"
+            className="flex-1 py-2.5 text-sm font-semibold rounded-lg bg-[#16a34a] text-white hover:bg-[#15803d] disabled:opacity-40 transition-colors"
           >
             {saving ? '저장 중...' : '저장'}
           </button>
