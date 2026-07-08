@@ -14,17 +14,32 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        // 일부 구글 엔드포인트는 UA 없는 요청을 거부하므로 명시
+        'User-Agent': 'plus-next-sheet-sync',
+      },
       body: JSON.stringify({ ...body, secret }),
       redirect: 'follow',
-    });
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeout));
+
     const text = await res.text();
     let data: unknown;
-    try { data = JSON.parse(text); } catch { data = { ok: false, error: 'non-json response from apps script' }; }
+    try { data = JSON.parse(text); }
+    catch {
+      // JSON이 아니면 원문 앞부분을 담아 원인 파악 가능하게
+      data = { ok: false, error: 'non-json response', status: res.status, snippet: text.slice(0, 300) };
+    }
     return NextResponse.json(data);
-  } catch {
-    return NextResponse.json({ ok: false, error: 'apps script 연결 실패' }, { status: 502 });
+  } catch (err) {
+    return NextResponse.json(
+      { ok: false, error: 'apps script fetch failed', detail: String(err) },
+      { status: 502 },
+    );
   }
 }
