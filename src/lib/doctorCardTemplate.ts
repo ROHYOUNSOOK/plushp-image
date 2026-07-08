@@ -17,7 +17,7 @@ const PRESETS: Record<number, { subjectSize: number; nameSize: number; suffixSiz
   2: { subjectSize: 26, nameSize: 72, suffixSize: 38, specialtySize: 24, lineGap: 14 },
   3: { subjectSize: 22, nameSize: 60, suffixSize: 32, specialtySize: 20, lineGap: 12 },
   4: { subjectSize: 20, nameSize: 56, suffixSize: 30, specialtySize: 18, lineGap: 11 },
-  5: { subjectSize: 18, nameSize: 50, suffixSize: 27, specialtySize: 16, lineGap: 10 },
+  5: { subjectSize: 18, nameSize: 44, suffixSize: 24, specialtySize: 16, lineGap: 10 },
 };
 
 /** 인원수별 이미지 높이 프리셋 (원본 HTML과 동일) */
