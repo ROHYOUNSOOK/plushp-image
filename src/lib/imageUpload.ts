@@ -155,27 +155,18 @@ function hasTransparency(canvas: HTMLCanvasElement): boolean {
   return false;
 }
 
-export async function compressForUpload(img: HTMLImageElement): Promise<Blob> {
-  const MAX_PX = 2160;
-  const toBlob = (canvas: HTMLCanvasElement, mime: string, q: number) =>
-    new Promise<Blob>(res => canvas.toBlob(b => res(b!), mime, q));
+// Vercel 서버리스 함수 요청 본문 한도(4.5MB)보다 낮은 안전 목표치.
+// 압축 결과가 이 값을 넘으면 품질·해상도를 단계적으로 낮춰 재압축한다.
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 
+/** 지정 해상도로 리샘플링한 캔버스를 만든다 (createImageBitmap 우선, 미지원 시 단계 리사이즈). */
+async function resampleToCanvas(img: HTMLImageElement, targetW: number, targetH: number): Promise<HTMLCanvasElement> {
   const { naturalWidth: w, naturalHeight: h } = img;
-  const finalScale = Math.min(1, MAX_PX / Math.max(w, h));
-  const targetW = Math.round(w * finalScale);
-  const targetH = Math.round(h * finalScale);
-
-  // 1. createImageBitmap으로 고품질 리샘플링 (브라우저 최적 알고리즘)
   let bitmap: ImageBitmap | null = null;
   try {
-    bitmap = await createImageBitmap(img, {
-      resizeWidth: targetW,
-      resizeHeight: targetH,
-      resizeQuality: 'high',
-    });
+    bitmap = await createImageBitmap(img, { resizeWidth: targetW, resizeHeight: targetH, resizeQuality: 'high' });
   } catch { /* 미지원 브라우저 → fallback */ }
 
-  // 최종 캔버스
   const canvas = document.createElement('canvas');
   canvas.width = targetW;
   canvas.height = targetH;
@@ -187,7 +178,6 @@ export async function compressForUpload(img: HTMLImageElement): Promise<Blob> {
     ctx.drawImage(bitmap, 0, 0, targetW, targetH);
     bitmap.close();
   } else {
-    // fallback: 단계적 리사이즈
     let curW = w, curH = h;
     let src: HTMLImageElement | HTMLCanvasElement = img;
     while (curW > targetW * 2 || curH > targetH * 2) {
@@ -203,23 +193,53 @@ export async function compressForUpload(img: HTMLImageElement): Promise<Blob> {
     }
     ctx.drawImage(src, 0, 0, targetW, targetH);
   }
+  return canvas;
+}
 
-  // PNG 투명 배경 보존: 알파 채널 있으면 JPEG(불투명 강제) 대신 PNG로 저장
-  // (JPEG는 알파를 지원하지 않아 투명 영역이 검은색으로 채워짐)
-  if (hasTransparency(canvas)) {
-    return toBlob(canvas, 'image/png', 1.0);
+export async function compressForUpload(img: HTMLImageElement): Promise<Blob> {
+  const toBlob = (canvas: HTMLCanvasElement, mime: string, q: number) =>
+    new Promise<Blob>(res => canvas.toBlob(b => res(b!), mime, q));
+
+  const { naturalWidth: w, naturalHeight: h } = img;
+  // 해상도 후보: 큰 이미지가 목표 용량을 못 맞추면 순차적으로 더 줄인다.
+  const MAX_PX_STEPS = [2160, 1920, 1600, 1280];
+
+  let lastBlob: Blob | null = null;
+
+  for (const maxPx of MAX_PX_STEPS) {
+    const finalScale = Math.min(1, maxPx / Math.max(w, h));
+    const targetW = Math.round(w * finalScale);
+    const targetH = Math.round(h * finalScale);
+    const canvas = await resampleToCanvas(img, targetW, targetH);
+
+    // PNG 투명 배경 보존: 알파 채널 있으면 PNG로 저장 (JPEG는 알파 미지원 → 투명이 검게 채워짐).
+    // PNG는 품질 조절이 안 되므로 용량이 크면 해상도를 낮춰 재시도한다.
+    if (hasTransparency(canvas)) {
+      const png = await toBlob(canvas, 'image/png', 1.0);
+      lastBlob = png;
+      if (png.size <= MAX_UPLOAD_BYTES) return png;
+      continue; // 다음(더 작은) 해상도로 재시도
+    }
+
+    // 불투명 이미지: Unsharp Mask 적용 후 JPEG 품질을 단계적으로 낮춰 목표 용량 이하로.
+    const output = document.createElement('canvas');
+    output.width = targetW;
+    output.height = targetH;
+    const oCtx = output.getContext('2d')!;
+    oCtx.filter = 'contrast(1.08) saturate(1.05)';
+    oCtx.drawImage(canvas, 0, 0);
+    oCtx.filter = 'none';
+
+    for (const q of [1.0, 0.92, 0.85, 0.78]) {
+      const jpg = await toBlob(output, 'image/jpeg', q);
+      lastBlob = jpg;
+      if (jpg.size <= MAX_UPLOAD_BYTES) return jpg;
+    }
+    // 이 해상도의 최저 품질로도 목표 초과 → 다음(더 작은) 해상도로 재시도
   }
 
-  // 2. Unsharp Mask — 새 캔버스에 contrast/sharpen 필터 적용 (자기 자신에게 적용 금지)
-  const output = document.createElement('canvas');
-  output.width = targetW;
-  output.height = targetH;
-  const oCtx = output.getContext('2d')!;
-  oCtx.filter = 'contrast(1.08) saturate(1.05)';
-  oCtx.drawImage(canvas, 0, 0);
-  oCtx.filter = 'none';
-
-  return toBlob(output, 'image/jpeg', 1.0);
+  // 모든 단계를 거쳐도 목표를 못 맞추면 마지막 결과라도 반환 (최선의 노력)
+  return lastBlob!;
 }
 
 export async function loadImageFromFile(file: File): Promise<{ img: HTMLImageElement; url: string }> {
