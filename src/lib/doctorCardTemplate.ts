@@ -17,22 +17,23 @@ const PRESETS: Record<number, { subjectSize: number; nameSize: number; suffixSiz
   2: { subjectSize: 26, nameSize: 72, suffixSize: 38, specialtySize: 24, lineGap: 14 },
   3: { subjectSize: 22, nameSize: 60, suffixSize: 32, specialtySize: 20, lineGap: 12 },
   4: { subjectSize: 20, nameSize: 56, suffixSize: 30, specialtySize: 18, lineGap: 11 },
+  5: { subjectSize: 18, nameSize: 50, suffixSize: 27, specialtySize: 16, lineGap: 10 },
 };
 
 /** 인원수별 이미지 높이 프리셋 (원본 HTML과 동일) */
-export const IMG_H_PRESETS: Record<number, number> = { 1: 920, 2: 820, 3: 730, 4: 680 };
-export const Y_OFFSETS: Record<number, number> = { 1: 80, 2: 80, 3: 30, 4: -30 };
+export const IMG_H_PRESETS: Record<number, number> = { 1: 920, 2: 820, 3: 730, 4: 680, 5: 630 };
+export const Y_OFFSETS: Record<number, number> = { 1: 80, 2: 80, 3: 30, 4: -30, 5: -30 };
 
 export function applyDoctorCardTemplate(
   page: Page,
-  count: 1 | 2 | 3 | 4,
+  count: 1 | 2 | 3 | 4 | 5,
   doctorNames?: string[],
   doctorSpecialty?: string,
   doctorSpecialties?: string[],
   doctorDepartments?: string[],
 ): Page {
   const p = PRESETS[count];
-  const margin = count === 4 ? MARGIN_4 : MARGIN;
+  const margin = count >= 4 ? MARGIN_4 : MARGIN;
   const usableW = W - margin * 2;
   const zoneW = usableW / count;
 

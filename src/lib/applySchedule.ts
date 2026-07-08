@@ -249,7 +249,7 @@ function buildDoctorPage(inputPage: Page, refLogo: LogoLayer | undefined, g: Doc
     ],
   };
 
-  const dc = Math.min(Math.max(doctors.length, 1), 4) as 1 | 2 | 3 | 4;
+  const dc = Math.min(Math.max(doctors.length, 1), 5) as 1 | 2 | 3 | 4 | 5;
   page = applyDoctorCardTemplate(page, dc, doctors, doctorSpecialty, doctorSpecialties, doctorDepartments);
 
   if (doctorImages && doctorImages.some(img => img !== null)) {

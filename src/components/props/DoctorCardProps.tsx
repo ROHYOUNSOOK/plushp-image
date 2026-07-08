@@ -20,7 +20,7 @@ export default function DoctorCardProps({ layer }: { layer: DoctorCardLayer }) {
 
   const update = (u: Partial<DoctorCardLayer>) => updateLayer(layer.id, u);
 
-  const handleTemplate = (count: 1 | 2 | 3 | 4) => {
+  const handleTemplate = (count: 1 | 2 | 3 | 4 | 5) => {
     pushHistory();
     const newPages = [...pages];
     newPages[currentPage] = applyDoctorCardTemplate(pages[currentPage], count);
@@ -35,8 +35,8 @@ export default function DoctorCardProps({ layer }: { layer: DoctorCardLayer }) {
       {/* 자동 배치 버튼 */}
       <div>
         <div className="text-xs text-gray-500 font-bold mb-1">자동 배치</div>
-        <div className="grid grid-cols-4 gap-1">
-          {([1, 2, 3, 4] as const).map(n => (
+        <div className="grid grid-cols-5 gap-1">
+          {([1, 2, 3, 4, 5] as const).map(n => (
             <button key={n} onClick={() => handleTemplate(n)}
               className="px-1 py-1.5 text-xs rounded border border-gray-300 hover:bg-blue-50 hover:border-blue-400 transition-colors">
               {n}인
