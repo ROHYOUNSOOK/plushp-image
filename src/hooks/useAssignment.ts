@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import type { ScheduleRow } from '@/lib/supabase';
+import { syncSheet } from '@/lib/sheetSync';
 
 export interface Designer {
   id: string;
@@ -35,6 +36,9 @@ export function useAssignment() {
   const assign = async (scheduleId: string, designerId: string | null) => {
     await supabase.from('plus_schedule').update({ assigned_to: designerId }).eq('id', scheduleId);
     setRows(prev => prev.map(r => r.id === scheduleId ? { ...r, assigned_to: designerId } : r));
+    // 협업시트 P열(디자이너) 동기화 — 미배분이면 빈값 (best-effort)
+    const designerName = designerId ? (designers.find(d => d.id === designerId)?.name ?? '') : '';
+    syncSheet({ action: 'assign', id: scheduleId, designerName });
   };
 
   const updateDeadline = async (scheduleId: string, deadline: string) => {

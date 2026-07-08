@@ -18,6 +18,7 @@ import { downloadCurrentPage, downloadAllAsZip } from '@/canvas/export';
 import { mergeTemplateIntoPage, saveCloudTemplate, loadCloudTemplate, listCloudTemplates, type TemplatePage } from '@/lib/templateIO';
 import { loadScheduleInnerImages, supabase } from '@/lib/supabase';
 import { buildScheduleFolderName, useScheduleApplication } from '@/hooks/useScheduleApplication';
+import { syncSheet } from '@/lib/sheetSync';
 import { createBrowserClient } from '@supabase/ssr';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
 import type { FrameLayer } from '@/types/layer';
@@ -394,6 +395,8 @@ export default function EditorShell() {
                 useEditorStore.getState().setCurrentScheduleRow({ ...currentScheduleRow, completed: true });
                 hideToast();
                 toast('디자인 완료 처리되었습니다');
+                // 협업시트 Q열(작업완료) 체크 (best-effort)
+                syncSheet({ action: 'complete', id, checked: true });
               } catch {
                 hideToast();
                 toast('디자인 저장 실패 — 다시 시도해주세요');
@@ -415,6 +418,8 @@ export default function EditorShell() {
               await supabase.from('plus_schedule').update({ confirmed: true }).eq('id', id);
               useEditorStore.getState().setCurrentScheduleRow({ ...currentScheduleRow, confirmed: true });
               toast('컨펌 완료 처리되었습니다');
+              // 협업시트 L열(컨펌완료) 체크 (best-effort)
+              syncSheet({ action: 'confirm', id, checked: true });
             }}
             className="ml-auto text-xs px-3 py-1.5 rounded-lg bg-green-500 hover:bg-green-400 text-white transition-colors whitespace-nowrap"
           >

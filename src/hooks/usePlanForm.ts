@@ -9,7 +9,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import { type ScheduleRow } from '@/lib/supabase';
 import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
 import { useScheduleApplication } from '@/hooks/useScheduleApplication';
-
+import { syncSheet } from '@/lib/sheetSync';
 import { toast } from '@/components/editor/Toast';
 
 interface Doctor {
@@ -86,6 +86,8 @@ export function usePlanForm(
       body: JSON.stringify({ folderName }),
     }).catch(() => {});
     toast('삭제 완료');
+    // 협업시트 행 제거 (best-effort)
+    syncSheet({ action: 'delete', id: row.id });
     return true;
   };
 
@@ -94,6 +96,28 @@ export function usePlanForm(
       const saved = await saveToDb(form);
       toast('저장 완료');
       onSaved(saved);
+
+      // 협업시트 동기화 (best-effort — 실패해도 저장에 영향 없음)
+      void (async () => {
+        let team = '';
+        try {
+          if (saved.created_by) {
+            const { data: u } = await supabase.from('users').select('team').eq('id', saved.created_by).single();
+            team = u?.team ?? '';
+          }
+        } catch { /* noop */ }
+        syncSheet({
+          action: 'upsert',
+          id: saved.id,
+          reqDate: (saved.created_at ?? '').slice(0, 10),
+          upDate: saved.date ?? '',
+          accountId: saved.account_id ?? '',
+          keyword: saved.keyword ?? '',
+          team,
+          marketer: saved.marketer ?? '',
+        });
+      })();
+
       return saved;
     } catch (e: unknown) {
       // Supabase 에러는 Error 인스턴스가 아니라 { message, details, hint, code } 객체
@@ -116,6 +140,9 @@ export function usePlanForm(
     if (error) { toast('수정요청 실패: ' + error.message); return; }
     onSaved({ ...row, completed: false, confirmed: false });
     toast('수정요청이 전송되었습니다');
+    // 협업시트 작업완료(Q)·컨펌완료(L) 체크 해제 (best-effort)
+    syncSheet({ action: 'complete', id: row.id, checked: false });
+    syncSheet({ action: 'confirm', id: row.id, checked: false });
   };
 
   return { handleSave, navigateToEditor, handleDelete, handleRevision, navigating };

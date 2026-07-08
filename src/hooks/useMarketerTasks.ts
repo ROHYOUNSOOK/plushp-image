@@ -5,6 +5,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import type { ScheduleRow } from '@/lib/supabase';
 import { useScheduleApplication } from '@/hooks/useScheduleApplication';
 import type { DoctorInfo } from '@/hooks/useScheduleData';
+import { syncSheet } from '@/lib/sheetSync';
 
 export function useMarketerTasks() {
   const [rows, setRows] = useState<ScheduleRow[]>([]);
@@ -41,6 +42,8 @@ export function useMarketerTasks() {
   const confirmRow = async (id: string) => {
     await supabase.from('plus_schedule').update({ confirmed: true }).eq('id', id);
     setRows(prev => prev.map(r => r.id === id ? { ...r, confirmed: true } : r));
+    // 협업시트 L열(컨펌완료) 체크 (best-effort)
+    syncSheet({ action: 'confirm', id, checked: true });
   };
 
   // 디자인 확인: 편집기로 이동(완료 건은 Ch5에서 읽기 전용으로 강제)
