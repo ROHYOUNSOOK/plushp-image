@@ -18,8 +18,8 @@ interface SyncPayload {
   keyword?: string;         // H 키워드
   team?: string;            // J 팀 (작성자 소속팀)
   marketer?: string;        // K 마케터
-  // assign 전용
-  designerName?: string;    // P 디자이너 (빈값 = 미배분)
+  // assign 전용 (upsert 시에도 이미 배정된 디자이너를 함께 기록)
+  designerName?: string;    // P 디자이너 (빈값 = 미배분/미지정)
   // complete/confirm 전용
   checked?: boolean;        // false면 해제 (수정요청 등)
 }

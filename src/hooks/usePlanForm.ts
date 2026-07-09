@@ -100,10 +100,18 @@ export function usePlanForm(
       // 협업시트 동기화 (best-effort — 실패해도 저장에 영향 없음)
       void (async () => {
         let team = '';
+        let designerName = '';
         try {
           if (saved.created_by) {
             const { data: u } = await supabase.from('users').select('team').eq('id', saved.created_by).single();
             team = u?.team ?? '';
+          }
+        } catch { /* noop */ }
+        try {
+          // 이미 배정된 디자이너도 함께 기록 — assign 이벤트 이전(로직 배포 전) 배정 건도 저장 한 번으로 P열 채움
+          if (saved.assigned_to) {
+            const { data: d } = await supabase.from('users').select('name').eq('id', saved.assigned_to).single();
+            designerName = d?.name ?? '';
           }
         } catch { /* noop */ }
         syncSheet({
@@ -115,6 +123,7 @@ export function usePlanForm(
           keyword: saved.keyword ?? '',
           team,
           marketer: saved.marketer ?? '',
+          designerName,
         });
       })();
 

@@ -69,6 +69,9 @@ function doPost(e) {
         setSafe_(sheet, targetRow, COL.keyword, p.keyword || '', skipped, 'keyword');
         setSafe_(sheet, targetRow, COL.team, p.team || '', skipped, 'team');
         setSafe_(sheet, targetRow, COL.marketer, p.marketer || '', skipped, 'marketer');
+        // 이미 배정된 디자이너가 있으면 P열도 채운다 (assign 이벤트 이전 배정 건 보완).
+        // 빈값이면 건드리지 않아, 별도로 배정된 디자이너를 저장이 지우지 않도록 한다.
+        if (p.designerName) setSafe_(sheet, targetRow, COL.designer, p.designerName, skipped, 'designer');
         return json_({ ok: true, mode: row > 0 ? 'updated' : 'inserted', row: targetRow, skipped: skipped });
       }
       case 'assign': { // 디자이너 배분 → P열 (미배분 처리 시 빈값)
