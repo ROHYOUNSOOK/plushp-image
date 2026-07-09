@@ -5,6 +5,41 @@
 
 import type { ImageLayer } from '@/types/layer';
 import { hexToRgb, calcShadowColor } from '@/lib/colorHelpers';
+import { applyFrameColorFilter } from './imageFilters';
+import { applyFiltersWebGL, isFilterFrozen, type CameraRawFilters } from './webglFilters';
+
+function buildFilterKey(layer: ImageLayer): string {
+  return `${layer.imgLightness||0}|${layer.imgTemperature||0}|${layer.imgContrast||0}|${layer.imgHighlights||0}|${layer.imgShadows||0}|${layer.imgVibrance||0}|${layer.imgSaturation||0}`;
+}
+
+function hasAnyFilter(layer: ImageLayer): boolean {
+  return (layer.imgLightness||0) !== 0 || (layer.imgTemperature||0) !== 0 ||
+    (layer.imgContrast||0) !== 0 || (layer.imgHighlights||0) !== 0 ||
+    (layer.imgShadows||0) !== 0 || (layer.imgVibrance||0) !== 0 || (layer.imgSaturation||0) !== 0;
+}
+
+/** 필터 적용된 캔버스를 반환 (프레임과 동일 방식, design 분기 없음). 필터 없으면 원본 그대로. */
+function getFilteredSrc(layer: ImageLayer): HTMLImageElement | HTMLCanvasElement {
+  if (!layer.img || !hasAnyFilter(layer)) return layer.img!;
+  const filterKey = buildFilterKey(layer);
+  const cached = layer._imgFilterCache;
+  const hit = cached && cached.filterKey === filterKey && cached.url === layer.url;
+  if (!hit && !isFilterFrozen()) {
+    const f: CameraRawFilters = {
+      exposure: layer.imgLightness || 0,
+      temperature: layer.imgTemperature || 0,
+      contrast: layer.imgContrast || 0,
+      highlights: layer.imgHighlights || 0,
+      shadows: layer.imgShadows || 0,
+      vibrance: layer.imgVibrance || 0,
+      saturation: layer.imgSaturation || 0,
+    };
+    const canvas = applyFiltersWebGL(layer.img, f)
+      ?? applyFrameColorFilter(layer.img, f.exposure, f.temperature);
+    layer._imgFilterCache = { filterKey, url: layer.url, canvas };
+  }
+  return layer._imgFilterCache?.canvas ?? layer.img;
+}
 
 export function drawImgLayer(
   ctx: CanvasRenderingContext2D,
@@ -43,12 +78,13 @@ export function drawImgLayer(
     ctx.shadowOffsetX = layer.shadow.offsetX ?? 0;
     ctx.shadowOffsetY = layer.shadow.offsetY ?? 20;
   }
+  const src = getFilteredSrc(layer);
   if (layer.rotation) {
     ctx.translate(layer.x + layer.w / 2, layer.y + layer.h / 2);
     ctx.rotate(layer.rotation * Math.PI / 180);
-    ctx.drawImage(layer.img, -layer.w / 2, -layer.h / 2, layer.w, layer.h);
+    ctx.drawImage(src, -layer.w / 2, -layer.h / 2, layer.w, layer.h);
   } else {
-    ctx.drawImage(layer.img, layer.x, layer.y, layer.w, layer.h);
+    ctx.drawImage(src, layer.x, layer.y, layer.w, layer.h);
   }
   ctx.restore();
 }

@@ -121,6 +121,16 @@ export interface ImageLayer extends LayerBase {
   opacity: number;
   rotation: number;
   shadow: ShadowConfig;
+  // Camera Raw 보정 (프레임과 동일) — UI엔 노출·색온도·대비·채도 4종 노출, 나머지는 0 유지
+  imgLightness?: number;
+  imgTemperature?: number;
+  imgContrast?: number;
+  imgHighlights?: number;
+  imgShadows?: number;
+  imgVibrance?: number;
+  imgSaturation?: number;
+  // 내부 캐시 (직렬화 제외)
+  _imgFilterCache?: { filterKey: string; url: string | null; canvas: HTMLCanvasElement } | null;
 }
 
 export interface TextboxLayer extends LayerBase {

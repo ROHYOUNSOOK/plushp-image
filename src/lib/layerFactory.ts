@@ -39,6 +39,7 @@ export function makeLayer(type: LayerType): Layer {
         x: 100, y: 100, w: 880, h: 880,
         img: null, url: null, opacity: 1, rotation: 0,
         shadow: { enabled: false, color: null, alpha: 0.2, blur: 10, offsetX: 0, offsetY: 20 },
+        imgLightness: 0, imgTemperature: 0, imgContrast: 0, imgSaturation: 0,
       };
 
     case 'textbox': {

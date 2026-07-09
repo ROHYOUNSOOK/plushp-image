@@ -8,10 +8,12 @@ import SliderInput from '@/components/ui/SliderInput';
 import ImageUploadButton from '@/components/ui/ImageUploadButton';
 import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import { loadImageFromFile, applyImageLayerImage, compressForUploadWithImage, uploadScheduleImage, deleteOldImageLayerFile } from '@/lib/imageUpload';
+import { setFilterFrozen } from '@/canvas/webglFilters';
 import { toast, hideToast } from '@/components/editor/Toast';
 
 export default function ImageProps({ layer }: { layer: ImageLayer }) {
   const updateLayer = useEditorStore(s => s.updateLayer);
+  const pushHistory = useEditorStore(s => s.pushHistory);
 
   const update = (u: Partial<ImageLayer>) => updateLayer(layer.id, u);
 
@@ -91,6 +93,48 @@ export default function ImageProps({ layer }: { layer: ImageLayer }) {
         />
       </div>
       {layer.img && <div className="text-xs text-green-600 mt-1">이미지 적용됨</div>}
+
+      {/* 이미지 조정 (Camera Raw — 프레임과 동일) */}
+      {layer.img && (
+        <>
+          <div className="text-xs text-gray-500 mt-2">이미지 조정</div>
+          {(() => {
+            const onFilterChange = (patch: Partial<ImageLayer>) => {
+              setFilterFrozen(true);
+              update(patch);
+            };
+            const onFilterEnd = () => {
+              setFilterFrozen(false);
+              update({ _imgFilterCache: null });
+            };
+            return (
+              <>
+                <SliderInput label="노출" value={layer.imgLightness ?? 0} min={-20} max={20} step={0.1}
+                  onChange={v => onFilterChange({ imgLightness: v })}
+                  onChangeEnd={onFilterEnd} />
+                <SliderInput label="색온도" value={layer.imgTemperature ?? 0} min={-20} max={20}
+                  onChange={v => onFilterChange({ imgTemperature: v })}
+                  onChangeEnd={onFilterEnd} />
+                <SliderInput label="대비" value={layer.imgContrast ?? 0} min={-20} max={20}
+                  onChange={v => onFilterChange({ imgContrast: v })}
+                  onChangeEnd={onFilterEnd} />
+                <SliderInput label="채도" value={layer.imgSaturation ?? 0} min={-20} max={20}
+                  onChange={v => onFilterChange({ imgSaturation: v })}
+                  onChangeEnd={onFilterEnd} />
+              </>
+            );
+          })()}
+          <button
+            className="text-xs text-gray-400 hover:text-gray-700 mt-0.5"
+            onClick={() => {
+              pushHistory();
+              update({ imgLightness: 0, imgTemperature: 0, imgContrast: 0, imgSaturation: 0, _imgFilterCache: null });
+            }}
+          >
+            보정 초기화
+          </button>
+        </>
+      )}
     </div>
   );
 }
