@@ -11,6 +11,7 @@ import type { Page } from '@/types/page';
 
 const MARGIN = 40;
 const MARGIN_4 = 10;
+const DOCTOR_BG_H = 200; // 의사카드 배경박스 높이 (캔버스 하단 고정)
 
 const PRESETS: Record<number, { subjectSize: number; nameSize: number; suffixSize: number; specialtySize: number; lineGap: number }> = {
   1: { subjectSize: 30, nameSize: 80, suffixSize: 40, specialtySize: 28, lineGap: 16 },
@@ -112,7 +113,11 @@ export function applyDoctorCardTemplate(
     let actualH = p.nameSize;
     if ((card.subject || '').trim()) actualH += p.subjectSize + p.lineGap;
     if ((card.specialty || '').trim()) actualH += p.lineGap + p.specialtySize;
-    card.y = H - MARGIN - actualH;
+    // 5명: 폰트가 작아 하단 고정 시 박스 안에서 아래로 치우침 → 배경박스(하단 200px) 세로 중앙에 맞춤.
+    // 1~4명: 기존 하단 고정 유지(현재 배치 그대로).
+    card.y = count === 5
+      ? Math.round((H - DOCTOR_BG_H) + (DOCTOR_BG_H - actualH) / 2)
+      : H - MARGIN - actualH;
 
     return card;
   });
@@ -127,7 +132,7 @@ export function applyDoctorCardTemplate(
   layers = layers.filter(l => !(l as TextboxLayer)._isDoctorCardBg);
 
   // 배경 텍스트박스 생성 — 캔버스 하단에 고정(높이 200px), 화면 밖으로 넘어가지 않도록
-  const BG_H = 200;
+  const BG_H = DOCTOR_BG_H;
   const bgLayer: TextboxLayer = {
     id: uid(),
     type: 'textbox',
