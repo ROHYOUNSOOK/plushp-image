@@ -35,10 +35,19 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
         onClick={() => {
           const state = useEditorStore.getState();
           const pages = state.pages;
-          const bgLayer = pages[0]?.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-          if (!bgLayer?.img) { toast('배경 이미지가 없습니다'); return; }
+          // 기준색은 항상 1페이지 배경에 반영되어야 하므로 적용 대상은 page1Bg 고정
+          const page1Bg = pages[0]?.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
+          if (!page1Bg) { toast('배경 레이어가 없습니다'); return; }
+          // 배경 이미지는 전 페이지가 동일하다. 1페이지 것이 비어 있으면(저장 시 blob URL이라 유실된 경우)
+          // 다른 페이지에 남아있는 같은 배경 이미지를 원본으로 사용한다.
+          const src = page1Bg.img
+            ? page1Bg
+            : pages
+                .map(pg => pg.layers.find(l => l.type === 'background' && !!(l as BackgroundLayer).img) as BackgroundLayer | undefined)
+                .find(Boolean);
+          if (!src?.img) { toast('배경 이미지가 없습니다'); return; }
           pushHistory();
-          applyBackgroundImage(bgLayer, bgLayer.img, bgLayer.url ?? '', pages);
+          applyBackgroundImage(page1Bg, src.img, src.url ?? '', pages);
           state.setPages([...pages]);
           toast('배경색 다시 적용됨');
         }}
