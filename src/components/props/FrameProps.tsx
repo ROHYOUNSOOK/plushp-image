@@ -9,7 +9,7 @@ import NumberInput from '@/components/ui/NumberInput';
 import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import SliderInput from '@/components/ui/SliderInput';
 import ImageUploadButton from '@/components/ui/ImageUploadButton';
-import { loadImageFromFile, compressForUploadWithImage, uploadScheduleImage, applyBackgroundImage } from '@/lib/imageUpload';
+import { loadImageFromFile, compressForUploadWithImage, uploadScheduleImage } from '@/lib/imageUpload';
 import { checkScheduleImageExists } from '@/lib/supabase';
 import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
 import { setFilterFrozen } from '@/canvas/webglFilters';
@@ -29,26 +29,17 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
     <div className="space-y-3">
       <div className="font-bold text-xs text-gray-500 uppercase">프레임</div>
 
-      {/* 배경색 다시 적용 — 스케줄 적용 때 도는 applyBackgroundImage를 그대로 호출만 한다.
-          (기존 색상 로직은 수정하지 않음. 1페이지 배경 이미지에서 대표색을 다시 뽑아 적용) */}
+      {/* 배경색 다시 적용 — 스케줄 적용 때와 같은 동기화를 수행하되,
+          대표색은 이미지에서 다시 뽑지 않고 템플릿에 저장된 1페이지 배경의 solidColor를 그대로 쓴다.
+          (재추출하면 배경 이미지가 바뀌거나 유실된 경우 작업 당시와 다른 색이 나오기 때문) */}
       <button
         onClick={() => {
           const state = useEditorStore.getState();
-          const pages = state.pages;
-          // 기준색은 항상 1페이지 배경에 반영되어야 하므로 적용 대상은 page1Bg 고정
-          const page1Bg = pages[0]?.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-          if (!page1Bg) { toast('배경 레이어가 없습니다'); return; }
-          // 배경 이미지는 전 페이지가 동일하다. 1페이지 것이 비어 있으면(저장 시 blob URL이라 유실된 경우)
-          // 다른 페이지에 남아있는 같은 배경 이미지를 원본으로 사용한다.
-          const src = page1Bg.img
-            ? page1Bg
-            : pages
-                .map(pg => pg.layers.find(l => l.type === 'background' && !!(l as BackgroundLayer).img) as BackgroundLayer | undefined)
-                .find(Boolean);
-          if (!src?.img) { toast('배경 이미지가 없습니다'); return; }
+          const page1Bg = state.pages[0]?.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
+          const bgColor = page1Bg?.solidColor;
+          if (!bgColor) { toast('배경 대표색이 없습니다'); return; }
           pushHistory();
-          applyBackgroundImage(page1Bg, src.img, src.url ?? '', pages);
-          state.setPages([...pages]);
+          state.applySyncColors(calcAutoFillColor(bgColor), calcShadowColor(bgColor));
           toast('배경색 다시 적용됨');
         }}
         className="w-full py-1.5 text-xs font-medium rounded border border-blue-300 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
