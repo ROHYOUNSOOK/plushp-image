@@ -8,7 +8,7 @@ import { useEditorStore } from '@/store/editorStore';
 import { toast, hideToast } from '@/components/editor/Toast';
 import { autoLoadLogos } from '@/lib/logoLoader';
 import { applyBgToAllPages } from '@/lib/imageUpload';
-import { replaceTextboxImageColors, calcAutoFillColor, calcShadowColor } from '@/lib/colorHelpers';
+import { replaceTextboxImageColors } from '@/lib/colorHelpers';
 import type { BackgroundLayer } from '@/types/layer';
 import { pickRandomBackground } from '@/lib/backgroundLoader';
 import { loadCloudTemplate, mergeTemplateIntoPage } from '@/lib/templateIO';
@@ -82,12 +82,8 @@ export async function applyCloudTemplate(selectedRow: ScheduleRow, folderName: s
     }
   });
   state.setPages(newPages);
-  // 색상 동기화 — 수동 '템플릿 열기' 경로와 동일하게 맞춘다.
-  // (이 호출이 없으면 프레임 마스크가 배경색을 못 따라가 색이 어긋난다)
-  const s2 = useEditorStore.getState();
-  const bgLayer = s2.pages[0]?.layers.find(l => l.type === 'background') as { solidColor?: string } | undefined;
-  const bgColor = bgLayer?.solidColor ?? '#ffffff';
-  s2.applySyncColors(calcAutoFillColor(bgColor), calcShadowColor(bgColor));
+  // 색상 동기화는 여기서 자동으로 하지 않는다 — 저장된 디자인의 색을 덮어쓰게 되기 때문.
+  // 색이 어긋난 경우 프레임 속성의 '배경색 다시 적용' 버튼으로 디자이너가 직접 적용한다.
   // selectedRow는 이미 위에서 설정했으므로 덮어쓰지 않음
   await autoLoadLogos();
 }

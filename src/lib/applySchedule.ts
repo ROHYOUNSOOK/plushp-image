@@ -206,22 +206,26 @@ export function buildSchedulePages({
   };
 
   // 전체 색상 동기화
+  // 주의: 배경색이 없을 때 흰색으로 대체하면 안 된다. calcAutoFillColor는 hue를 보존하는데
+  // 흰색은 hue=0(빨강)이고 채도가 최소 40으로 강제되어 마룬색이 만들어진다. 없으면 동기화를 건너뛴다.
   const bgLayer = pages[0]?.layers.find(l => l.type === 'background');
-  const bgColor = (bgLayer as { solidColor?: string })?.solidColor ?? '#ffffff';
-  const autoColor = calcAutoFillColor(bgColor);
-  const shadowColor = calcShadowColor(bgColor);
-  pages = pages.map(pg => ({
-    ...pg,
-    layers: pg.layers.map(l => {
-      if (l.type === 'textbox') return { ...l, fillColor: autoColor };
-      if (l.type === 'med-title') return { ...l, color: autoColor };
-      if (l.type === 'logo' && (l as LogoLayer).stroke?.enabled)
-        return { ...l, stroke: { ...(l as LogoLayer).stroke, color: autoColor } };
-      if (l.type === 'logo' && (l as LogoLayer).shadow?.enabled)
-        return { ...l, shadow: { ...(l as LogoLayer).shadow, color: shadowColor } };
-      return l;
-    }),
-  }));
+  const bgColor = (bgLayer as { solidColor?: string })?.solidColor;
+  if (bgColor) {
+    const autoColor = calcAutoFillColor(bgColor);
+    const shadowColor = calcShadowColor(bgColor);
+    pages = pages.map(pg => ({
+      ...pg,
+      layers: pg.layers.map(l => {
+        if (l.type === 'textbox') return { ...l, fillColor: autoColor };
+        if (l.type === 'med-title') return { ...l, color: autoColor };
+        if (l.type === 'logo' && (l as LogoLayer).stroke?.enabled)
+          return { ...l, stroke: { ...(l as LogoLayer).stroke, color: autoColor } };
+        if (l.type === 'logo' && (l as LogoLayer).shadow?.enabled)
+          return { ...l, shadow: { ...(l as LogoLayer).shadow, color: shadowColor } };
+        return l;
+      }),
+    }));
+  }
 
   return pages;
 }

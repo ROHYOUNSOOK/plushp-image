@@ -1,7 +1,7 @@
 'use client';
 
 
-import type { FrameLayer } from '@/types/layer';
+import type { FrameLayer, BackgroundLayer } from '@/types/layer';
 import { useEditorStore } from '@/store/editorStore';
 import { FRAME_SHAPES } from '@/types/constants';
 import ColorPickerField from '@/components/ui/ColorPickerField';
@@ -9,7 +9,7 @@ import NumberInput from '@/components/ui/NumberInput';
 import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import SliderInput from '@/components/ui/SliderInput';
 import ImageUploadButton from '@/components/ui/ImageUploadButton';
-import { loadImageFromFile, compressForUploadWithImage, uploadScheduleImage } from '@/lib/imageUpload';
+import { loadImageFromFile, compressForUploadWithImage, uploadScheduleImage, applyBackgroundImage } from '@/lib/imageUpload';
 import { checkScheduleImageExists } from '@/lib/supabase';
 import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
 import { setFilterFrozen } from '@/canvas/webglFilters';
@@ -30,11 +30,18 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
     <div className="space-y-3">
       <div className="font-bold text-xs text-gray-500 uppercase">프레임</div>
 
-      {/* 배경색 재적용 — 색이 어긋났을 때 수동 복구용 (기존 동기화 로직 그대로 호출) */}
+      {/* 배경색 재적용 — 스케줄 적용 때 도는 로직(applyBackgroundImage)을 그대로 다시 실행한다.
+          배경 이미지에서 대표색을 재추출하는 것부터 시작하므로, 저장된 색이 틀어져 있어도 복구된다. */}
       <button
         onClick={() => {
+          const state = useEditorStore.getState();
+          const pages = state.pages;
+          const bgLayer = pages[0]?.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
+          if (!bgLayer?.img) { toast('배경 이미지가 없습니다'); return; }
           pushHistory();
-          applySyncColors(calcAutoFillColor(bgKeyColor), calcShadowColor(bgKeyColor));
+          // 스케줄 적용과 동일한 함수 — 대표색 재추출 + 전 페이지 색상 동기화
+          applyBackgroundImage(bgLayer, bgLayer.img, bgLayer.url ?? '', pages);
+          state.setPages([...pages]);
           toast('배경색 다시 적용됨');
         }}
         className="w-full py-1.5 text-xs font-medium rounded border border-blue-300 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"

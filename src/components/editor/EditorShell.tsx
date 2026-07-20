@@ -349,7 +349,8 @@ export default function EditorShell() {
               const { pages: tplPages, scheduleRow: savedScheduleRow } = await loadCloudTemplate(folder);
               const state = useEditorStore.getState();
               const curBg = state.pages[0]?.layers.find(l => l.type === 'background') as { solidColor?: string } | undefined;
-              const curBgColor = curBg?.solidColor ?? '#ffffff';
+              // 흰색 등으로 대체 금지 — calcAutoFillColor는 hue 보존이라 흰색(hue=0)이면 마룬색이 된다
+              const curBgColor = curBg?.solidColor;
               const pagesWithImages = await applyScheduleImagesToPages(tplPages, savedScheduleRow);
               pushHistory();
               const newPages = [...state.pages];
@@ -365,7 +366,9 @@ export default function EditorShell() {
               });
               setPages(newPages);
               if (savedScheduleRow) setCurrentScheduleRow(savedScheduleRow);
-              useEditorStore.getState().applySyncColors(calcAutoFillColor(curBgColor), calcShadowColor(curBgColor));
+              if (curBgColor) {
+                useEditorStore.getState().applySyncColors(calcAutoFillColor(curBgColor), calcShadowColor(curBgColor));
+              }
               hideToast();
               toast('템플릿 불러오기 완료');
               autoLoadLogos();
@@ -506,8 +509,11 @@ export default function EditorShell() {
             // 배경 색상 기반으로 로고 획 색상 동기화
             const state = useEditorStore.getState();
             const bgLayer = state.pages[0]?.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-            const bgColor = bgLayer?.solidColor ?? '#ffffff';
-            state.applySyncColors(calcAutoFillColor(bgColor), calcShadowColor(bgColor));
+            // 흰색 등으로 대체 금지 — calcAutoFillColor는 hue 보존이라 흰색(hue=0)이면 마룬색이 된다
+            const bgColor = bgLayer?.solidColor;
+            if (bgColor) {
+              state.applySyncColors(calcAutoFillColor(bgColor), calcShadowColor(bgColor));
+            }
           }}
           className="px-2 py-1 bg-[#1a5cba] hover:bg-[#1a5cba] rounded-t text-xs text-amber-400 ml-0.5"
           title="의료법 페이지 추가"
