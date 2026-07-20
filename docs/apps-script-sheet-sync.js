@@ -44,6 +44,14 @@ const COL = {
 };
 
 function doPost(e) {
+  // 동시 저장 방어: 여러 요청이 한꺼번에 와도 한 건씩 순서대로 처리한다.
+  // (락이 없으면 새 기획안 동시 최초저장 시 getLastRow()+1이 같은 행을 가리켜 한 건이 덮여 사라질 수 있음)
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(15000); // 최대 15초 대기 (앞 요청 처리 완료까지)
+  } catch (lockErr) {
+    return json_({ ok: false, error: 'busy: ' + String(lockErr) });
+  }
   try {
     const p = JSON.parse(e.postData.contents);
     if (p.secret !== SECRET) return json_({ ok: false, error: 'unauthorized' });
@@ -129,6 +137,8 @@ function doPost(e) {
     }
   } catch (err) {
     return json_({ ok: false, error: String(err) });
+  } finally {
+    lock.releaseLock(); // 다음 대기 요청이 진행되도록 반드시 해제
   }
 }
 

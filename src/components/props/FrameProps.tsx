@@ -13,7 +13,8 @@ import { loadImageFromFile, compressForUploadWithImage, uploadScheduleImage } fr
 import { checkScheduleImageExists } from '@/lib/supabase';
 import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
 import { setFilterFrozen } from '@/canvas/webglFilters';
-import { extractDominantColor, calcAutoFillColor, calcShadowColor, replaceTextboxImageColors, hasTransparentPixels } from '@/lib/colorHelpers';
+import { extractDominantColor, calcAutoFillColor, calcShadowColor, hasTransparentPixels } from '@/lib/colorHelpers';
+import { recolorFrameByHueRotate } from '@/canvas/imageFilters';
 import { selectBgKeyColor } from '@/store/editorStore';
 import { toast, hideToast } from '@/components/editor/Toast';
 
@@ -28,6 +29,18 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
   return (
     <div className="space-y-3">
       <div className="font-bold text-xs text-gray-500 uppercase">프레임</div>
+
+      {/* 배경색 재적용 — 색이 어긋났을 때 수동 복구용 (기존 동기화 로직 그대로 호출) */}
+      <button
+        onClick={() => {
+          pushHistory();
+          applySyncColors(calcAutoFillColor(bgKeyColor), calcShadowColor(bgKeyColor));
+          toast('배경색 다시 적용됨');
+        }}
+        className="w-full py-1.5 text-xs font-medium rounded border border-blue-300 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+      >
+        배경색 다시 적용
+      </button>
 
       {/* 위치/크기 */}
       <div className="grid grid-cols-2 gap-1">
@@ -104,8 +117,12 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
               const { img, url } = await loadImageFromFile(file);
               pushHistory();
               const isMask = hasTransparentPixels(img);
-              const frameMaskProcessed = isMask ? replaceTextboxImageColors(img, bgKeyColor) : null;
-              update({ frameMaskImg: img, frameMaskUrl: url, frameMaskProcessed });
+              // 그리기 경로와 동일한 함수·캐시 키 (색 어긋남 방지)
+              const frameMaskProcessed = isMask ? recolorFrameByHueRotate(img, bgKeyColor) : null;
+              update({
+                frameMaskImg: img, frameMaskUrl: url, frameMaskProcessed,
+                _processedMaskKey: isMask ? `${url || ''}__${bgKeyColor}` : undefined,
+              });
               if (isMask) {
                 const dominant = extractDominantColor(img);
                 applySyncColors(calcAutoFillColor(dominant), calcShadowColor(dominant));

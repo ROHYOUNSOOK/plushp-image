@@ -6,6 +6,7 @@
 import type { Page } from '@/types/page';
 import type { TextboxLayer, FrameLayer, LogoLayer, ImageLayer, BackgroundLayer } from '@/types/layer';
 import { replaceTextboxImageColors } from './colorHelpers';
+import { recolorFrameByHueRotate } from '@/canvas/imageFilters';
 
 export function syncColorsAcrossPages(
   pages: Page[],
@@ -28,7 +29,13 @@ export function syncColorsAcrossPages(
       if (l.type === 'frame') {
         const fr = l as FrameLayer;
         if (fr.frameMaskImg) {
-          return { ...fr, frameMaskProcessed: replaceTextboxImageColors(fr.frameMaskImg, bgKeyColor) };
+          // 그리기 경로(drawFrame)와 동일한 함수·동일한 캐시 키를 사용한다.
+          // 키를 함께 갱신하지 않으면 다음 렌더에서 그리기 로직이 다른 결과로 덮어써 색이 어긋난다.
+          return {
+            ...fr,
+            frameMaskProcessed: recolorFrameByHueRotate(fr.frameMaskImg, bgKeyColor),
+            _processedMaskKey: `${fr.frameMaskUrl || ''}__${bgKeyColor}`,
+          };
         }
       }
       if (l.type === 'logo') {

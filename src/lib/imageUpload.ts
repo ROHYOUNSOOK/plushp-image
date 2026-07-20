@@ -7,7 +7,8 @@ import type { BackgroundLayer, FrameLayer, ImageLayer, LogoLayer } from '@/types
 import type { Page } from '@/types/page';
 import { W, H } from '@/types/constants';
 import { loadImage } from './utils';
-import { extractDominantColor, calcAutoFillColor, calcShadowColor, replaceTextboxImageColors } from './colorHelpers';
+import { extractDominantColor, calcAutoFillColor, calcShadowColor } from './colorHelpers';
+import { recolorFrameByHueRotate } from '@/canvas/imageFilters';
 import { makeLayer } from './layerFactory';
 
 /** 배경 이미지 적용 + 전 페이지 색상 동기화 */
@@ -40,12 +41,12 @@ export function applyBackgroundImage(
     if (l.type === 'image' && l.shadow) l.shadow.color = shadowColor;
   }));
   // 프레임 마스크 색상 재처리 (배경 dominant color 기준)
+  // 그리기 경로(drawFrame)와 동일한 함수·캐시 키를 사용해야 결과가 어긋나지 않는다.
   pages.forEach(pg => pg.layers.forEach(l => {
     if (l.type === 'frame' && (l as FrameLayer).frameMaskImg) {
-      (l as FrameLayer).frameMaskProcessed = replaceTextboxImageColors(
-        (l as FrameLayer).frameMaskImg!,
-        layer.solidColor,
-      );
+      const fr = l as FrameLayer;
+      fr.frameMaskProcessed = recolorFrameByHueRotate(fr.frameMaskImg!, layer.solidColor);
+      fr._processedMaskKey = `${fr.frameMaskUrl || ''}__${layer.solidColor}`;
     }
   }));
 }
