@@ -82,8 +82,6 @@ export async function applyCloudTemplate(selectedRow: ScheduleRow, folderName: s
     }
   });
   state.setPages(newPages);
-  // 색상 동기화는 여기서 자동으로 하지 않는다 — 저장된 디자인의 색을 덮어쓰게 되기 때문.
-  // 색이 어긋난 경우 프레임 속성의 '배경색 다시 적용' 버튼으로 디자이너가 직접 적용한다.
   // selectedRow는 이미 위에서 설정했으므로 덮어쓰지 않음
   await autoLoadLogos();
 }

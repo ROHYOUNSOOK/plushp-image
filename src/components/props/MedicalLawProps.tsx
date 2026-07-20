@@ -27,11 +27,8 @@ export default function MedicalLawProps() {
     await autoLoadLogos();
     // 로고 외곽선 색상 동기화
     const bg = useEditorStore.getState().pages[0]?.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-    // 흰색 등으로 대체 금지 — calcAutoFillColor는 hue 보존이라 흰색(hue=0)이면 마룬색이 된다
-    const bgColor = bg?.solidColor;
-    if (bgColor) {
-      useEditorStore.getState().applySyncColors(calcAutoFillColor(bgColor), calcShadowColor(bgColor));
-    }
+    const bgColor = bg?.solidColor ?? '#ffffff';
+    useEditorStore.getState().applySyncColors(calcAutoFillColor(bgColor), calcShadowColor(bgColor));
   };
 
   return (

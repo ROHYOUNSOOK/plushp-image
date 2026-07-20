@@ -13,8 +13,7 @@ import { loadImageFromFile, compressForUploadWithImage, uploadScheduleImage, app
 import { checkScheduleImageExists } from '@/lib/supabase';
 import { buildScheduleFolderName } from '@/hooks/useScheduleApplication';
 import { setFilterFrozen } from '@/canvas/webglFilters';
-import { extractDominantColor, calcAutoFillColor, calcShadowColor, hasTransparentPixels } from '@/lib/colorHelpers';
-import { recolorFrameByHueRotate } from '@/canvas/imageFilters';
+import { extractDominantColor, calcAutoFillColor, calcShadowColor, replaceTextboxImageColors, hasTransparentPixels } from '@/lib/colorHelpers';
 import { selectBgKeyColor } from '@/store/editorStore';
 import { toast, hideToast } from '@/components/editor/Toast';
 
@@ -30,27 +29,17 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
     <div className="space-y-3">
       <div className="font-bold text-xs text-gray-500 uppercase">프레임</div>
 
-      {/* 배경색 재적용 — 스케줄 적용 때 도는 로직(applyBackgroundImage)을 그대로 다시 실행한다.
-          배경 이미지에서 대표색을 재추출하는 것부터 시작하므로, 저장된 색이 틀어져 있어도 복구된다. */}
+      {/* 배경색 다시 적용 — 스케줄 적용 때 도는 applyBackgroundImage를 그대로 호출만 한다.
+          (기존 색상 로직은 수정하지 않음. 1페이지 배경 이미지에서 대표색을 다시 뽑아 적용) */}
       <button
         onClick={() => {
           const state = useEditorStore.getState();
           const pages = state.pages;
-          // 기준은 항상 1페이지 배경 (브랜드 기준색 규칙)
           const bgLayer = pages[0]?.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-          if (bgLayer?.img) {
-            // 배경 이미지가 있으면 스케줄 적용과 동일 — 대표색 재추출 + 전 페이지 동기화
-            pushHistory();
-            applyBackgroundImage(bgLayer, bgLayer.img, bgLayer.url ?? '', pages);
-            state.setPages([...pages]);
-          } else if (bgLayer?.solidColor) {
-            // 템플릿에서 불러온 경우 배경 img는 비어도 대표색은 남아있다 — 그 색으로 동기화
-            pushHistory();
-            state.applySyncColors(calcAutoFillColor(bgLayer.solidColor), calcShadowColor(bgLayer.solidColor));
-          } else {
-            toast('배경색을 찾을 수 없습니다');
-            return;
-          }
+          if (!bgLayer?.img) { toast('배경 이미지가 없습니다'); return; }
+          pushHistory();
+          applyBackgroundImage(bgLayer, bgLayer.img, bgLayer.url ?? '', pages);
+          state.setPages([...pages]);
           toast('배경색 다시 적용됨');
         }}
         className="w-full py-1.5 text-xs font-medium rounded border border-blue-300 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
@@ -133,12 +122,8 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
               const { img, url } = await loadImageFromFile(file);
               pushHistory();
               const isMask = hasTransparentPixels(img);
-              // 그리기 경로와 동일한 함수·캐시 키 (색 어긋남 방지)
-              const frameMaskProcessed = isMask ? recolorFrameByHueRotate(img, bgKeyColor) : null;
-              update({
-                frameMaskImg: img, frameMaskUrl: url, frameMaskProcessed,
-                _processedMaskKey: isMask ? `${url || ''}__${bgKeyColor}` : undefined,
-              });
+              const frameMaskProcessed = isMask ? replaceTextboxImageColors(img, bgKeyColor) : null;
+              update({ frameMaskImg: img, frameMaskUrl: url, frameMaskProcessed });
               if (isMask) {
                 const dominant = extractDominantColor(img);
                 applySyncColors(calcAutoFillColor(dominant), calcShadowColor(dominant));
