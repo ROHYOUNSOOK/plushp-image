@@ -36,12 +36,21 @@ export default function FrameProps({ layer }: { layer: FrameLayer }) {
         onClick={() => {
           const state = useEditorStore.getState();
           const pages = state.pages;
+          // 기준은 항상 1페이지 배경 (브랜드 기준색 규칙)
           const bgLayer = pages[0]?.layers.find(l => l.type === 'background') as BackgroundLayer | undefined;
-          if (!bgLayer?.img) { toast('배경 이미지가 없습니다'); return; }
-          pushHistory();
-          // 스케줄 적용과 동일한 함수 — 대표색 재추출 + 전 페이지 색상 동기화
-          applyBackgroundImage(bgLayer, bgLayer.img, bgLayer.url ?? '', pages);
-          state.setPages([...pages]);
+          if (bgLayer?.img) {
+            // 배경 이미지가 있으면 스케줄 적용과 동일 — 대표색 재추출 + 전 페이지 동기화
+            pushHistory();
+            applyBackgroundImage(bgLayer, bgLayer.img, bgLayer.url ?? '', pages);
+            state.setPages([...pages]);
+          } else if (bgLayer?.solidColor) {
+            // 템플릿에서 불러온 경우 배경 img는 비어도 대표색은 남아있다 — 그 색으로 동기화
+            pushHistory();
+            state.applySyncColors(calcAutoFillColor(bgLayer.solidColor), calcShadowColor(bgLayer.solidColor));
+          } else {
+            toast('배경색을 찾을 수 없습니다');
+            return;
+          }
           toast('배경색 다시 적용됨');
         }}
         className="w-full py-1.5 text-xs font-medium rounded border border-blue-300 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
