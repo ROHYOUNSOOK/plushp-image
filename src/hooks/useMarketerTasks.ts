@@ -42,8 +42,16 @@ export function useMarketerTasks() {
   const confirmRow = async (id: string) => {
     await supabase.from('plus_schedule').update({ confirmed: true }).eq('id', id);
     setRows(prev => prev.map(r => r.id === id ? { ...r, confirmed: true } : r));
-    // 협업시트 L열(컨펌완료) 체크 (best-effort)
-    syncSheet({ action: 'confirm', id, checked: true });
+    // 협업시트 L열(컨펌완료) 체크 (best-effort). 행이 없을 때 대비해 기본정보도 함께 전달
+    const row = rows.find(r => r.id === id);
+    syncSheet({
+      action: 'confirm', id, checked: true,
+      reqDate: (row?.created_at ?? '').slice(0, 10),
+      upDate: row?.date ?? '',
+      accountId: row?.account_id ?? '',
+      keyword: row?.keyword ?? '',
+      marketer: row?.marketer ?? '',
+    });
   };
 
   // 디자인 확인: 편집기로 이동(완료 건은 Ch5에서 읽기 전용으로 강제)

@@ -97,35 +97,34 @@ export function usePlanForm(
       toast('저장 완료');
       onSaved(saved);
 
-      // 협업시트 동기화 (best-effort — 실패해도 저장에 영향 없음)
-      void (async () => {
-        let team = '';
-        let designerName = '';
-        try {
-          if (saved.created_by) {
-            const { data: u } = await supabase.from('users').select('team').eq('id', saved.created_by).single();
-            team = u?.team ?? '';
-          }
-        } catch { /* noop */ }
-        try {
-          // 이미 배정된 디자이너도 함께 기록 — assign 이벤트 이전(로직 배포 전) 배정 건도 저장 한 번으로 P열 채움
-          if (saved.assigned_to) {
-            const { data: d } = await supabase.from('users').select('name').eq('id', saved.assigned_to).single();
-            designerName = d?.name ?? '';
-          }
-        } catch { /* noop */ }
-        syncSheet({
-          action: 'upsert',
-          id: saved.id,
-          reqDate: (saved.created_at ?? '').slice(0, 10),
-          upDate: saved.date ?? '',
-          accountId: saved.account_id ?? '',
-          keyword: saved.keyword ?? '',
-          team,
-          marketer: saved.marketer ?? '',
-          designerName,
-        });
-      })();
+      // 협업시트 동기화 (best-effort — 실패해도 저장에 영향 없음).
+      // 완료까지 await 해 저장 직후 페이지 이탈로 요청이 취소돼 누락되는 일을 막는다.
+      let team = '';
+      let designerName = '';
+      try {
+        if (saved.created_by) {
+          const { data: u } = await supabase.from('users').select('team').eq('id', saved.created_by).single();
+          team = u?.team ?? '';
+        }
+      } catch { /* noop */ }
+      try {
+        // 이미 배정된 디자이너도 함께 기록 — assign 이벤트 이전(로직 배포 전) 배정 건도 저장 한 번으로 P열 채움
+        if (saved.assigned_to) {
+          const { data: d } = await supabase.from('users').select('name').eq('id', saved.assigned_to).single();
+          designerName = d?.name ?? '';
+        }
+      } catch { /* noop */ }
+      await syncSheet({
+        action: 'upsert',
+        id: saved.id,
+        reqDate: (saved.created_at ?? '').slice(0, 10),
+        upDate: saved.date ?? '',
+        accountId: saved.account_id ?? '',
+        keyword: saved.keyword ?? '',
+        team,
+        marketer: saved.marketer ?? '',
+        designerName,
+      });
 
       return saved;
     } catch (e: unknown) {
@@ -150,8 +149,15 @@ export function usePlanForm(
     onSaved({ ...row, completed: false, confirmed: false });
     toast('수정요청이 전송되었습니다');
     // 협업시트 작업완료(Q)·컨펌완료(L) 체크 해제 (best-effort)
-    syncSheet({ action: 'complete', id: row.id, checked: false });
-    syncSheet({ action: 'confirm', id: row.id, checked: false });
+    const base = {
+      reqDate: (row.created_at ?? '').slice(0, 10),
+      upDate: row.date ?? '',
+      accountId: row.account_id ?? '',
+      keyword: row.keyword ?? '',
+      marketer: row.marketer ?? '',
+    };
+    syncSheet({ action: 'complete', id: row.id, checked: false, ...base });
+    syncSheet({ action: 'confirm', id: row.id, checked: false, ...base });
   };
 
   return { handleSave, navigateToEditor, handleDelete, handleRevision, navigating };

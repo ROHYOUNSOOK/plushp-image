@@ -38,7 +38,16 @@ export function useAssignment() {
     setRows(prev => prev.map(r => r.id === scheduleId ? { ...r, assigned_to: designerId } : r));
     // 협업시트 P열(디자이너) 동기화 — 미배분이면 빈값 (best-effort)
     const designerName = designerId ? (designers.find(d => d.id === designerId)?.name ?? '') : '';
-    syncSheet({ action: 'assign', id: scheduleId, designerName });
+    // 시트에 행이 없을 때(upsert 누락 등) Apps Script가 행을 만들 수 있게 기본정보도 함께 전달
+    const row = rows.find(r => r.id === scheduleId);
+    syncSheet({
+      action: 'assign', id: scheduleId, designerName,
+      reqDate: (row?.created_at ?? '').slice(0, 10),
+      upDate: row?.date ?? '',
+      accountId: row?.account_id ?? '',
+      keyword: row?.keyword ?? '',
+      marketer: row?.marketer ?? '',
+    });
   };
 
   const updateDeadline = async (scheduleId: string, deadline: string) => {

@@ -83,22 +83,23 @@ function doPost(e) {
         return json_({ ok: true, mode: row > 0 ? 'updated' : 'inserted', row: targetRow, skipped: skipped });
       }
       case 'assign': { // 디자이너 배분 → P열 (미배분 처리 시 빈값)
-        if (row < 0) return json_({ ok: false, error: 'row not found' });
         const skipped = [];
-        setSafe_(sheet, row, COL.designer, p.designerName || '', skipped, 'designer');
-        return json_({ ok: true, row: row, skipped: skipped });
+        // 행이 없으면(upsert 누락 등) 기본정보로 행을 만들어 기록이 유실되지 않게 한다(self-heal)
+        const r1 = row > 0 ? row : ensureRow_(sheet, p, skipped);
+        setSafe_(sheet, r1, COL.designer, p.designerName || '', skipped, 'designer');
+        return json_({ ok: true, row: r1, healed: row < 0, skipped: skipped });
       }
       case 'complete': { // 디자인완료 → Q열 O / 수정요청 시 checked:false로 해제
-        if (row < 0) return json_({ ok: false, error: 'row not found' });
         const skipped = [];
-        setSafe_(sheet, row, COL.done, p.checked === false ? '' : CHECK_VALUE, skipped, 'done');
-        return json_({ ok: true, row: row, skipped: skipped });
+        const r2 = row > 0 ? row : ensureRow_(sheet, p, skipped);
+        setSafe_(sheet, r2, COL.done, p.checked === false ? '' : CHECK_VALUE, skipped, 'done');
+        return json_({ ok: true, row: r2, healed: row < 0, skipped: skipped });
       }
       case 'confirm': { // 컨펌완료 → L열 O / 해제 가능
-        if (row < 0) return json_({ ok: false, error: 'row not found' });
         const skipped = [];
-        setSafe_(sheet, row, COL.confirm, p.checked === false ? '' : CHECK_VALUE, skipped, 'confirm');
-        return json_({ ok: true, row: row, skipped: skipped });
+        const r3 = row > 0 ? row : ensureRow_(sheet, p, skipped);
+        setSafe_(sheet, r3, COL.confirm, p.checked === false ? '' : CHECK_VALUE, skipped, 'confirm');
+        return json_({ ok: true, row: r3, healed: row < 0, skipped: skipped });
       }
       case 'delete': { // 기획안 삭제 → 행 제거
         if (row < 0) return json_({ ok: true, mode: 'not-found' }); // 없으면 조용히 통과
@@ -167,6 +168,26 @@ function setSafe_(sheet, row, col, value, skipped, label) {
       try { range.setDataValidation(null); range.setValue(''); SpreadsheetApp.flush(); } catch (e3) { /* noop */ }
     }
   }
+}
+
+/**
+ * 행이 없을 때 기본정보로 새 행을 만들어 행 번호를 반환한다(self-heal).
+ * 배분/완료/컨펌 시점에 upsert가 누락돼 행이 없어도, 그 이벤트가 스스로 행을 복구해
+ * 기록이 유실되지 않도록 한다. 앱이 함께 보낸 값(있는 것만) 기록.
+ */
+function ensureRow_(sheet, p, skipped) {
+  const targetRow = sheet.getLastRow() + 1;
+  const link = 'https://plushp-image.vercel.app/plan?id=' + p.id;
+  setSafe_(sheet, targetRow, COL.planLink, link, skipped, 'planLink'); // 행 매칭 키를 가장 먼저
+  if (p.reqDate)   setSafe_(sheet, targetRow, COL.reqDate, p.reqDate, skipped, 'reqDate');
+  if (p.upDate)    setSafe_(sheet, targetRow, COL.upDate, p.upDate, skipped, 'upDate');
+  setSafe_(sheet, targetRow, COL.channel, CHANNEL_NAME, skipped, 'channel');
+  if (p.accountId) setSafe_(sheet, targetRow, COL.accountId, p.accountId, skipped, 'accountId');
+  setSafe_(sheet, targetRow, COL.branch, BRANCH_NAME, skipped, 'branch');
+  if (p.keyword)   setSafe_(sheet, targetRow, COL.keyword, p.keyword, skipped, 'keyword');
+  if (p.team)      setSafe_(sheet, targetRow, COL.team, p.team, skipped, 'team');
+  if (p.marketer)  setSafe_(sheet, targetRow, COL.marketer, p.marketer, skipped, 'marketer');
+  return targetRow;
 }
 
 /** M열(상세기획안 링크)에서 기획안 UUID가 포함된 행 번호 반환, 없으면 -1 */

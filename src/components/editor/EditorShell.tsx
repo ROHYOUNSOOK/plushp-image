@@ -395,8 +395,15 @@ export default function EditorShell() {
                 useEditorStore.getState().setCurrentScheduleRow({ ...currentScheduleRow, completed: true });
                 hideToast();
                 toast('디자인 완료 처리되었습니다');
-                // 협업시트 Q열(작업완료) 체크 (best-effort)
-                syncSheet({ action: 'complete', id, checked: true });
+                // 협업시트 Q열(작업완료) 체크 (best-effort). 행이 없을 때 대비해 기본정보도 함께 전달
+                syncSheet({
+                  action: 'complete', id, checked: true,
+                  reqDate: String(currentScheduleRow.created_at ?? '').slice(0, 10),
+                  upDate: String(currentScheduleRow.date ?? ''),
+                  accountId: String(currentScheduleRow.account_id ?? ''),
+                  keyword: String(currentScheduleRow.keyword ?? ''),
+                  marketer: String(currentScheduleRow.marketer ?? ''),
+                });
               } catch {
                 hideToast();
                 toast('디자인 저장 실패 — 다시 시도해주세요');
@@ -418,8 +425,15 @@ export default function EditorShell() {
               await supabase.from('plus_schedule').update({ confirmed: true }).eq('id', id);
               useEditorStore.getState().setCurrentScheduleRow({ ...currentScheduleRow, confirmed: true });
               toast('컨펌 완료 처리되었습니다');
-              // 협업시트 L열(컨펌완료) 체크 (best-effort)
-              syncSheet({ action: 'confirm', id, checked: true });
+              // 협업시트 L열(컨펌완료) 체크 (best-effort). 행이 없을 때 대비해 기본정보도 함께 전달
+              syncSheet({
+                action: 'confirm', id, checked: true,
+                reqDate: String(currentScheduleRow.created_at ?? '').slice(0, 10),
+                upDate: String(currentScheduleRow.date ?? ''),
+                accountId: String(currentScheduleRow.account_id ?? ''),
+                keyword: String(currentScheduleRow.keyword ?? ''),
+                marketer: String(currentScheduleRow.marketer ?? ''),
+              });
             }}
             className="ml-auto text-xs px-3 py-1.5 rounded-lg bg-green-500 hover:bg-green-400 text-white transition-colors whitespace-nowrap"
           >
